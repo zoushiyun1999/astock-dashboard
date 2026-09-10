@@ -31,6 +31,9 @@ const SKIP_DIR = new Set(['.git', '.workbuddy', '.gh-config', 'node_modules', '.
 
 // 安全闸门：这些文件绝不外传。注意 .gitignore 对 API 推送无效，必须在这里硬拦。
 const DENY_FILE = /^(\.gh-token|\.env|\.env\..*|.*\.token|.*\.pem|.*\.key|.*\.p12|id_rsa.*)$/i;
+
+// 本地工作文件（抓取原文、临时图片、合并脚本等），公开仓库不需要
+const SKIP_PATH = /(^|\/)(tmp_|_tmp|temp_|_preview|_test|_shot)/i;
 const DENY_CONTENT = [
   /gh[pousr]_[A-Za-z0-9]{20,}/,          // GitHub 各类令牌
   /SCT[0-9A-Za-z]{20,}/,                  // Server酱 SendKey
@@ -84,6 +87,7 @@ function collect(onlyList) {
       else if (st.isFile()) {
         const rel = path.relative(ROOT, full).replace(/\\/g, '/');
         if (DENY_FILE.test(rel)) { console.log('🔒 拒绝上传敏感文件：' + rel); continue; }
+        if (SKIP_PATH.test(rel)) continue;                    // 本地工作文件，静默跳过
         out.push(rel);
       }
     }
