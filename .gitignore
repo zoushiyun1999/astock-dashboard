@@ -1,0 +1,5 @@
+# WorkBuddy 项目内部数据（任务状态/记忆），不进版本库
+.workbuddy/
+
+# GitHub CLI 配置（含登录凭据，绝不提交）
+.gh-config/

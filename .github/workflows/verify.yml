@@ -1,0 +1,72 @@
+name: 次日验证（推荐股实际表现标记）
+
+on:
+  # ⚠️ 自动调度暂未启用：push 后若立刻生效，会因 Pages/Secrets 未配置而每天跑失败。
+  #    等 Phase 2（Pages 与 Secrets 配好后）再取消下面三行的注释即可开启。
+  # schedule:
+  #   - cron: '30 13 * * 1-5'      # 北京时间 21:30 = UTC 13:30，周一至周五
+  workflow_dispatch: {}            # 允许手动触发（测试 / 补跑）
+
+# 推送回仓库 + 部署 GitHub Pages 所需权限
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# 防止并发 push 冲突
+concurrency:
+  group: verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 运行次日验证（捕获输出以判断非交易日）
+        run: |
+          OUT=$(node tools/verify.js 2>&1)
+          echo "$OUT"
+          if echo "$OUT" | grep -qE "非交易日"; then
+            echo "skip=1" >> "$GITHUB_ENV"
+          else
+            echo "skip=0" >> "$GITHUB_ENV"
+          fi
+
+      - name: 刷新前端版本号
+        if: env.skip != '1'
+        run: bash tools/bump_version.sh
+
+      - name: 提交数据回仓库
+        if: env.skip != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard/data.js dashboard/index.html
+          git commit -m "次日验证 $(date +%Y-%m-%d) [skip ci]" || echo "无变化"
+          git push
+
+      - name: 上传 Pages 产物（仅 dashboard 目录）
+        if: env.skip != '1'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+      - name: 部署到 GitHub Pages
+        id: deploy
+        if: env.skip != '1'
+        uses: actions/deploy-pages@v4
+
+      # 说明：次日验证为每日常规操作，不发微信通知，避免打扰（与本地自动化保持一致）。

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1633a8"/>
+      <stop offset="0.55" stop-color="#1f5cff"/>
+      <stop offset="1" stop-color="#3d7bff"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#g)"/>
+  <text x="96" y="100" font-size="118" font-family="Arial, 'PingFang SC', sans-serif" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central">A</text>
+  <text x="96" y="156" font-size="22" font-family="Arial, 'PingFang SC', sans-serif" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">A股速览</text>
+</svg>

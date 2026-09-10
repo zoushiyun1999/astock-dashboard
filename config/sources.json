@@ -1,0 +1,85 @@
+{
+  "system": {
+    "name": "A股推送系统",
+    "version": "1.2.1",
+    "channel": "网页看板 + 微信通知（Server酱）",
+    "rule": "有发就推、没发就停"
+  },
+  "automations": [
+    {
+      "id": "automation-1788184424861",
+      "name": "A股早报-开盘必读资讯",
+      "time": "08:30",
+      "rule": "FREQ=DAILY;BYHOUR=8;BYMINUTE=30",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "automation-1788187841979",
+      "name": "A股量价选股（技术面筛选）",
+      "time": "14:30",
+      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=14;BYMINUTE=30",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "automation-1788184401617",
+      "name": "A股晚报-AI读图复盘+投资日历专版",
+      "time": "21:00",
+      "rule": "FREQ=DAILY;BYHOUR=21;BYMINUTE=0",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "automation-1788328556486",
+      "name": "A股次日验证",
+      "time": "21:30",
+      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=21;BYMINUTE=30",
+      "status": "ACTIVE",
+      "note": "给推荐个股补当日实际涨跌标记，不发微信通知"
+    }
+  ],
+  "morning": {
+    "brief_name": "A股早报",
+    "content": ["要闻简讯(5-8条)", "盘前人气股(四平台)", "重点公司公告", "今日新股"],
+    "sources": [
+      {
+        "name": "韭研公社·开盘必读",
+        "type": "user_home",
+        "url": "https://www.jiuyangongshe.com/u/df07647c21594f8c9c382304128c08f3/",
+        "article_pattern": "https://www.jiuyangongshe.com/a/{id}",
+        "publish_time": "每日 7:30-8:10"
+      }
+    ]
+  },
+  "evening": {
+    "brief_name": "A股复盘晚报",
+    "content": ["博主复盘标题+摘要+原文链接", "投资日历仅在「📅 专版」展示（不在晚报正文）"],
+    "sources": [
+      {
+        "name": "淘股吧·湖南人",
+        "type": "blog",
+        "url": "https://m.tgb.cn/blog/444409",
+        "article_pattern": "https://m.tgb.cn/a/{id}",
+        "publish_time": "16:08-17:28",
+        "note": "正文为图片，通过AI逐张读图识别后提炼成结构化文字总结（大盘概况/连板梯队/板块热点/市场情绪）"
+      },
+      {
+        "name": "淘股吧·行鱼复盘(shenghuo329)",
+        "type": "blog",
+        "url": "https://m.tgb.cn/blog/563404",
+        "article_pattern": "https://m.tgb.cn/a/{id}",
+        "publish_time": "20:00-20:30"
+      }
+    ]
+  },
+  "calendar": {
+    "brief_name": "📅 投资日历专版（看板第四Tab）",
+    "sources": [
+      {
+        "name": "韭研公社·A股投资日历",
+        "type": "user_home",
+        "url": "https://www.jiuyangongshe.com/u/648089de4f1649de9e18b8285faca8b8",
+        "article_pattern": "https://www.jiuyangongshe.com/a/{id}",
+        "note": "博主昵称「绝不追高的老韭菜」，月度长文+原图，仅写入看板顶层 calendar 专版；不设时效，跟随博主发帖节奏"
+      }
+    ]
+  }
+}

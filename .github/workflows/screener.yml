@@ -1,0 +1,88 @@
+name: 量价选股（技术面筛选）
+
+on:
+  # ⚠️ 自动调度暂未启用：push 后若立刻生效，会因 Pages/Secrets 未配置而每天跑失败。
+  #    等 Phase 2（Pages 与 Secrets 配好后）再取消下面三行的注释即可开启。
+  # schedule:
+  #   - cron: '30 6 * * 1-5'      # 北京时间 14:30 = UTC 06:30，周一至周五
+  workflow_dispatch: {}            # 允许手动触发（测试 / 补跑）
+
+# 推送回仓库 + 部署 GitHub Pages 所需权限
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# 防止并发 push 冲突：同一时刻只跑一个
+concurrency:
+  group: screener
+  cancel-in-progress: false
+
+jobs:
+  screener:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 运行选股（捕获输出以判断非交易日）
+        run: |
+          OUT=$(node tools/screener.js 2>&1)
+          echo "$OUT"
+          if echo "$OUT" | grep -qE "全市场（沪深主板）：0 只|最终入选 0 只"; then
+            echo "skip=1" >> "$GITHUB_ENV"
+          else
+            echo "skip=0" >> "$GITHUB_ENV"
+          fi
+
+      - name: 刷新前端版本号
+        if: env.skip != '1'
+        run: bash tools/bump_version.sh
+
+      - name: 提交数据回仓库
+        if: env.skip != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard/data.js dashboard/screener.js dashboard/index.html
+          git commit -m "量价选股 $(date +%Y-%m-%d) [skip ci]" || echo "无变化"
+          git push
+
+      - name: 上传 Pages 产物（仅 dashboard 目录）
+        if: env.skip != '1'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+      - name: 部署到 GitHub Pages
+        id: deploy
+        if: env.skip != '1'
+        uses: actions/deploy-pages@v4
+
+      - name: 微信通知（Server酱）
+        if: env.skip != '1' && success()
+        env:
+          SCT_KEY: ${{ secrets.SCT_KEY }}
+        run: |
+          INFO=$(node -e "const fs=require('fs');const s=fs.readFileSync('dashboard/data.js','utf8');eval(s.replace('window.REPORTS =','global.R='));const list=(R.screener&&R.screener.list)||[];const top=list.slice(0,5).map(x=>x.name+'('+x.gain+'%)').join('、');console.log(list.length+'|'+top);")
+          COUNT=$(echo "$INFO" | cut -d'|' -f1)
+          TOP=$(echo "$INFO" | cut -d'|' -f2)
+          curl -s --max-time 20 -X POST "https://sctapi.ftqq.com/${SCT_KEY}.send" \
+            --data-urlencode "title=🔍 量价选股已更新（$(date +%Y-%m-%d)）" \
+            --data-urlencode "desp=今日技术面筛选完成，共 ${COUNT} 只符合条件。
+
+前 5 只：${TOP}
+
+🔗 看板链接：${{ steps.deploy.outputs.page_url }}
+
+—— 由 GitHub Actions 自动推送"

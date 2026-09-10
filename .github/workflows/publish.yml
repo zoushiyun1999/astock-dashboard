@@ -1,0 +1,63 @@
+name: 发布看板
+
+# 数据或页面一有变化就发布。本地/云端任何一端 push 都会触发，保证两边一致。
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'dashboard/**'
+      - 'config/site.json'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时刻只跑一个发布，后触发的排队（不能 cancel，否则可能发布到一半）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 在 CI 里重新导出，确保线上 data.json / version.json 与 data.js 永远同步
+      # （本地定时任务可能忘记跑 export_json.js）
+      - name: 导出前端数据副本
+        run: node tools/export_json.js
+
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # 部署完立刻探一次，失败能马上知道（不等次日体检）
+      - name: 发布后自检
+        env:
+          SITE_URL: ${{ vars.SITE_URL || steps.deployment.outputs.page_url }}
+        run: |
+          sleep 20
+          code=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$SITE_URL" || echo 000)
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::发布自检未通过（HTTP $code），请检查 Pages 配置与 CNAME"
+          fi

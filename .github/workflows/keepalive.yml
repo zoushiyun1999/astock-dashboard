@@ -1,0 +1,26 @@
+name: 保活
+
+# GitHub 会对长时间无活动的仓库停用 schedule 触发器。
+# 本项目虽然每天有数据提交，但长假（春节/国庆）可能连续十几天无提交 —— 留个保险。
+on:
+  schedule:
+    - cron: '17 3 * * 1'      # 每周一 北京时间 11:17
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 空提交保活
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "keepalive [skip ci]" || echo "无变化"
+          git push

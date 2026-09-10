@@ -1,0 +1,19 @@
+{
+  "name": "A股速览 · 每日简报",
+  "short_name": "A股速览",
+  "description": "A股早报 / 晚报 / 短线关注 / 投资日历 / 量价选股 一站式速览",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f5f7",
+  "theme_color": "#1f5cff",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

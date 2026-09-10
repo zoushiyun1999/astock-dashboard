@@ -1,0 +1,28 @@
+name: 看板健康检查
+
+# 每天北京时间 04:00 体检一次，异常直接推微信，不等用户发现。
+on:
+  schedule:
+    - cron: '0 20 * * *'      # UTC 20:00 = 北京时间次日 04:00
+  workflow_dispatch: {}
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 运行检查
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          FALLBACK_URL: ${{ vars.FALLBACK_URL }}
+          MIRROR_URL: ${{ vars.MIRROR_URL }}
+          DOMAIN_EXPIRY: ${{ vars.DOMAIN_EXPIRY }}
+          SCT_KEY: ${{ secrets.SCT_KEY }}
+        run: node tools/health_site.js

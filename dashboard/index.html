@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>A股速览 · 每日简报</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="A股速览">
+<link rel="stylesheet" href="css/style.css?v=202609101953">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">A</div>
+    <div class="name">股速览</div>
+    <div class="tag">每日简报</div>
+  </div>
+  <div class="h-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
+  <div class="h-status" id="hdStatus"></div>
+</header>
+
+<div class="wrap">
+
+  <div id="healthBar" class="health"></div>
+
+  <div class="date-nav">
+    <span class="lbl" id="navLbl">最新一期</span>
+    <span class="arrows">
+      <button id="btnPrev" onclick="step(-1)">← 前一天</button>
+      <button id="btnNext" onclick="step(1)" disabled>后一天 →</button>
+    </span>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="morning" onclick="switchTab('morning')">早报</button>
+    <button class="tab" data-tab="evening" onclick="switchTab('evening')">晚报<i class="tab-dot" id="eveningDot"></i></button>
+    <button class="tab" data-tab="watchlist" onclick="switchTab('watchlist')">短线</button>
+    <button class="tab" data-tab="screener" onclick="switchTab('screener')">量价</button>
+    <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">日历</button>
+    <span class="tab-glider" id="tabGlider"></span>
+  </div>
+
+  <!-- 早报 -->
+  <section id="sec-morning"></section>
+  <!-- 晚报 -->
+  <section id="sec-evening" class="hide"></section>
+  <!-- 短线关注 -->
+  <section id="sec-watchlist" class="hide"></section>
+  <!-- 投资日历（A股投资日历博主专版） -->
+  <section id="sec-calendar" class="hide"></section>
+  <!-- 量价选股（技术面条件筛选） -->
+  <section id="sec-screener" class="hide"></section>
+
+  <!-- 刷新前同步恢复上次浏览的 Tab（内联，无网络依赖，先于 app.js 执行，避免闪回首个 Tab） -->
+  <script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('curTab');
+      var order = ['morning', 'evening', 'watchlist', 'screener', 'calendar'];
+      if (!saved || order.indexOf(saved) < 0) saved = 'morning';
+      var btns = document.querySelectorAll('.tab');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('on', btns[i].getAttribute('data-tab') === saved);
+      }
+      for (var j = 0; j < order.length; j++) {
+        var sec = document.getElementById('sec-' + order[j]);
+        if (sec) sec.classList.toggle('hide', order[j] !== saved);
+      }
+    } catch (e) {}
+  })();
+  </script>
+
+  <footer>
+    <div>数据由 A股推送系统 定时生成 · 更新：<span id="ftUpd">—</span></div>
+    <div>信息仅供参考，不构成投资建议 · 投资有风险</div>
+  </footer>
+</div>
+
+<!-- 数据（定时任务自动写入，勿手改） -->
+<script src="data.js?v=202609101953"></script>
+<!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
+<script src="screener.js?v=202609101953"></script>
+<!-- 休市日（节假日，用于前端显示「休市」） -->
+<script src="holidays.js?v=202609101953"></script>
+<!-- 渲染逻辑 -->
+<script src="js/app.js?v=202609101953"></script>
+
+<!-- 破缓存自检：服务端无 Cache-Control，手机会缓存旧 HTML 导致更新看不见。
+     这里比对「当前页面引用的版本号」与「服务端最新 HTML 的版本号」，
+     不一致说明有新版本，自动重载一次（同一版本每次会话只刷一次）。 -->
+<script>
+(function () {
+  try {
+    var link = document.querySelector('link[rel="stylesheet"]');
+    if (!link) return;
+    var m0 = link.getAttribute('href').match(/[?&]v=(\d+)/);
+    if (!m0) return;
+    var cur = m0[1];
+    setTimeout(function () {
+      fetch(location.pathname + '?_vc=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.text(); })
+        .then(function (t) {
+          var m = t.match(/[?&]v=(\d+)/);
+          if (m && m[1] !== cur && !sessionStorage.getItem('_rl_' + m[1])) {
+            sessionStorage.setItem('_rl_' + m[1], '1');
+            location.replace(location.pathname + '?_f=' + m[1]);
+          }
+        })['catch'](function () {});
+    }, 1000);
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

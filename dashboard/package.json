@@ -1,0 +1,15 @@
+{
+  "name": "a-share-dashboard",
+  "version": "1.1.0",
+  "description": "A股速览 · 移动端优先的每日简报看板（早报/晚报）",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "a-share",
+    "dashboard",
+    "stock",
+    "mobile"
+  ]
+}
