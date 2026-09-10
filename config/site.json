@@ -2,7 +2,7 @@
   "_说明": "访问链接的单一事实源。所有推送脚本、文档、二维码都从这里取值，禁止在任何地方硬编码 URL。",
   "_用法": "修改此处后，同步到 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables（SITE_URL / MIRROR_URL / FALLBACK_URL / DOMAIN_EXPIRY）。",
 
-  "siteUrl": "https://zoushiyun1999.github.io/astock-dashboard/",
+  "siteUrl": "https://asx.79zl.cn/",
   "mirrorUrl": "",
   "fallbackUrl": "https://zoushiyun1999.github.io/astock-dashboard/",
   "domainExpiry": "",
