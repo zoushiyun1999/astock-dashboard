@@ -52,6 +52,24 @@ node tools/notify_digest.js <morning|evening|screener> "标题"
 - `tools/gh_push_api.js` 的三重防护：`SKIP_DIR` / `DENY_FILE`（`.gh-token`、`.env`、`*.key`）+ `DENY_CONTENT`（内容里扫 token 特征）+ 删除保护（文件数骤减时拒绝删远端）。
 - `dashboard/CNAME` = `asx.79zl.cn`（GitHub Pages 自定义域名，必须与 `config/site.json` 的 host 一致）。
 
+## 云端 runner 实测事实（2026-09-10 探测，云化前必读）
+
+用临时 `.github/workflows/_probe*.yml` 在真实 GitHub runner（ubuntu-24.04，Azure 美西，出口 IP 128.24.161.85）跑通，结论：
+
+- **国内数据源从海外 runner 全部可达**：韭研公社 200/1.3s、淘股吧 200/1.8s、腾讯行情 200、Server酱 200。
+- **⚠️ 东财 `push2his` 与 新浪 `hq.sinajs.cn` 必须带 Referer**，否则失败（本地测不出来）：
+  - 东财缺 Referer → `curl: (52) Empty reply`；带 `Referer: https://quote.eastmoney.com/` → 200
+  - 新浪缺 Referer → 403；带 `Referer: https://finance.sina.com.cn/` → 200
+  - 同时要带浏览器 UA。这是**地域 + 防盗链**双重判定。
+- **图片下载链路可用**：淘股吧当天抓到 18 张图，下载得 JPEG 760×277 / 34KB；投资日历 CDN 长图 JPEG 2240×1008 / 965KB。
+- **五个大模型 API 全部连通**（返回 401/404，仅缺 Key）：阿里百炼 dashscope、智谱 bigmodel、DeepSeek、火山方舟、Kimi。
+- **页面内容同源同质**：韭研公社 HTML 125KB / 15 条 `/a/` 链接，最新帖 ID 与本地抓取一致 → 解析逻辑可原样复用。
+- 平台限制（官方文档）：cron 最小 5 分钟；高负载时**延迟 15–30 分钟**（整点最堵）；Public 仓库 60 天无活动自动禁用 schedule（已有 keepalive.yml 兜底）；schedule 无失败通知（已有 health.yml 兜底）。
+
+**成本结论**：Public 仓库 Actions 分钟数无限免费，唯一变动成本是大模型调用，**¥6–10/月**（均衡档：Qwen3-VL-8B + DeepSeek V4 Flash）。
+
+**方案文档**：`docs/定时任务云端化方案.md`（含三路线对比、成本明细、分阶段落地步骤）。
+
 ## 踩坑与结论
 
 - **动态沙箱 ≠ 生产托管**：平台机制是每次部署分配新沙箱、停旧沙箱，空闲会停机。要稳定链接必须换静态托管。
