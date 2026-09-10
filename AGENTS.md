@@ -15,6 +15,9 @@
 - 前端：原生 HTML/CSS/JS，无框架、无构建步骤，`dashboard/` 目录整体即站点
 - 关键依赖：无第三方 npm 依赖（脚本全部零依赖，只用 Node 内置模块）
 - 常用命令：
+  - **一次发布（改完数据必跑）**：`bash tools/publish.sh "<说明>"`
+  - **发布 + 等生效 + 微信通知**：`bash tools/publish_and_notify.sh morning|evening|screener [日期]`
+  - **只发通知**：`node tools/notify_digest.js morning|evening|screener "<标题>"`
   - 刷新版本号 + 排序 + 导出 JSON：`bash tools/bump_version.sh`
   - 站点体检：`node tools/health_site.js`
   - 个股代码校验：`node tools/check_codes.js --fix --prune`
@@ -58,6 +61,24 @@ docs/              方案与说明文档
 6. 不提交凭据、密钥、token 到仓库；只在 MEMORY.md 记录"位置"，不记录"值"。
 7. 不擅自引入新框架/大依赖，先提方案。
 8. 不动 `.workbuddy/` 目录。
+9. **禁止改回 `workbuddy_sites_deploy` 沙箱部署**。看板部署形态是「GitHub Pages + 自有域名
+   `https://asx.79zl.cn/`」，发布只走 `tools/publish.sh`。沙箱域名每次部署都变、空闲会停机，
+   是历史上链接失效的根因。
+10. **`.git/hooks/post-commit` 必须存在**（源文件 `tools/git-hooks/post-commit`）。它是本地提交
+    自动上云的唯一通道，删除或丢失会导致数据停在本地、线上不更新。重建仓库后要重装该钩子。
+11. **改 `.github/workflows/*.yml` 后必须做 YAML 语法校验**。`screener.yml` 曾因 `run:` 里跨行
+    字符串导致解析失败，**整整 6 天从未成功运行过而无人察觉**。
+
+## 发布链路（改任何与"上线"相关的东西前先看这张图）
+
+```
+写数据 → bash tools/publish.sh "说明"
+           ├─ bump_version.sh（版本号 + sort_reports + export_json）
+           ├─ git commit
+           ├─ .git/hooks/post-commit → tools/gh_push_api.js（GitHub Trees API）
+           └─ GitHub Actions publish.yml → https://asx.79zl.cn/（约 1 分钟）
+         → node tools/notify_digest.js <type> "标题"（自动带 site.json 里的链接）
+```
 
 ## 变更流程
 
