@@ -1,0 +1,29 @@
+#!/bin/sh
+# git post-commit 钩子：本地提交后自动推送到 GitHub
+#
+# 为什么需要：本机 git 协议到 github.com 不通（代理 502 / 直连超时），
+# 但 api.github.com 可达，所以用 tools/gh_push_api.js 走 API 推送。
+# 这样所有定时任务原本的「git 提交数据」步骤会自动带上云端发布，无需改任务逻辑。
+#
+# 失败不影响本地提交（退出码始终为 0），只在日志里留痕，避免阻塞任务。
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -z "$ROOT" ] && exit 0
+
+NODE_BIN="/c/Users/zoush/.workbuddy/binaries/node/versions/22.22.2-2/node.exe"
+[ -x "$NODE_BIN" ] || NODE_BIN="node"
+
+TOKEN_FILE="$ROOT/.gh-token"
+if [ ! -f "$TOKEN_FILE" ]; then
+  echo "[publish-hook] 未找到 .gh-token，跳过云端同步"
+  exit 0
+fi
+
+MSG="$(git log -1 --pretty=%s)"
+WIN_ROOT="$(cd "$ROOT" && pwd -W)"
+
+echo "[publish-hook] 同步到 GitHub：$MSG"
+GITHUB_TOKEN="$(cat "$TOKEN_FILE")" "$NODE_BIN" "$WIN_ROOT/tools/gh_push_api.js" -m "$MSG" \
+  || echo "[publish-hook] 同步失败（不影响本地提交）"
+
+exit 0
