@@ -1,0 +1,64 @@
+name: 探测2（临时）
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_probe2.yml'
+  workflow_dispatch:
+
+jobs:
+  probe2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 带正确请求头复测 + 大模型API可达性
+        run: |
+          set +e
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+          probe () {
+            local name="$1"; shift
+            local out
+            out=$(curl -sSL -o /tmp/body.txt --max-time 25 -A "$UA" -w "%{http_code}|%{time_total}|%{size_download}" "$@" 2>&1)
+            printf '%-26s %s\n' "$name" "$out"
+          }
+
+          echo "===== A. 带 Referer 复测行情接口 ====="
+          probe "东财-push2his"      -H 'Referer: https://quote.eastmoney.com/' 'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600000&fields1=f1,f2,f3&fields2=f51,f52,f53&klt=101&fqt=1&end=20500101&lmt=5'
+          probe "东财-push2his-备用" -H 'Referer: https://quote.eastmoney.com/' 'https://push2.eastmoney.com/api/qt/stock/kline/get?secid=1.600000&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5'
+          probe "新浪-hq-带Referer"  -H 'Referer: https://finance.sina.com.cn/' 'https://hq.sinajs.cn/list=sh600000'
+          probe "新浪-日K-备用"      -H 'Referer: https://finance.sina.com.cn/' 'https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh600000&scale=240&ma=no&datalen=5'
+          probe "腾讯-kline"         'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sh600000,day,,,5,qfq'
+          probe "tgb图CDN-带Referer" -H 'Referer: https://m.tgb.cn/' 'https://image.tgb.cn/img/2026/09/10/20260910161705abc.png_max.png'
+
+          echo ""
+          echo "===== B. 东财 push2his 空回复诊断 ====="
+          echo "--- 仅握手，看 header ---"
+          curl -sS -o /dev/null --max-time 20 -A "$UA" -w 'http=%{http_code} time=%{time_total}\n' \
+            -H 'Referer: https://quote.eastmoney.com/' \
+            'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600000&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5' 2>&1 | tail -3
+          echo "--- 试试 http（非 https） ---"
+          curl -sS -o /dev/null --max-time 20 -A "$UA" -w 'http=%{http_code}\n' \
+            'http://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600000&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5' 2>&1 | tail -3
+          echo "--- DNS 解析 ---"
+          getent hosts push2his.eastmoney.com || echo "(getent 无结果)"
+          nslookup push2his.eastmoney.com 2>&1 | tail -6
+
+          echo ""
+          echo "===== C. 大模型 API 可达性（生成层上云前提）====="
+          probe "阿里百炼-dashscope"  'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation'
+          probe "智谱-bigmodel"       'https://open.bigmodel.cn/api/paas/v4/chat/completions'
+          probe "深度求索-deepseek"   'https://api.deepseek.com/v1/chat/completions'
+          probe "火山方舟-volces"     'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
+          probe "月之暗面-kimi"       'https://api.moonshot.cn/v1/chat/completions'
+          echo "(401/405 = 网络通、仅缺鉴权，即为可用)"
+
+          echo ""
+          echo "===== D. 页面内容质量抽查 ====="
+          curl -sSL --max-time 25 -A "$UA" 'https://m.tgb.cn/blog/444409' -o /tmp/tgb.html
+          echo "淘股吧 帖标题样本:"
+          grep -oE '<title>[^<]*</title>' /tmp/tgb.html | head -2
+          echo "最新帖日期关键词（9.10 / 09-10）出现次数:"
+          grep -oE '9\.10|09-10|9月10' /tmp/tgb.html | wc -l
+          echo ""
+          curl -sSL --max-time 25 -A "$UA" 'https://www.jiuyangongshe.com/u/df07647c21594f8c9c382304128c08f3/' -o /tmp/jy.html
+          echo "韭研公社 最新文章标题样本:"
+          grep -oE '开盘必读[^<"]{0,30}' /tmp/jy.html | head -3
