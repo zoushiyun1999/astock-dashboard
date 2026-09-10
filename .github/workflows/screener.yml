@@ -1,11 +1,14 @@
 name: 量价选股（技术面筛选）
 
 on:
-  # ⚠️ 自动调度暂未启用：push 后若立刻生效，会因 Pages/Secrets 未配置而每天跑失败。
-  #    等 Phase 2（Pages 与 Secrets 配好后）再取消下面三行的注释即可开启。
+  # ⚠️ 目前仅支持手动触发。原因：
+  #   · 自动调度（cron）会因 GitHub cron 延迟而错过 14:30 开盘时段
+  #   · 且原逻辑直接 push 回仓库，会与本机的自动同步钩子冲突
+  # 当前由本机定时任务负责生成，push 后经「发布看板」上线。
+  # 未来若把生成也搬到云端，再取消下面三行注释并改造提交逻辑。
   # schedule:
   #   - cron: '30 6 * * 1-5'      # 北京时间 14:30 = UTC 06:30，周一至周五
-  workflow_dispatch: {}            # 允许手动触发（测试 / 补跑）
+  workflow_dispatch: {}            # 手动触发（测试 / 补跑）
 
 # 推送回仓库 + 部署 GitHub Pages 所需权限
 permissions:
@@ -77,12 +80,7 @@ jobs:
           INFO=$(node -e "const fs=require('fs');const s=fs.readFileSync('dashboard/data.js','utf8');eval(s.replace('window.REPORTS =','global.R='));const list=(R.screener&&R.screener.list)||[];const top=list.slice(0,5).map(x=>x.name+'('+x.gain+'%)').join('、');console.log(list.length+'|'+top);")
           COUNT=$(echo "$INFO" | cut -d'|' -f1)
           TOP=$(echo "$INFO" | cut -d'|' -f2)
+          DESP=$(printf '今日技术面筛选完成，共 %s 只符合条件。\n\n前 5 只：%s\n\n🔗 看板链接：%s\n\n—— 由 GitHub Actions 自动推送' "$COUNT" "$TOP" "${{ steps.deploy.outputs.page_url }}")
           curl -s --max-time 20 -X POST "https://sctapi.ftqq.com/${SCT_KEY}.send" \
             --data-urlencode "title=🔍 量价选股已更新（$(date +%Y-%m-%d)）" \
-            --data-urlencode "desp=今日技术面筛选完成，共 ${COUNT} 只符合条件。
-
-前 5 只：${TOP}
-
-🔗 看板链接：${{ steps.deploy.outputs.page_url }}
-
-—— 由 GitHub Actions 自动推送"
+            --data-urlencode "desp=${DESP}"
