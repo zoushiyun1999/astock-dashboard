@@ -20,8 +20,20 @@ echo "== 1/4 刷新版本号与数据产物 =="
 bash "$SCRIPT_DIR/bump_version.sh"
 
 echo "== 2/4 本地 git 提交 =="
-git add -A
-git -c core.quotepath=false commit -m "$MSG" 2>&1 | tail -1 || echo "（无变化或非 git 仓库，跳过）"
+COMMIT_SHORT=""
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  git add -A
+  if git diff --cached --quiet; then
+    echo "（无文件变化，跳过提交）"
+  elif git -c core.quotepath=false commit -m "$MSG" >/dev/null 2>&1; then
+    COMMIT_SHORT="$(git rev-parse --short HEAD)"
+    echo "commit $COMMIT_SHORT"
+  else
+    echo "（提交失败，继续尝试推送）"
+  fi
+else
+  echo "（非 git 仓库，跳过）"
+fi
 
 echo "== 3/4 推送到 GitHub =="
 # node.exe 是 Windows 程序，需要 Windows 风格路径（/c/... → C:/...）
