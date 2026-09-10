@@ -3,3 +3,8 @@
 
 # GitHub CLI 配置（含登录凭据，绝不提交）
 .gh-config/
+
+# 访问令牌（绝不提交）
+.gh-token
+.env
+*.token
