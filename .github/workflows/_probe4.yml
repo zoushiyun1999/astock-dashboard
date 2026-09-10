@@ -1,0 +1,50 @@
+name: 探测4（临时）
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_probe4.yml'
+  workflow_dispatch:
+
+jobs:
+  probe4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 验证淘股吧图片可下载
+        run: |
+          set +e
+          UA='Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
+          URL='https://image.tgb.cn/img/2025/08/20/wfrouwmcrx8e.jpg_80wh.png'
+          echo "测试URL: $URL"
+          curl -sSL --max-time 40 -A "$UA" -H 'Referer: https://m.tgb.cn/' \
+            "$URL" -o /tmp/p1.bin -w 'http=%{http_code} bytes=%{size_download} time=%{time_total}\n'
+          echo "文件类型: $(file -b /tmp/p1.bin)"
+
+          echo ""
+          echo "--- 当天路径格式测试（YYYY/MM/DD）---"
+          URL2='https://image.tgb.cn/img/2026/09/10/'
+          curl -sSL --max-time 20 -A "$UA" -H 'Referer: https://m.tgb.cn/' \
+            "$URL2" -o /dev/null -w 'http=%{http_code}\n'
+
+          echo ""
+          echo "--- 精简版：模拟真实抓取流程 ---"
+          curl -sSL --max-time 30 -A "$UA" -H 'Referer: https://m.tgb.cn/' \
+            'https://m.tgb.cn/blog/444409' -o /tmp/b.html
+          POST=$(grep -oE 'href="/a/[A-Za-z0-9]+"' /tmp/b.html | head -1 | grep -oE '/a/[A-Za-z0-9]+')
+          curl -sSL --max-time 30 -A "$UA" -H 'Referer: https://m.tgb.cn/' \
+            "https://m.tgb.cn$POST" -o /tmp/a.html
+          echo "文章: $POST  字节: $(wc -c < /tmp/a.html)"
+          echo "当天(2026/09/10)图片数: $(grep -o 'image\.tgb\.cn/img/2026/09/10/' /tmp/a.html | wc -l)"
+          echo "全部图片URL数: $(grep -oE 'https://image\.tgb\.cn/img/[^\"'"'"' )]+' /tmp/a.html | sort -u | wc -l)"
+          echo "--- 当天图片URL ---"
+          grep -oE 'https://image\.tgb\.cn/img/2026/09/10/[^\"'"'"' )]+' /tmp/a.html | sort -u | head -3
+          IMG=$(grep -oE 'https://image\.tgb\.cn/img/2026/09/10/[^\"'"'"' )]+' /tmp/a.html | sort -u | head -1)
+          if [ -n "$IMG" ]; then
+            echo "--- 下载当天首图 ---"
+            curl -sSL --max-time 40 -A "$UA" -H 'Referer: https://m.tgb.cn/' \
+              "$IMG" -o /tmp/p2.bin -w 'http=%{http_code} bytes=%{size_download}\n'
+            echo "文件类型: $(file -b /tmp/p2.bin)"
+          else
+            echo "（当天无图或帖子为旧帖，列出全部图片样本）"
+            grep -oE 'https://image\.tgb\.cn/img/[^\"'"'"' )]+' /tmp/a.html | sort -u | tail -5
+          fi
