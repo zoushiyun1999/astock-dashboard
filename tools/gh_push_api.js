@@ -152,12 +152,20 @@ function collect(onlyList) {
     }
   }
 
-  // 3. 远端多余的文件 → 删除标记（仅全量模式下处理，避免误删）
+  // 3. 远端多余的文件 → 删除标记
+  //    安全约束：只在「全量模式」且「本地收集到的文件数合理」时才允许删除。
+  //    若收集数骤降（例如扫描出错），绝不允许删除 —— 否则会把整个仓库清空。
   let removed = 0;
-  if (!only && !noDelete && parentSha) {
+  const remoteCount = Object.keys(remoteMap).length;
+  const safeToDelete = !only && !noDelete && parentSha &&
+    remoteCount > 0 && files.length >= remoteCount * 0.5;   // 本地文件数不得少于远端的一半
+  if (safeToDelete) {
     for (const rel of Object.keys(remoteMap)) {
       if (!localSet.has(rel)) { tree.push({ path: rel, mode: '100644', type: 'blob', sha: null }); removed++; }
     }
+  } else if (!only && !noDelete && parentSha && remoteCount > 0) {
+    console.log('⚠️ 本地文件数异常偏少（' + files.length + ' vs 线上 ' + remoteCount +
+      '），本次跳过删除以保护仓库。');
   }
 
   if (!tree.length) {
