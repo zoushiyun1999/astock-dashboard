@@ -60,6 +60,9 @@
 | 2026-09-14 | **清理 11 个文件**：死代码（`notify.js`/`notify_digest.js`）+ 归档遗物（`tools/legacy-sandbox/` 整目录）+ 5 份过时/重复文档（`GitHub上线清单.md`、`测试指南.md`、`网页看板-运行逻辑与数据来源.md`、`ui_report.docx`、`复盘_20260907.html`） | 反复删除/恢复期间积累的**误导性**冗余：`网页看板-…` 与 `系统功能与运行逻辑总览.md` 内容重叠且后者更全、已是基线；`GitHub上线清单` 还在教 gh CLI 登录与"配微信密钥"；通知已下线而脚本留着让人以为功能还在 | 全部保留（占地方、误导后来者） |
 | 2026-09-14 | `tools/_test_health_logic.js` → **`tools/test_health_logic.js`**（去掉 `_test` 前缀） | `gh_push_api.js` 的 `SKIP_PATH` 正则命中 `_test*`，把它当本地临时文件跳过 → 这个被 AGENTS 规则 20 强制要求运行的测试脚本**从未上过云端仓库** | 改 `SKIP_PATH` 正则（影响面更大，且 `_test` 前缀理应留给本地临时件） |
 | 2026-09-14 | **禁止用「一条命令多路径」的 `git rm`**（含中文路径时尤甚）；批量删除改用 Node + 先 dry-run | 实测一次 `git rm -q <11 个路径>` 后，`tools/` 与 `docs/` 下**未被指定的 20 多个文件也一起从工作区消失**（index 未丢，`git checkout HEAD -- tools docs` 完整恢复，零损失）。已写入 AGENTS 硬性规则 23 | 继续用 git rm 并靠运气 |
+| 2026-09-15 | 日期导航从「全局前一天/后一天」改为 **每个 Tab 内一条日期选择条**（自然日 ±1 + 原生 `<input type=date>` + 「最新」），主状态 **`idx` → `curDate`** | 用户明确要求"能选时间"：旧的两个按钮到不了指定日期，也永远点不到休市日 —— 于是"当天没有数据"只能显示成语义含糊的"待更新"。改用 `curDate` 后可选范围含休市日与历史缺口日 | 保留全局按钮 + 只在"有数据的那几期"之间跳（那样永远无法表达"这天没数据"） |
+| 2026-09-15 | 空态文案**四分**：`休市·无数据` ／ `当日无数据`（历史交易日缺口）／ `待更新`（今天未到计划点）／ `今日…未生成`（过点仍无）。到期点文案单点定义在 `todayDue()` | 用户明确要求"休市就直接注明没有数据，不要写待更新"。休市日说"待更新"是错的（那天根本不会有数据）；历史交易日说"待更新"也是错的（早就该有） | 所有情况统一显示"待更新" |
+| 2026-09-15 | 投资日历 Tab 的"时间"维度定为**发布期**（`calBar()` 按期刊出），不跟随自然日 | 博主发布的是月度长图，与交易日没有对应关系；并且它原本的 chips 只在 `length > 1` 时才出现，单期时没有任何选择控件 | 让日历也跟随 `curDate`（会得到一个"选了某天但日历内容不变"的错位界面） |
 
 ## 环境事实
 
@@ -145,6 +148,17 @@ bash tools/publish.sh "说明"
 - **`git add -A` 会把 `.gh-token` 带进提交**：已在 `.gitignore` 加规则，但 API 推送不受 `.gitignore` 约束，必须靠 `gh_push_api.js` 的 `DENY_FILE` 兜底（曾真的差点推上公网，被 GitHub 以 422 Secret detected 拦下）。
 - **任何临时产物必须放项目根并加 `tmp_` 前缀**（2026-09-12 加 `.gitignore` 规则 `tmp_*` 根治）。此前 `tmp_*` 被提交进 HEAD，只靠 `gh_push_api.js` 的 `SKIP_PATH` 在推送层兜底；现在本地 `git add` 层面即屏蔽。**特别警告**：Edge headless 做前端截图时 `--user-data-dir` **绝不能指向仓库根**——profile 里的 `Cookies` 被浏览器占用，会让 `git add -A` 直接 `fatal: adding files failed`，整条发布链路中断（2026-09-12 晚报任务实际踩到）。
 - **结束 Edge 无头进程要用 PowerShell `Stop-Process -Name msedge -Force`**：`taskkill //F //IM msedge.exe` 返回后进程仍在（残留导致临时目录删不掉）。
+- **无头截图两个"失败得莫名其妙"的坑**（2026-09-15 实测）：
+  ① `Page.captureScreenshot` 在 **`deviceScaleFactor=2` + 全页高**时会**超时**（CDP timeout 提到 90s 也一样），
+     报错只有一句 `timeout Page.captureScreenshot`。**用 dsf=1** 立刻正常，清晰度够看。
+  ② 每次截图前**必须先把视口还原成手机高度、再量 `scrollHeight`**：上一次把 height 设成全页高之后，
+     页面的最小高度就被那个值撑住，直接再量只会越截越长（后面每一张底下都拖一大片空白）。
+  两条都已固化进 `tools/verify_page.js` 的 `shot()`。
+- **`tools/verify_page.js` 的浏览器 profile 必须放 `os.tmpdir()`，绝不能落仓库根**：profile 里的 `Cookies`
+  被浏览器占用会让 `git add -A` fatal（2026-09-12 晚报任务真实踩到，整条发布链路中断）。
+- **改了 `srcMeta` / `renderHealth` / `updateEveningDot` 后必须跑 `node tools/test_health_logic.js`**。
+  该脚本把函数抽进**同一个 vm 上下文**，`FN_NAMES` 是唯一依赖清单 —— **漏一个就是 ReferenceError**
+  （不是静默跳过）。2026-09-15 起清单含 `parseYmd / isTradingDay / screenerOn / verifyOn / esc / fmtDate / emptyCard / todayDue / emptyFor`。
 - **GitHub Pages 返回 "Site not found" ≠ DNS 有问题**（2026-09-14 实测）：`nslookup asx.79zl.cn` 已正确返回
   GitHub Pages 的官方 IP，说明 DNS 全对；真因是**仓库 Pages 未启用**。404 排查顺序应为
   ① `GET /repos/{o}/{r}` 看 `has_pages` ② 仓库 `Settings → Pages` 的 Source 是否 = `GitHub Actions` ③ 最后才看 DNS。
