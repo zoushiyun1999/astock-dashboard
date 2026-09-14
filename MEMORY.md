@@ -182,11 +182,16 @@ bash tools/publish.sh "说明"
 ## 待办 / 悬置问题
 
 - [x] ~~轮换 Server酱 key~~ — 2026-09-12 推送通知功能已整体下线，不再需要（若日后恢复推送则仍需用新 key）
-- [x] ~~撤销/重建 GitHub PAT~~ → **2026-09-14 完成**：新 fine-grained PAT 写入项目根 `.gh-token`（`github_pat_` 前缀、单行、无空格换行），
-      仓库名硬编码在 `tools/gh_push_api.js` 的 `DEFAULT_REPO`。
-      **权限要求（踩过）**：`Contents: Read and write` + `Workflows: Read and write`，两个都要；
-      只给 Contents 会在 `POST /git/blobs` 报 403 `Resource not accessible by personal access token`。
-      ⚠️ 该 token 曾在本轮对话明文出现，**建议择机 Regenerate**（换新后同步覆盖 `.gh-token`）。
+- [x] ~~撤销/重建 GitHub PAT~~ → **2026-09-14 完成，当天并已轮换一次**（首个 token 在本轮对话明文出现，随即换成新 token）。
+      - **位置**：项目根 `.gh-token`（`github_pat_` 前缀、**93 字符**、单行无空格换行），
+        由 `.gitignore` + `gh_push_api.js` 的 `DENY_FILE` 双重兜底，**不会被上传**。
+      - **权限要求（踩过）**：`Contents: Read and write` + `Workflows: Read and write`，**两个都要**。
+        只给 Contents 会在 `POST /git/blobs` 报 **403 `Resource not accessible by personal access token`**；
+        而 `/git/ref`、`/git/commits`、`/git/trees` 的**读操作会照常成功** —— 别被"能读"骗过去。
+      - **有效期 2026-12-13（90 天）**。⚠️ 到期前 30 天务必换新，否则定时任务会静默降级为「仅本地提交」、线上停更且无告警。
+      - 💡 **反直觉结论**：在对话里发 token，轮换多少次新 token 都会再次明文出现，**轮换本身不是有效缓解**。
+        真正有效的是「**设 90 天过期** + 最小权限（只授权这 1 个仓库 + 仅 Contents/Workflows 两项）」——
+        泄露的影响因此有界、有时限。以后不必为"发过 token"反复重生成。
 - [ ] ⚠️ **晚报任务（每日 21:00）提示词缺「非交易日 / 今天未发布」的显式跳过兜底**：原文只说"不是今天则带 `?t=` 复抓再判定"，**没写判定后怎么办**（早报那版有明确的跳过分支）。周末与节假日存在写入脏数据的风险，待用户决定是否补一句
 - [ ] 在 `config/site.json` 填 `domainExpiry`（79zl.cn 到期日）以启用到期提醒
 - [ ] `verify.gain` 口径改造：增加 `buyRet` / `openPct` / `locked` 字段，前端改显示实盘口径（当前显示的是市场涨跌幅，会让用户误以为跟着买能赚）
