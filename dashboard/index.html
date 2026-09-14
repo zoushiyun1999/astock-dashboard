@@ -12,27 +12,27 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="A股速览">
-<link rel="stylesheet" href="css/style.css?v=202609150149">
+<link rel="stylesheet" href="css/style.css?v=202609150213">
 </head>
 <body>
 
 <header>
   <div class="h-inner">
-    <div class="h-collapse">
+    <!-- 品牌 + 当前日期同一行（旧版是「大号日期独占一行 + 每日简报标签」，纯占地方） -->
+    <div class="h-top">
       <div class="brand">
         <div class="logo">A</div>
         <div class="name">股速览</div>
-        <div class="tag">每日简报</div>
       </div>
       <div class="h-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     </div>
+    <!-- 告警条：正常时不占位（各源的绿点已经表达了"正常"），异常/休市时才整行出现 -->
+    <div id="healthBar" class="health"></div>
     <div class="h-status" id="hdStatus"></div>
   </div>
 </header>
 
 <div class="wrap">
-
-  <div id="healthBar" class="health"></div>
 
   <div class="tabs-sticky">
     <div class="tabs" id="tabs">
@@ -82,13 +82,13 @@
 </div>
 
 <!-- 数据（定时任务自动写入，勿手改） -->
-<script src="data.js?v=202609150149"></script>
+<script src="data.js?v=202609150213"></script>
 <!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
-<script src="screener.js?v=202609150149"></script>
+<script src="screener.js?v=202609150213"></script>
 <!-- 休市日（节假日，用于前端显示「休市」） -->
-<script src="holidays.js?v=202609150149"></script>
+<script src="holidays.js?v=202609150213"></script>
 <!-- 渲染逻辑 -->
-<script src="js/app.js?v=202609150149"></script>
+<script src="js/app.js?v=202609150213"></script>
 
 <!-- 破缓存自检：服务端无 Cache-Control，手机会缓存旧 HTML 导致更新看不见。
      这里比对「当前页面引用的版本号」与「服务端最新 HTML 的版本号」，

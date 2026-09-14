@@ -244,7 +244,9 @@
       '<button class="db-latest" type="button" onclick="gotoLatest()"' +
       (isLatest ? ' disabled' : '') + '>最新</button>' +
       '</div>' +
-      '<div class="db-sub"><span>' + esc(d.ymd) + ' ' + esc(d.week) + '</span>' +
+      // 小字只留「星期 + 状态标签」：日期本身已由上面的选择器显示，
+      // 而 header 第一行也写着完整日期 —— 再写一遍就是同一屏内第三次重复。
+      '<div class="db-sub"><span>' + esc(d.week) + '</span>' +
       (tags.length ? '<span class="db-tag' + (trading ? '' : ' off') + '">' + esc(tags.join(' · ')) + '</span>' : '') +
       '</div>';
   }
@@ -808,6 +810,11 @@
 
   var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
 
+  /* header 状态行里用的**短名**（与 Tab 名一致）：
+     「量价选股 / 次日验证 / 投资日历」三个全称会让这一行在 430px 手机上折成两行，
+     白白多占 18px。footer 仍用全称（那是完整句子，短名会读不通）。 */
+  var SHORT_NAME = { '量价选股': '量价', '次日验证': '验证', '投资日历': '日历' };
+
   /* ── 日期导航：每个 Tab 内的日期条按钮都走这三个入口 ── */
   function clampDate(ds) {
     var min = earliestDate(), max = todayYmd();
@@ -876,14 +883,18 @@
     document.getElementById('hdDate').textContent = d.ymd;
     document.getElementById('hdWeek').textContent = d.week + (isLatest ? ' · 最新一期' : '');
 
-    // 状态（按数据源分别展示时间与状态，圆点表示状态）—— 基准是选中日期，与页头日期自洽
+    // 状态（基准是选中日期，与页头日期自洽）
+    // ⚠️ 正常项**不写**"已生成/已收录"：5 项各写一次会把这一行挤成两行，
+    //    而绿点已经说明了结果。只有异常态（待更新/未更新/休市）才补状态词，
+    //    这样"异常才显眼"，正常时一行装得下 5 个数据源。
     document.getElementById('hdStatus').innerHTML = srcMeta(r).map(function (s) {
-      var label = s.state === 'ok' ? (s.name === '投资日历' ? '已收录' : '已生成')
+      var label = s.state === 'ok' ? ''
         : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
       var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
-      // 每项一个 div（网格子项），不再用 <br> 分隔 —— 网格才能稳定 2 列
-      return '<div><i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml +
-        ' <span class="st-state">' + label + '</span></div>';
+      var full = s.name + ' ' + (label ? label : ((timeHtml ? timeHtml.trim() : '') + ' 已生成'));
+      return '<div title="' + esc(full) + '"><i class="st-dot ' + s.state + '"></i>' +
+        esc(SHORT_NAME[s.name] || s.name) + timeHtml +
+        (label ? ' <span class="st-state">' + esc(label) + '</span>' : '') + '</div>';
     }).join('');
 
     // 内容（每个 Tab 自己渲染顶部的日期条：日期语义各 Tab 不同，见 dateBar / calBar）

@@ -126,6 +126,41 @@ async function main() {
   report.healthBar = await ev("(document.getElementById('healthBar')||{}).textContent");
   report.footer = await ev("(document.getElementById('ftUpd')||{}).textContent");
 
+  // 顶部开销（未滚动 / 滚动后）—— 2026-09-15 把 header 从 ~190px 压到两行，
+  // 这个数字以后改动时容易被悄悄改胖，所以固定测一下。
+  report.headerHeight = await ev("(function(){var h=document.querySelector('header');" +
+    "return {header: h.offsetHeight, topLine: (document.querySelector('.h-top')||{}).offsetHeight," +
+    " statusLine: (document.querySelector('.h-status')||{}).offsetHeight};})()");
+  await ev('window.scrollTo(0, 400)');
+  await sleep(500);
+  report.headerHeightScrolled = await ev("(function(){return {header: document.querySelector('header').offsetHeight," +
+    " scrolledClass: document.body.classList.contains('scrolled')};})()");
+  // ⚠️ 这里要**直接截当前视口**，不能用 shot()：shot() 会把视口设成全页高，
+  //    那一步会重置滚动位置 → body.scrolled 被撤掉，截出来的还是展开态。
+  {
+    const r = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.join(OUT, 'header_scrolled.png'), Buffer.from(r.data, 'base64'));
+  }
+  await ev('window.scrollTo(0, 0)');
+  await sleep(400);
+
+  // 告警条外观：正常时 display:none 不占位，所以异常态的可读性必须单独验一次
+  // （深色 header 上的浅红/浅黄文字，配色错了在浅底测试里看不出来）。
+  await ev("(function(){var b=document.getElementById('healthBar');" +
+    "b.className='health bad';b.innerHTML='🔴 异常：🌅早报缺失、🔬验证未跑';})()");
+  await sleep(250);
+  report.healthAlert = await ev("(function(){var b=document.getElementById('healthBar');" +
+    "return {height:b.offsetHeight, text:b.textContent, display:getComputedStyle(b).display};})()");
+  {
+    const r = await cdp.send('Page.captureScreenshot', {
+      format: 'png', clip: { x: 0, y: 0, width: 430, height: 190, scale: 2 }
+    });
+    fs.writeFileSync(path.join(OUT, 'health_alert.png'), Buffer.from(r.data, 'base64'));
+  }
+  // 复原：重跑一次 render()（把真实健康状态渲染回来）
+  await ev("stepDay(0)");
+  await sleep(300);
+
   // 逐 Tab 截图（截图前记录该 Tab 可见区块的非空判定）+ 每个 Tab 都必须有时间选择模块
   const tabs = ['morning', 'evening', 'watchlist', 'screener', 'calendar'];
   const secIds = { morning: 'sec-morning', evening: 'sec-evening', watchlist: 'sec-watchlist', screener: 'sec-screener', calendar: 'sec-calendar' };

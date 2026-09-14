@@ -123,40 +123,52 @@ body {
 }
 .wrap { max-width: 560px; margin: 0 auto; padding: 0 14px 40px; }
 
-/* ── 顶部 Header ── */
+/* ── 顶部 Header ──
+   2026-09-15 瘦身：原来「34px logo + 每日简报标签 + 22px 大号日期独占一行 +
+   状态两列网格 + 独立的健康条」在手机上要吃掉近 190px，而其中
+   日期、状态与内容区顶部的日期条大量重复。现在压成两行（约 66px）：
+     ① 品牌 + 当前日期（同行）
+     ② 各数据源状态（一行放完 5 项）
+   健康条只在异常/休市时出现，正常时 display:none 不占位。 */
 header {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%);
   color: #fff;
-  padding: var(--sp-5) 18px 18px;
-  border-radius: 0 0 22px 22px;
+  padding: 10px 16px 9px;
+  border-radius: 0 0 16px 16px;
   position: relative;
   overflow: hidden;
 }
 /* header 内容与正文列对齐（桌面端不再一个贴左一个贴右，视线跨度 1100px → 0） */
 .h-inner { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; }
 header::after {
-  content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px;
+  content: ""; position: absolute; right: -34px; top: -46px; width: 118px; height: 118px;
   border-radius: 50%; background: rgba(255,255,255,.08);
 }
 header::before {
-  content: ""; position: absolute; right: 30px; bottom: -60px; width: 130px; height: 130px;
+  content: ""; position: absolute; right: 34px; bottom: -52px; width: 92px; height: 92px;
   border-radius: 50%; background: rgba(255,255,255,.06);
 }
-.brand { display: flex; align-items: center; gap: 9px; }
+/* 第一行：品牌在左，日期靠右（用 margin-left:auto，不再让日期独占一行） */
+.h-top { display: flex; align-items: center; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 6px; flex: none; }
 .brand .logo {
-  width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.18);
-  display: flex; align-items: center; justify-content: center; font-size: var(--fs-lg); font-weight: var(--fw-bold);
-  border: 1px solid rgba(255,255,255,.25);
+  width: 22px; height: 22px; border-radius: 7px; background: rgba(255,255,255,.18);
+  display: flex; align-items: center; justify-content: center; font-size: var(--fs-sm); font-weight: var(--fw-bold);
+  border: 1px solid rgba(255,255,255,.22); flex: none;
 }
-.brand .name { font-size: var(--fs-lg); font-weight: var(--fw-bold); letter-spacing: .5px; }
-.brand .tag { font-size: var(--fs-xs); background: rgba(255,255,255,.16); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: var(--fw-medium); }
-.h-date { margin-top: 14px; font-size: var(--fs-md); opacity: .92; }
-.h-date b { font-size: var(--fs-xl); font-weight: var(--fw-bold); margin-right: 6px; }
-/* 4 项数据源状态：2 列网格，避免 flex-wrap 随机折行把某项挤到边缘被裁 */
-.h-status { font-size: var(--fs-xs); opacity: .85; line-height: 1.7; margin-top: 10px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+.brand .name { font-size: var(--fs-base); font-weight: var(--fw-semibold); letter-spacing: .3px; }
+.h-date {
+  margin-left: auto; display: flex; align-items: baseline; gap: 5px;
+  font-size: var(--fs-sm); opacity: .9; min-width: 0;
+}
+.h-date b { font-size: var(--fs-base); font-weight: var(--fw-semibold); }
+.h-date span { font-size: var(--fs-xs); opacity: .88; white-space: nowrap; }
+/* 第二行：5 个数据源状态。用 flex 而不是 grid —— 项的内容长度差异大，
+   网格会把短项也撑成一列宽，白占一行高度。 */
+.h-status { font-size: var(--fs-xs); opacity: .85; line-height: 1.5; margin-top: 6px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .h-status > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.h-status .st-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.h-status .st-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
 .h-status .st-dot.ok { background: #4ade80; }
 .h-status .st-dot.wait { background: rgba(255,255,255,.45); }
 .h-status .st-dot.miss { background: #fca5a5; }
@@ -173,16 +185,17 @@ header::before {
 .tabs {
   display: flex; margin: 0 0 14px; border-bottom: 1px solid var(--line); position: relative;
 }
-/* 滚动后 header 收缩（靠 body.scrolled 切换，见 app.js） */
+/* 滚动后 header 收缩（靠 body.scrolled 切换，见 app.js）：
+   收起「品牌 + 日期」那一行，只留状态行 —— 在长页面里随时能看到各源状态。 */
 header { transition: padding var(--t-base); }
-.h-collapse {
-  max-height: 220px; overflow: hidden;
-  transition: max-height var(--t-base), opacity var(--t-base), margin var(--t-base);
+.h-top {
+  max-height: 30px; overflow: hidden;
+  transition: max-height var(--t-base), opacity var(--t-base);
   opacity: 1;
 }
-body.scrolled .h-collapse { max-height: 0; opacity: 0; margin-top: 0; }
-body.scrolled .h-date { margin-top: 0; }
-body.scrolled header { padding-bottom: var(--sp-3); border-radius: 0 0 16px 16px; }
+body.scrolled .h-top { max-height: 0; opacity: 0; }
+body.scrolled .h-status { margin-top: 0; }
+body.scrolled header { padding-top: 8px; padding-bottom: 7px; }
 .tab {
   flex: 1; text-align: center; padding: 11px 0 12px; font-size: var(--fs-base); font-weight: var(--fw-medium);
   color: var(--ink-2); cursor: pointer; transition: color var(--t-fast); user-select: none;
@@ -540,12 +553,17 @@ body.scrolled header { padding-bottom: var(--sp-3); border-radius: 0 0 16px 16px
 /* 次数胶囊：结构色，不用绿色（绿只表示"跌"） */
 .hot-rep .rc { font-size: var(--fs-xs); color: #fff; background: var(--brand-2); border-radius: var(--radius-pill); padding: 1px 9px; }
 
-/* ── 顶部数据健康条 ── */
-.health { font-size: var(--fs-sm); padding: 7px 10px; border-radius: 10px; margin: 2px 2px 8px; line-height: 1.4; }
-.health.ok { background: var(--ok-bg); color: var(--ok); }
-.health.warn { background: var(--warn-bg); color: var(--warn); }
-.health.bad { background: var(--bad-bg); color: var(--bad); font-weight: var(--fw-semibold); }
-.health.close { background: var(--close-bg); color: var(--close); }
+/* ── 顶部告警条（现在嵌在 header 里，深色底） ──
+   正常时**完全不占高度**：各源的绿点已经表达了"一切正常"，
+   再写一行"🟢 各源运行正常"纯属重复占用手机屏幕。
+   异常 / 休市时才整行出现，并用高对比浅色文字保证看得见。
+   ⚠️ class 名（ok/warn/bad/close）被 tools/test_health_logic.js 断言，别改。 */
+.health { font-size: var(--fs-xs); line-height: 1.5; border-radius: 8px; }
+.health.ok { display: none; }
+.health.warn, .health.bad, .health.close { margin: 6px 0 0; padding: 4px 9px; }
+.health.warn  { background: rgba(245,159,0,.20); color: #ffd9a0; }
+.health.bad   { background: rgba(224,49,49,.24); color: #ffc9c9; font-weight: var(--fw-semibold); }
+.health.close { background: rgba(147,197,253,.16); color: #c7dcff; }
 
 /* ── 新数据提示条 ── */
 #updateBar { display: none; position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 50;
