@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const ops = require('./lib/ops');
+const gapCheck = require('./lib/gap_check');   // 断更检测/交易日判定的可测纯逻辑（可被测试脚本 require）
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -175,29 +176,22 @@ const HOLIDAYS = (function () {
   catch (e) { return {}; }
 })();
 function isTradingDay(d) {
-  const w = d.getDay();
-  if (w === 0 || w === 6) return false;
-  const p = function (n) { return String(n).padStart(2, '0'); };
-  const key = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-  return ((HOLIDAYS[String(d.getFullYear())]) || []).indexOf(key) < 0;
+  return gapCheck.isTradingDay(d, HOLIDAYS);   // 口径收敛到 tools/lib/gap_check.js，与 verify.js 一致
 }
 (function checkGaps() {
   if (!reports.length) return;
-  const have = new Set(dates);
-  const first = new Date(dates[0] + 'T00:00:00');
-  const today = new Date();
-  const gaps = [];
-  for (let d = new Date(first); d <= today; d.setDate(d.getDate() + 1)) {
-    if (!isTradingDay(d)) continue;
-    const p = function (n) { return String(n).padStart(2, '0'); };
-    const ds = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-    if (have.has(ds)) continue;
-    const hasLog = fs.existsSync(path.join(ROOT, 'logs', ds + '.md'));
-    gaps.push({ ds: ds, ran: hasLog });
-  }
-  if (!gaps.length) return;
-  const stalled = gaps.filter(function (g) { return !g.ran; }).map(function (g) { return g.ds; });
-  const skipped = gaps.filter(function (g) { return g.ran; }).map(function (g) { return g.ds; });
+  // 判定逻辑抽到 tools/lib/gap_check.js（纯函数，可被 test_scripts.js 断言）。
+  // ⚠️ 2026-09-15 修复：当 now 早于当天最早任务时刻（早报 08:30）时，今天不计入 gaps——
+  //    否则交易日凌晨/早上（当天首个任务尚未开始）会误报「管线未运行，需排查」
+  //    （每日 07:00 的体检任务会天天撞上这条假警报）。
+  const g = gapCheck.computeGaps({
+    reportDates: dates,
+    now: new Date(),
+    holidayYears: HOLIDAYS,
+    hasLog: function (ds) { return fs.existsSync(path.join(ROOT, 'logs', ds + '.md')); }
+  });
+  const stalled = g.stalled, skipped = g.skipped;
+  if (!stalled.length && !skipped.length) return;
   if (skipped.length) notes.push('交易日无数据但已运行（数据源未发布，属正常）：' + skipped.join(', '));
   if (stalled.length) {
     warn('交易日无数据且无运行日志（管线未运行，需排查）：' + stalled.join(', ') +

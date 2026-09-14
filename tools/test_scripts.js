@@ -21,6 +21,7 @@ const { sortReports } = require('./sort_reports');
 const screener = require('./screener');
 const checkCodes = require('./check_codes');
 const verify = require('./verify');
+const gapCheck = require('./lib/gap_check');   // 断更检测/交易日判定纯逻辑（#19）
 
 let pass = 0, fail = 0;
 function ok(cond, label, extra) {
@@ -316,6 +317,63 @@ console.log('\n#18 · ops.screenerHistCount + screener.js 期数闸门（副闸/
     'ops.js 副闸比对 HEAD:dashboard/screener.js 期数');
   ok(/remoteScreenerCount\(repo, remoteMap\['dashboard\/screener\.js'\]\)/.test(ghSrc),
     'gh_push_api.js 主闸取远端 dashboard/screener.js 期数');
+}
+
+/* ════════════ #19 · 断更检测时间边界（2026-09-15 修复：早间不把今天当既成事实） ════════════ */
+console.log('\n#19 · gap_check.computeGaps：交易日早于 08:30 不报今天；08:30 起才检查今天');
+{
+  // 休市日样本（2026 年；09-25 中秋在 config/trade_holidays.json 内）
+  const HY = { '2026': JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years['2026'] };
+  const D = (y, m, d, hh, mm) => new Date(y, m - 1, d, hh, mm);
+  const reports = ['2026-09-10'];                       // 扫描起点 09-10（周四）
+  const logAllButToday = (ds) => ds !== '2026-09-15';   // 历史都有日志，仅今天没有
+  const hhmm = (now) => now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  // 交易日当天凌晨 / 早间（首个任务 08:30 尚未开始）→ 今天不得进入结果
+  [D(2026, 9, 15, 0, 19), D(2026, 9, 15, 7, 0), D(2026, 9, 15, 8, 29)].forEach(function (now) {
+    const g = gapCheck.computeGaps({ reportDates: reports, now: now, holidayYears: HY, hasLog: logAllButToday });
+    eq(g.stalled.join(','), '', '交易日 ' + hhmm(now) + ' → stalled 为空（不报今天）');
+    ok(g.stalled.indexOf('2026-09-15') < 0, '  ↑ 今天(09-15)不在 stalled');
+  });
+
+  // 08:30 起（到达最早任务时刻）→ 今天无数据且无日志 → 必须报今天（真停摆）
+  [D(2026, 9, 15, 8, 30), D(2026, 9, 15, 8, 31), D(2026, 9, 15, 23, 0)].forEach(function (now) {
+    const g = gapCheck.computeGaps({ reportDates: reports, now: now, holidayYears: HY, hasLog: logAllButToday });
+    eq(g.stalled.join(','), '2026-09-15', '交易日 ' + hhmm(now) + ' → 报今天（管线未运行）');
+  });
+
+  // 历史交易日无数据无日志 → 行为不变（仍报）；有日志 → 进 skipped（数据源未发布，正常）
+  {
+    const hasLog = (ds) => ds === '2026-09-11';
+    let g = gapCheck.computeGaps({ reportDates: reports, now: D(2026, 9, 15, 0, 19), holidayYears: HY, hasLog: hasLog });
+    eq(g.stalled.join(','), '2026-09-14', '00:19 历史无日志日(09-14)仍报；今天(09-15)跳过');
+    eq(g.skipped.join(','), '2026-09-11', '有日志的 09-11 进 skipped（未发布，属正常）');
+    g = gapCheck.computeGaps({ reportDates: reports, now: D(2026, 9, 15, 23, 0), holidayYears: HY, hasLog: hasLog });
+    eq(g.stalled.join(','), '2026-09-14,2026-09-15', '23:00 历史(09-14)与今天(09-15)都报');
+  }
+
+  // 周末 / 休市日 → 今天本就不是交易日，不报
+  {
+    const g1 = gapCheck.computeGaps({ reportDates: reports, now: D(2026, 9, 12, 10, 0), holidayYears: HY, hasLog: logAllButToday });
+    ok(g1.stalled.indexOf('2026-09-12') < 0 && g1.skipped.indexOf('2026-09-12') < 0, '周六 09-12 不报今天');
+    const g2 = gapCheck.computeGaps({ reportDates: ['2026-09-24'], now: D(2026, 9, 25, 10, 0), holidayYears: HY, hasLog: logAllButToday });
+    ok(g2.stalled.indexOf('2026-09-25') < 0 && g2.skipped.indexOf('2026-09-25') < 0, '节假日 09-25 不报今天');
+  }
+
+  // 边界与纯函数细节
+  eq(gapCheck.EARLIEST_TASK_MIN, 510, 'EARLIEST_TASK_MIN = 510（08:30，早报）');
+  eq(gapCheck.isBeforeEarliestTask(D(2026, 9, 15, 8, 29)), true, 'isBeforeEarliestTask 08:29 → true（跳过今天）');
+  eq(gapCheck.isBeforeEarliestTask(D(2026, 9, 15, 8, 30)), false, 'isBeforeEarliestTask 08:30 → false（到点即检查今天）');
+  eq(gapCheck.isBeforeEarliestTask(D(2026, 9, 15, 8, 31)), false, 'isBeforeEarliestTask 08:31 → false');
+  eq(gapCheck.computeGaps({ reportDates: [], now: D(2026, 9, 15, 10, 0), holidayYears: HY, hasLog: logAllButToday }).stalled.length, 0, '无 reports → 空结果（安全）');
+  eq(gapCheck.isTradingDay(D(2026, 9, 12, 10, 0), HY), false, 'isTradingDay 周六 → false');
+  eq(gapCheck.isTradingDay(D(2026, 9, 25, 10, 0), HY), false, 'isTradingDay 节假日 → false');
+  eq(gapCheck.isTradingDay(D(2026, 9, 15, 10, 0), HY), true, 'isTradingDay 普通交易日 → true');
+
+  // 源码守卫：health_check.js 断更检测已委派 gap_check，且不再有「固定扫到今天」的循环
+  const hc = fs.readFileSync(path.join(ROOT, 'tools', 'health_check.js'), 'utf8');
+  ok(/gapCheck\.computeGaps\(/.test(hc), 'health_check.js 断更检测委派 gap_check.computeGaps');
+  ok(!/d <= today/.test(hc), 'health_check.js 不再用「d <= today」无条件纳入今天');
 }
 
 // 清理
