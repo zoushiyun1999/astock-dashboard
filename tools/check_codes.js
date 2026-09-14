@@ -117,6 +117,41 @@ function loadData() {
   return data;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 数据写入安全阀（与 verify.js / screener.js 同源，2026-09-14 补）
+ *
+ * 背景：本脚本带 --fix 时会直接重写 data.js，而它跑一轮网络校验要几分钟，
+ * 期间早报/晚报任务完全可能已经改过 data.js；原来的裸 writeFileSync
+ * 会毫无察觉地把对方的改动整体覆盖掉。同时也没有「规模骤减」保护。
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** 中止信号：抛给顶层 catch，避免 process.exit 截断 Windows 下的管道输出 */
+function abort(msg) {
+  const e = new Error(msg);
+  e.__abort = true;
+  throw e;
+}
+
+/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
+function saveDataSafe(file, next, baseline, srcAtRead) {
+  const afterN = (next.reports || []).length;
+  const afterC = (next.calendar || []).length;
+
+  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
+    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
+      '），为避免清空看板历史，拒绝写回');
+  }
+  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
+    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
+  }
+  const nowSrc = fs.readFileSync(file, 'utf8');
+  if (nowSrc !== srcAtRead) {
+    abort('✗ data.js 在本次校验期间被其他任务修改过（很可能是早报/晚报并发写），' +
+      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
+  }
+  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
+}
+
 /** 收集 data.js 中所有推荐条目（带数组与索引，便于回写/删除） */
 function collectPicks(data) {
   const out = [];
@@ -146,6 +181,13 @@ function collectPicks(data) {
 
   const data = loadData();
   if (!data) { console.log('  ✗ 读取 data.js 失败'); process.exit(1); }
+
+  // 安全阀基线：读取当时的原文与规模快照（后面 --fix 写回前比对）
+  const loadedSrc = fs.readFileSync(DATA, 'utf8');
+  const loaded = {
+    reports0: (data.reports || []).length,
+    calendar0: (data.calendar || []).length
+  };
 
   const items = collectPicks(data);
   console.log('  待校验推荐条目：' + items.length + ' 条');
@@ -202,6 +244,7 @@ function collectPicks(data) {
       if (PRUNE) pruneTargets.push(it);
       continue;
     }
+    // 兜底：名称与代码都没查到（例如行情接口部分失败），保持原样通过，不误改
     ok.push({ where: it.where, name: name, code: code || nameCode });
   }
 
@@ -239,7 +282,16 @@ function collectPicks(data) {
         idxs.sort(function (a, b) { return b - a; }).forEach(function (i) { arr.splice(i, 1); });
       });
     }
-    fs.writeFileSync(DATA, 'window.REPORTS = ' + JSON.stringify(data, null, 2) + ';\n');
+    // 与 verify.js / screener.js 同源的安全阀：
+    //   ① 规模骤减拦截（防一次写坏把 7 天历史 + 日历清空）
+    //   ② 乐观锁（本脚本跑网络校验耗时长，期间早报/晚报可能已改过 data.js，
+    //      原来裸 writeFileSync 会把对方的成果整体覆盖掉）
+    try {
+      saveDataSafe(DATA, data, loaded, loadedSrc);
+    } catch (e) {
+      if (e && e.__abort) { console.error('\n' + e.message); process.exitCode = 1; return; }
+      throw e;
+    }
     console.log('\n  ✔ 已写回 dashboard/data.js' + (PRUNE ? '，剔除 ' + pruneTargets.length + ' 条幻觉股' : ''));
   } else {
     console.log('\n  （体检模式，未修改任何文件。加 --fix 生效，加 --prune 剔除幻觉股）');

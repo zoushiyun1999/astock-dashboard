@@ -88,10 +88,27 @@ docs/              方案与说明文档
     `tools/optimize_calendar.py` 压缩，**不要手工塞未压缩的长图**——它是站点体积最大的来源。
 15. **不要在 `bump_version.sh` 之外单独跑 `git commit` + `bump_version.sh`**：`publish.sh`
     已串联全部收尾步骤，重复执行只会制造空提交。需要只提交不发布时，用 `git add -A && git commit`。
-16. **写 `data.js` 的脚本必须保留安全阀**：`tools/verify.js` 与 `tools/screener.js` 用
-    `loadDataStrict()`（解析失败即中止）+ `saveDataSafe()`（规模骤减拦截 + 乐观锁防并发覆盖）。
+16. **写 `data.js` 的脚本必须保留安全阀**：`tools/verify.js`、`tools/screener.js`、`tools/check_codes.js`
+    用 `loadDataStrict()`（解析失败即中止）+ `saveDataSafe()`（规模骤减拦截 + 乐观锁防并发覆盖）。
     **禁止改回 `try { eval(...) } catch (e) {}` 那种静默降级**——data.js 一旦写坏，下一步就会把
-    全部历史 reports 与 calendar 覆盖成空。改这两个脚本后请用 `--dry`（选股）或沙箱验证安全阀仍生效。
+    全部历史 reports 与 calendar 覆盖成空。改这些脚本后请用 `--dry`（选股）或沙箱验证安全阀仍生效。
+    ⚠️ **适用对象是所有「写入型」脚本，不只上面点名的三个**：新增任何会重写 `data.js` 的脚本，
+    必须走同一套安全阀，禁止裸 `fs.writeFileSync(DATA, ...)`
+    （2026-09-14 审计发现 `check_codes.js --fix` 被漏掉：它跑一轮网络校验要几分钟，
+    期间早报/晚报可能已改过 data.js，裸写会把对方成果整体覆盖）。
+16b. **`bump_version.sh` 里的 `|| true` 只允许出现在「软步骤」上**：日历图压缩 / 孤儿图回收 /
+    排序 / 休市日同步失败可以不阻塞发布；但 **`export_json.js` 是必需步骤，失败必须 `exit 1`**。
+    它负责由 data.js 派生 data.json / version.json，失败时前端轮询拿到的仍是旧版本，
+    而 publish.sh 照样 commit + push 并提示"发布成功"——症状是「看着成功、线上停在上一期」。
+16c. **`config/trade_holidays.json` 的真实结构是 `{ note, years: { "2026": [...] } }`**：
+    取休市日列表必须用 `.years[年份]`。曾误写成 `hs[年份]`（`health_site.js`），
+    恒得 `undefined` → 所有节假日被判为交易日 → 每逢长假线上必误报「数据未更新」。
+16d. **正则 / 过滤条件必须用真实数据跑一遍断言，不能只看代码"像是对的"**。
+    已踩过两次：① `screener.js` 排除新股写 `/N\s|C\s/`（要求字母后跟空白），
+    但 A 股新股名是 `N华虹`、次新是 `C华虹`，**中间根本没有空格** → 一个都匹配不到，形同虚设；
+    ② `health_site.js` 取错结构层级（见 16c）。凡新增/修改筛选或匹配逻辑，
+    至少跑：真实样本（从 `data.js` 抽 100+ 条）+ 边界用例（正例/反例各若干）两轮断言，
+    并确认改动前后**结果集差异符合预期**。
 17. **`evening` 有两套并行结构，别当成重复字段删掉**：`明日关注`（短线 Tab，带 picks 明细，
     由 verify.js 写 verify 标记）与 `板块热点`（晚报 Tab，扁平摘要）。**两者条数必须一致**，
     不一致时两个 Tab 会显示不同的板块数（`health_check.js` 会报警）。

@@ -87,8 +87,12 @@ function isTradingToday() {
   const pad = (n) => String(n).padStart(2, '0');
   const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   try {
+    // 注意：trade_holidays.json 的真实结构是 { note, years: { "2026": [...] } }，
+    // 必须取 .years[年] —— 曾误写成 hs[年]，永远得到 undefined，
+    // 使「节假日」被一律判为交易日，休市日会误报「数据已 26 小时未更新」。
     const hs = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8'));
-    return (hs[String(now.getFullYear())] || []).indexOf(today) < 0;
+    const list = (hs.years && hs.years[String(now.getFullYear())]) || [];
+    return list.indexOf(today) < 0;
   } catch (e) { return true; }
 }
 

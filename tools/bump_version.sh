@@ -40,4 +40,10 @@ fi
 "$NODE_BIN" "$WIN_DIR/tools/clean_calendar.js" --quiet || true
 
 # 导出 data.json / version.json（前端按 version.json 轻量轮询，避免每分钟拉全量 data.js）
-"$NODE_BIN" "$WIN_DIR/tools/export_json.js" || true
+# ⚠️ 这一步失败必须让整条发布失败：data.js 已更新但 data.json 没更新时，
+#    前端轮询拿到的仍是旧版本，而 publish.sh 会照样 commit + push，
+#    结果是「看着发布成功、线上数据却停在上一期」。故不加 `|| true`。
+if ! "$NODE_BIN" "$WIN_DIR/tools/export_json.js"; then
+  echo "✗ export_json.js 失败：data.json/version.json 未更新，中止发布（避免线上数据与 data.js 不一致）" >&2
+  exit 1
+fi

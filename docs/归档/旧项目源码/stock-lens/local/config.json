@@ -1,0 +1,67 @@
+{
+  "_comment": "stock-lens 本地版配置。改这里即可调整看什么，不用改代码。",
+
+  "picks": [
+    { "label": "低估值", "preset": "LowPE", "limit": 15 },
+    { "label": "高股息", "preset": "HighDividend", "limit": 15 },
+    { "label": "高ROE", "preset": "HighROE", "limit": 15 },
+    { "label": "主力资金流入", "preset": "MainInflow", "limit": 15 }
+  ],
+
+  "sectors": {
+    "count": 15
+  },
+
+  "hot": {
+    "count": 12
+  },
+
+  "watchlist": [
+    "sh600519",
+    "sz000001",
+    "sh601318",
+    "sz300750"
+  ],
+
+  "blogs": [
+    {
+      "key": "morning",
+      "type": "jiuyan",
+      "id": "df07647c21594f8c9c382304128c08f3",
+      "label": "早报 · 开盘必读",
+      "author": "开盘必读",
+      "limit": 8
+    },
+    {
+      "key": "evening_hunanren",
+      "type": "tgb",
+      "id": 444409,
+      "label": "晚报 · 湖南人",
+      "author": "湖南人",
+      "limit": 5
+    },
+    {
+      "key": "evening_shenghuo",
+      "type": "tgb",
+      "id": 563404,
+      "label": "晚报 · shenghuo329",
+      "author": "shenghuo329",
+      "limit": 5
+    },
+    {
+      "key": "calendar",
+      "type": "jiuyan",
+      "id": "648089de4f1649de9e18b8285faca8b8",
+      "label": "投资日历",
+      "author": "A股投资日历",
+      "limit": 6
+    }
+  ],
+
+  "paths": {
+    "_comment": "留空则自动探测。",
+    "node": "",
+    "westock_tool_index": "",
+    "westock_go": ""
+  }
+}

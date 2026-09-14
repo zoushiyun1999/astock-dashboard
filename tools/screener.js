@@ -76,7 +76,11 @@ async function fetchMarket() {
   return all;
 }
 
-function isBadName(name) { return /ST|退|N\s|C\s/.test(name); }
+/** 排除 ST / 退市 / 新股(N前缀) / 次新(C前缀)
+ *  注意：A股新股名形如「N华虹」、次新形如「C华虹」，字母紧贴名字**中间无空格**，
+ *  原来的 /N\s|C\s/ 要求字母后跟空白，实际一个都匹配不到，形同虚设。
+ *  改用锚定行首的 /^N|^C/（真实股票名不含半角 N/C 开头，无正常股被误伤，已用 146 个真实名断言验证）。 */
+function isBadName(name) { return /ST|退|^N|^C/.test(name); }
 
 function passBase(x) {
   if (typeof x.f3 !== 'number' || !isFinite(x.f3)) return false;

@@ -4,14 +4,27 @@
 // 前端 app.js 依赖此顺序（idx = length-1 指向最新），乱序会导致默认显示旧日期。
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const F = path.join(__dirname, '..', 'dashboard', 'data.js');
 const MAX = 7;
 
 let s = fs.readFileSync(F, 'utf8');
-const m = s.match(/window\.REPORTS\s*=\s*([\s\S]*);\s*$/);
-if (!m) { console.error('未找到 window.REPORTS，退出'); process.exit(1); }
-const R = eval('(' + m[1] + ')');
+// 用 vm 执行而不是 eval：语法错误会准确指到 data.js 自己的行号，
+// 且不会把 data.js 的代码注入当前作用域（原先 eval 有同名变量污染风险）。
+const ctx = { window: {} };
+try {
+  vm.runInNewContext(s, ctx, { filename: 'dashboard/data.js' });
+} catch (e) {
+  console.error('✗ 解析 data.js 失败：' + e.message);
+  console.error('  为避免把看板写坏，本次退出（未修改文件）。');
+  process.exit(1);
+}
+const R = ctx.window.REPORTS;
+if (!R || !Array.isArray(R.reports)) {
+  console.error('✗ data.js 结构异常（window.REPORTS.reports 不是数组），退出');
+  process.exit(1);
+}
 
 const before = (R.reports || []).map(x => x.date).join(',');
 R.reports.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));

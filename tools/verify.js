@@ -137,15 +137,22 @@ async function getJSON(url, retry = 2) {
   }
 }
 
-/** 拉沪深主板全市场行情，建立 代码 → {名称,涨跌幅,现价} 映射
+/** 拉沪深全市场行情，建立 代码 → {名称,涨跌幅,现价} 映射
  *  注意：东方财富该接口单页最多返回 100 条（pz 上限亦被服务端截断），
- *  故 pz 固定为 100 并逐页拉取；以 total 字段判定是否已拉全，避免漏页。 */
+ *  故 pz 固定为 100 并逐页拉取；以 total 字段判定是否已拉全，避免漏页。
+ *
+ *  2026-09-14 修复：原 fs 只取 m:0+t:6,m:1+t:2（沪深主板），
+ *  导致早报/晚报推荐的创业板(300/301)、科创板(688) 股**永远拿不到行情**，
+ *  findQuote 返回 null 后静默跳过 → 这些推荐永久无 verify 标记、不计入胜率。
+ *  已实测 09-03 芒果超媒(300413)、09-04 皖仪科技(688600)、09-09 本川智能(300964)、
+ *  南大环境(300864) 共 4 条受影响。现补齐创业板(t:80)与科创板(t:23)。 */
 async function fetchQuotes() {
   const map = {};
+  const fsStr = 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23';
   let total = Infinity;
   for (let pn = 1; pn <= 80; pn++) {
     const url = `${EM}/api/qt/clist/get?pn=${pn}&pz=100&po=1&np=1&fltt=2&invt=2&fid=f3` +
-      `&fs=m:0+t:6,m:1+t:2&fields=f12,f14,f3,f2`;
+      `&fs=${encodeURIComponent(fsStr)}&fields=f12,f14,f3,f2`;
     const j = await getJSON(url);
     const dj = (j && j.data) || {};
     const d = dj.diff || [];

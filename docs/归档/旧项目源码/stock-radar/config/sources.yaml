@@ -1,0 +1,90 @@
+# stock-radar 数据源配置
+# 所有站点均为公开可访问页面，未绕过登录墙 / 付费墙。
+# 采集频率遵循「最小必要」原则。
+
+site:
+  name: stock-radar
+  timezone: Asia/Shanghai
+
+# ============ 源定义 ============
+sources:
+  # ---------- 1. 早报：韭研公社 · 开盘必读 ----------
+  - id: jy_morning
+    label: 早报 · 开盘必读
+    kind: jiuyan_user
+    enabled: true
+    url: https://www.jiuyangongshe.com/u/df07647c21594f8c9c382304128c08f3
+    user_id: df07647c21594f8c9c382304128c08f3
+    author: 开盘必读
+    schedule: morning          # 对应 09:00 前完成
+    max_pages: 1
+    detail_limit: 3
+    download_images: true
+    notes: "标题形如「X月X日开盘必读资讯」，系统会自动取当日最新一篇。"
+
+  # ---------- 2. 晚报：淘股吧 · 湖南人 ----------
+  - id: tgb_hunanren
+    label: 晚报 · 湖南人
+    kind: tgb_blog
+    enabled: true
+    url: https://www.tgb.cn/blog/444409
+    blog_id: 444409
+    author: 湖南人
+    schedule: evening          # 22:00 更新
+    max_items: 20
+    download_images: true
+    notes: "标题形如「X.X湖南人涨停复盘+晚间消息汇总」。正文以图片为主。"
+
+  # ---------- 2. 晚报：淘股吧 · shenghuo329 ----------
+  - id: tgb_shenghuo329
+    label: 晚报 · shenghuo329
+    kind: tgb_blog
+    enabled: true
+    url: https://www.tgb.cn/blog/563404
+    blog_id: 563404
+    author: shenghuo329
+    schedule: evening
+    max_items: 20
+    download_images: true
+    notes: "标题形如「行鱼复盘XXXX:...」。文字量大、结构清晰，摘要质量高。"
+
+  # ---------- 3. 投资日历：韭研公社 ----------
+  - id: jy_calendar
+    label: A股投资日历
+    kind: jiuyan_user
+    enabled: true
+    url: https://www.jiuyangongshe.com/u/648089de4f1649de9e18b8285faca8b8
+    user_id: 648089de4f1649de9e18b8285faca8b8
+    author: A股投资日历
+    schedule: on_change        # 变更驱动，非每日
+    max_pages: 1
+    download_images: true      # 日历帖以图片为主，需落盘
+    notes: "昵称「A股投资日历」（style_str: 绝不追高的老韭菜）。标题形如「投资日历：xxx」。"
+
+# ============ 调度 ============
+schedule:
+  morning:
+    cron: "25 8 * * 1-5"       # 工作日 08:25 启动采集，09:00 前完成
+    description: 盘前早报
+  evening:
+    cron: "0 22 * * 1-5"       # 工作日 22:00 采集晚报
+    description: 盘后晚报
+  calendar_check:
+    cron: "0 12 * * *"         # 每天中午检查日历是否更新
+    description: 投资日历变更检查
+
+# ============ 采集行为 ============
+fetch:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  timeout_sec: 25
+  retry: 3
+  retry_backoff_sec: 5
+  interval_sec: 3              # 请求间隔，避免给站点压力
+  respect_robots: true
+
+# ============ 存储 ============
+storage:
+  sqlite_path: data/radar.db
+  images_dir: data/images
+  raw_dir: data/raw
+  keep_raw_days: 30
