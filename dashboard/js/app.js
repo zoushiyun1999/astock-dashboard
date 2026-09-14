@@ -171,7 +171,12 @@
       var metHtml = '';
       if (m.metrics && m.metrics.length) {
         metHtml = '<div class="metrics">' + m.metrics.map(function (x) {
-          var cls = x.up === true ? ' up' : (x.up === false ? ' down' : '');
+          // 颜色按「数值符号」判定，不只看 x.up 字段 ——
+          // 字段缺失时原先静默不上色，同一行里出现"绿/灰/灰"三种呈现，用户无法解读。
+          var n = parseFloat(String(x.v).replace(/[^0-9.\-]/g, ''));
+          var cls = x.up === true ? ' up'
+            : x.up === false ? ' down'
+              : (!isNaN(n) ? (n > 0 ? ' up' : (n < 0 ? ' down' : '')) : '');
           // 炸板率是"越高越危险"的逆向指标，≥50% 标警示色
           var warn = '';
           if (/炸板/.test(x.k)) {
