@@ -336,7 +336,7 @@ console.log('\n场景 12 · 量价「跑了但选 0 只」时两处判据一致'
 }
 
 /* ════════════════ 场景 13 · 次日验证监控项（P1-3） ════════════════ */
-console.log('\n场景 13 · 次日验证：无 verify.at=今天 → 报未跑');
+console.log('\n场景 13 · 次日验证：跑没跑仍要监控，但不上顶部状态区');
 {
   const scr = [{ date: '2026-09-14', list: [1] }];
   let h = makeHarness(T(2026, 9, 14, 21, 50), {
@@ -355,8 +355,11 @@ console.log('\n场景 13 · 次日验证：无 verify.at=今天 → 报未跑');
   });
   h.ctx.renderHealth();
   ok(!/验证未跑/.test(h.els['healthBar'].innerHTML), '有 verify.at=今天 → 不报「验证未跑」');
-  const vrRow = h.ctx.srcMeta(null || { morning: {}, evening: {} }).filter(s => s.name === '次日验证')[0];
-  eq(vrRow.state, 'ok', 'srcMeta 次日验证行判为 ok');
+  // 顶部状态区**不再列**「次日验证」（2026-09-15 用户要求去掉：它没有生成时间，
+  // 混在一排时间戳里没信息量）。但它"跑没跑"的监控必须留着 —— 否则这项任务
+  // 悄悄停掉就没人发现了。
+  eq(h.ctx.srcMeta(null).filter(s => s.name === '次日验证').length, 0, 'srcMeta 不含「次日验证」行');
+  eq(h.ctx.verifyRanToday(), true, 'verifyRanToday 仍可用（renderHealth 依赖它）');
 }
 
 /* ════════════════ 场景 14 · srcMeta 以「选中的日期」为基准 ════════════════ */
@@ -372,7 +375,7 @@ console.log('\n场景 14 · 顶部状态区必须跟着选中的日期走（休�
   let m = h.ctx.srcMeta(null);
   eq(row(m, '早报').state, 'close', '休市日 → 早报 close（旧版会显示"待更新"）');
   eq(row(m, '量价选股').state, 'close', '休市日 → 量价 close');
-  eq(row(m, '次日验证').state, 'close', '休市日 → 次日验证 close');
+  eq(row(m, '投资日历').state, 'close', '休市日 → 日历 close');
   eq(h.ctx.metaTime(row(m, '早报')), '', '休市日不显示计划时间');
 
   // ② 历史交易日但没数据（2026-09-08 周二）→ miss，且不留"计划时间"

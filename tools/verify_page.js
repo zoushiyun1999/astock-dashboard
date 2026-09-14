@@ -123,6 +123,8 @@ async function main() {
   report.defaultDateInput = await ev("(document.getElementById('datePick')||{}).value");
   report.headerDate = await ev("document.getElementById('hdDate').textContent");
   report.headerWeek = await ev("document.getElementById('hdWeek').textContent");
+  report.headerStatusText = await ev("((document.getElementById('hdStatus')||{}).innerText||'').replace(/\\n/g,' ')");
+  report.footerText = await ev("(document.getElementById('ftUpd')||{}).textContent");
   report.healthBar = await ev("(document.getElementById('healthBar')||{}).textContent");
   report.footer = await ev("(document.getElementById('ftUpd')||{}).textContent");
 

@@ -159,13 +159,15 @@
   /** 汇总各数据源的时间与状态（供顶部状态区与 footer 使用）
    *  ⚠️ 基准是 **curDate（当前选中的日期）**，不是"今天"：
    *     翻到 09-08 时顶部必须显示 09-08 的状态，否则与页面上的日期自相矛盾。
-   *  状态：ok=已生成 / wait=待更新(今天还没到点) / miss=未更新 / close=休市 */
+   *  状态：ok=已生成 / wait=待更新(今天还没到点) / miss=未更新 / close=休市
+   *  ⚠️ **这里故意不列「次日验证」**（2026-09-15 用户要求去掉）：
+   *     它是后台脚本、没有"生成时间"可展示，混在一排时间戳里只剩一个光秃秃的词，没信息量。
+   *     它是否真的跑过仍由 renderHealth() 监控（`🔬验证未跑` 只在异常时出现）。 */
   function srcMeta(r, forDate) {
     var ds = forDate || curDate;
     var isToday = ds === todayYmd();
     var trading = isTradingDay(ds);
     var sc = screenerOn(ds);
-    var ver = verifyOn(ds);
     var cal = (window.REPORTS && window.REPORTS.calendar) || [];
     var mo = r && r.morning, ev = r && r.evening;
     var now = new Date();
@@ -195,7 +197,6 @@
       row('早报', mo && mo.generatedAt, !!(mo && mo.generatedAt), DUE.morning, '8:30'),
       row('晚报', ev && ev.generatedAt, !!(ev && ev.generatedAt), DUE.evening, '21:00'),
       row('量价选股', sc && sc.runAt, !!sc, DUE.screener, '15:10'),
-      row('次日验证', '', ver, DUE.verify, '21:30'),
       {
         name: '投资日历',
         time: (cal.length && cal[0].publishedAt) ? cal[0].publishedAt.slice(5, 10) : '',
@@ -811,9 +812,10 @@
   var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
 
   /* header 状态行里用的**短名**（与 Tab 名一致）：
-     「量价选股 / 次日验证 / 投资日历」三个全称会让这一行在 430px 手机上折成两行，
-     白白多占 18px。footer 仍用全称（那是完整句子，短名会读不通）。 */
-  var SHORT_NAME = { '量价选股': '量价', '次日验证': '验证', '投资日历': '日历' };
+     「量价选股 / 投资日历」这两个全称会让状态行在 430px 手机上折成两行，白白多占 18px。
+     footer 仍用全称（那是完整句子，短名会读不通）。
+     注：次日验证已不再进状态行（见 srcMeta 的注释），所以这里不需要它的映射。 */
+  var SHORT_NAME = { '量价选股': '量价', '投资日历': '日历' };
 
   /* ── 日期导航：每个 Tab 内的日期条按钮都走这三个入口 ── */
   function clampDate(ds) {
