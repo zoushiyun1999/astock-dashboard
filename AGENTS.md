@@ -8,7 +8,10 @@
 - **根目录**：`D:\workbuddylujing\A股推送系统`（2026-09-12 从隔离区恢复而来；隔离区原件 `D:\WorkBuddy_删除隔离_2026-09-10\WorkBuddy\A股推送系统\` 只读保留）
 - **创建日期**：2026-08-31
 - **一句话目标**：每天自动把分散的股票信息整合成早报/晚报/选股/验证四类简报，输出到网页看板（5 个 Tab：早报 / 晚报 / 短线 / 量价 / 日历）。
-- **当前运行模式**：**本地模式**。定时任务在本机跑，数据提交到本地 git；**未配置 `.gh-token`，云端推送自动跳过**。微信通知已于 2026-09-12 下线。
+- **当前运行模式**：**本地生成 + 云端发布**（2026-09-14 恢复上云）。定时任务在本机跑，数据经
+  `bash tools/publish.sh` 提交本地 git，再由 `post-commit` 钩子调 `tools/gh_push_api.js` 推送 GitHub，
+  Actions 自动发布到 `https://asx.79zl.cn/`（约 1 分钟）。项目根 `.gh-token` 已配置；
+  **缺失或权限不足时自动降级为「仅本地提交」**，不阻塞任务。微信通知已于 2026-09-12 下线。
 
 ## 技术栈
 
@@ -103,6 +106,18 @@ docs/              方案与说明文档
     `node tools/_test_health_logic.js`。这三个函数是**时间相关**的判定，读代码极容易看走眼
     （周末还无法用真实页面触发，因为休市会短路）。测试脚本从 `app.js` 里按大括号配对抽出真函数，
     用假 Date / 假 DOM 跑断言 —— 抽出失败会直接报错，不会静默跳过。
+21. **GitHub Pages 的 Source 必须是 `GitHub Actions`，不能选 `Deploy from a branch`**：仓库根没有
+    `index.html`，站点根是 `dashboard/` 子目录，而 `publish.yml` 用的正是
+    `actions/upload-pages-artifact (path: dashboard)` + `actions/deploy-pages`。
+    选分支模式会去发布仓库根，首页必 404。Pages 设置入口是**仓库级**
+    `Settings → Pages`（账号级那个「已验证的域名」页与本站无关，别走错）。
+    另注：**DNS 早已配好**（`asx` CNAME → `zoushiyun1999.github.io`，阿里云云解析），
+    站点 404 时先查 Pages 而不是 DNS。
+22. **`.gh-token` 必须是 fine-grained PAT，且同时具备两个权限**：`Contents: Read and write`
+    （传数据/图片）与 `Workflows: Read and write`（推 `.github/workflows/` 的更新）。
+    只给 Contents 会在 `POST /git/blobs` 报 **403 `Resource not accessible by personal access token`**；
+    缺 Workflows 则会在建 tree/commit 阶段被拒。**注意 `.gh-token` 会被 `gh_push_api.js` 主动拦截，
+    但 `publish.sh` 失败后不要重复跑**（会多刷一次版本号），直接 `node tools/gh_push_api.js` 重试即可。
 
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 

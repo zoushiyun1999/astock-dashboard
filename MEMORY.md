@@ -7,8 +7,13 @@
 ## 项目快照
 
 - **项目名**：A股推送系统
-- **当前阶段**：**2026-09-12 已从删除隔离区完整恢复，当前运行在本地**（`D:\workbuddylujing\A股推送系统\`；隔离区原件保留在 `D:\WorkBuddy_删除隔离_2026-09-10\`）。6 个定时任务已重建并全部 ACTIVE；**微信推送通知功能已按用户要求下线**；GitHub 推送待用户确认仓库状态后再启用（暂无 `.gh-token`，post-commit 会安全跳过）。
-- **最后更新**：2026-09-12
+- **当前阶段**：**2026-09-14 已恢复云端发布**。看板线上地址 `https://asx.79zl.cn/` 恢复正常，数据与本地同步。
+  - 恢复路径：2026-09-12 从删除隔离区重建（`D:\workbuddylujing\A股推送系统\`；原件只读保留在 `D:\WorkBuddy_删除隔离_2026-09-10\`）
+    → 2026-09-14 用户手动启用仓库 Pages + 配置新 fine-grained PAT（`.gh-token`）→ 首次带 PAT 推送成功（远端 commit `e16f5e69`）。
+  - 6 个定时任务已重建并全部 ACTIVE；**微信推送通知功能已按用户要求下线**。
+  - ⚠️ 恢复期间线上曾因 `has_pages` 未启用 + 无令牌而**两个地址全 404 达 4 天**（09-10~09-14），
+    表现是「域名解析正常但 GitHub 回 Site not found」——**404 时先查 Pages，别去动 DNS**（DNS 一直是好的）。
+- **最后更新**：2026-09-14
 - **系统总览文档**：`docs/系统功能与运行逻辑总览.md`（2026-09-10 建）。改动系统前先读它——含 5 个 Tab 的数据结构、全景数据流、6 个定时任务、前端三层防缓存、工具脚本清单、「想改 X 改哪里」对照表、硬性规则。比本文件更完整的对照基线。
 
 > ⚠️ **看板实际是 5 个 Tab**（早报 / 晚报 / 短线 / 量价 / 日历），不是"四类简报"。另外「短线」Tab 的数据源是 `evening.明日关注`（即板块热点），**不是** `watchlist` 字段。
@@ -48,6 +53,8 @@
 | 2026-09-12 | 09-02/09-03 的 `generatedAt` 依 `logs/` 记载据实补回 | 缺字段是历史遗留，但运行时间在日志里有据可查，补回后可让体检输出变得可信 | 一直留着 3 条 WARN |
 | 2026-09-12 | `一键推送GitHub.bat` 归档到 `tools/legacy-sandbox/`；删除空的 `.gh-config/` | 该脚本依赖 `gh` CLI + git 协议，本机访问不了 github.com，且仓库早已存在，放在根目录会误导 | 留在根目录 |
 | 2026-09-10 | 云化方案暂缓，先出「系统总览文档」作为规划基线 | 用户决定"先不做"；没有准确的现状描述，规划容易基于过时记忆。盘点中发现多处 MEMORY.md 描述已过时（Tab 数、任务数） | 直接开工云化改造 |
+| 2026-09-14 | 恢复云端发布：Pages Source 定为 **`GitHub Actions`** + 新建 fine-grained PAT（Contents / Workflows 双写） | 站点根在 `dashboard/` 子目录，分支部署必然 404；发布链路本就是 `upload-pages-artifact(path: dashboard)` + `deploy-pages` | 继续纯本地模式（线上永久停在恢复前，用户拿不到可用链接） |
+| 2026-09-14 | 站点 404 的诊断顺序定为「**先 Pages，后 DNS**」 | 实测 DNS 一直是对的（`asx` CNAME → `zoushiyun1999.github.io`，阿里云云解析），而 `has_pages` 才是真因。顺序搞反会白折腾 DNS | 见到 404 就去改 DNS 记录 |
 
 ## 环境事实
 
@@ -132,6 +139,15 @@ bash tools/publish.sh "说明"
 - **`git add -A` 会把 `.gh-token` 带进提交**：已在 `.gitignore` 加规则，但 API 推送不受 `.gitignore` 约束，必须靠 `gh_push_api.js` 的 `DENY_FILE` 兜底（曾真的差点推上公网，被 GitHub 以 422 Secret detected 拦下）。
 - **任何临时产物必须放项目根并加 `tmp_` 前缀**（2026-09-12 加 `.gitignore` 规则 `tmp_*` 根治）。此前 `tmp_*` 被提交进 HEAD，只靠 `gh_push_api.js` 的 `SKIP_PATH` 在推送层兜底；现在本地 `git add` 层面即屏蔽。**特别警告**：Edge headless 做前端截图时 `--user-data-dir` **绝不能指向仓库根**——profile 里的 `Cookies` 被浏览器占用，会让 `git add -A` 直接 `fatal: adding files failed`，整条发布链路中断（2026-09-12 晚报任务实际踩到）。
 - **结束 Edge 无头进程要用 PowerShell `Stop-Process -Name msedge -Force`**：`taskkill //F //IM msedge.exe` 返回后进程仍在（残留导致临时目录删不掉）。
+- **GitHub Pages 返回 "Site not found" ≠ DNS 有问题**（2026-09-14 实测）：`nslookup asx.79zl.cn` 已正确返回
+  GitHub Pages 的官方 IP，说明 DNS 全对；真因是**仓库 Pages 未启用**。404 排查顺序应为
+  ① `GET /repos/{o}/{r}` 看 `has_pages` ② 仓库 `Settings → Pages` 的 Source 是否 = `GitHub Actions` ③ 最后才看 DNS。
+- **`publish.yml` 的 build 步骤会现场跑 `node tools/export_json.js`**，因此线上 `version.json` 的 `exportedAt`
+  **是 CI runner 的生成时刻、且是 UTC 时区**（本地 +8）。这是判断「刚才有没有真的部署过」最快的信号：
+  如实测 `2026-09-14 05:53` = 北京时间 13:53，与用户手动触发时间精确吻合。
+- **`.gh-token` 权限不足的报错很长但很有指向性**：`POST /repos/.../git/blobs → HTTP 403
+  Resource not accessible by personal access token` = Contents 只读。而读操作（`/git/ref`、`/git/commits`、`/git/trees`）
+  会**照常成功**，所以别被"能读"骗过去——能读不等于能写。
 
 ## 用户偏好与纠正
 
@@ -166,7 +182,11 @@ bash tools/publish.sh "说明"
 ## 待办 / 悬置问题
 
 - [x] ~~轮换 Server酱 key~~ — 2026-09-12 推送通知功能已整体下线，不再需要（若日后恢复推送则仍需用新 key）
-- [ ] **撤销/重建 GitHub PAT**（曾明文发在对话里）→ 只有在启用 GitHub 推送时才需要；写入项目根 `.gh-token`（**40 位 hex 纯单行、无空格换行**），仓库名硬编码在 `tools/gh_push_api.js` 的 `DEFAULT_REPO`
+- [x] ~~撤销/重建 GitHub PAT~~ → **2026-09-14 完成**：新 fine-grained PAT 写入项目根 `.gh-token`（`github_pat_` 前缀、单行、无空格换行），
+      仓库名硬编码在 `tools/gh_push_api.js` 的 `DEFAULT_REPO`。
+      **权限要求（踩过）**：`Contents: Read and write` + `Workflows: Read and write`，两个都要；
+      只给 Contents 会在 `POST /git/blobs` 报 403 `Resource not accessible by personal access token`。
+      ⚠️ 该 token 曾在本轮对话明文出现，**建议择机 Regenerate**（换新后同步覆盖 `.gh-token`）。
 - [ ] ⚠️ **晚报任务（每日 21:00）提示词缺「非交易日 / 今天未发布」的显式跳过兜底**：原文只说"不是今天则带 `?t=` 复抓再判定"，**没写判定后怎么办**（早报那版有明确的跳过分支）。周末与节假日存在写入脏数据的风险，待用户决定是否补一句
 - [ ] 在 `config/site.json` 填 `domainExpiry`（79zl.cn 到期日）以启用到期提醒
 - [ ] `verify.gain` 口径改造：增加 `buyRet` / `openPct` / `locked` 字段，前端改显示实盘口径（当前显示的是市场涨跌幅，会让用户误以为跟着买能赚）
