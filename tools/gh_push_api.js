@@ -9,7 +9,7 @@
  *   · 真增量：本地算 git blob sha 与远端 tree 比对，只上传有变化的文件
  *   · 自动删除：远端有、本地没有的文件会被删掉（可用 --no-delete 关闭）
  *   · 二进制走 blobs API，文本内联进 tree
- *   · 跳过 .git / .workbuddy / .gh-config / node_modules / logs
+ *   · 跳过 .git / .workbuddy / .gh-config / node_modules / logs / docs/归档
  *
  * 用法：
  *   node tools/gh_push_api.js                        # 全量比对（默认仓库见 config/site.json）
@@ -27,7 +27,9 @@ const API = 'https://api.github.com';
 const DEFAULT_REPO = 'zoushiyun1999/astock-dashboard';
 
 // logs/ 也跳过：里面记着本机绝对路径与历史部署链接，公开仓库没必要暴露
-const SKIP_DIR = new Set(['.git', '.workbuddy', '.gh-config', 'node_modules', '.github-cache', 'logs']);
+// 归档/ 跳过：docs/归档 是本地历史资料（旧项目源码、诊断报告、工作日志），
+//             含主机名/会话 ID 等本机信息，只留本地，不进公开仓库。
+const SKIP_DIR = new Set(['.git', '.workbuddy', '.gh-config', 'node_modules', '.github-cache', 'logs', '归档']);
 
 // 安全闸门：这些文件绝不外传。注意 .gitignore 对 API 推送无效，必须在这里硬拦。
 const DENY_FILE = /^(\.gh-token|\.env|\.env\..*|.*\.token|.*\.pem|.*\.key|.*\.p12|id_rsa.*)$/i;
