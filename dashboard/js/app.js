@@ -159,15 +159,32 @@
     if (!r) return emptyCard('晚报待更新', '每天 21:00 自动生成，先看看早报吧');
     var html = '';
 
-    // 博主观点（每位博主的核心思路总结，放在最前）
+    // 博主观点（每位博主一张折叠卡，默认收起 —— 博主会增加，全展开会占满整屏）
     if (r['博主观点'] && r['博主观点'].length) {
-      var views = r['博主观点'].map(function (v) {
-        return '<div class="blogger-view">' +
-          '<div class="blogger-name">🗣️ ' + esc(v.author) + '</div>' +
-          '<div class="blogger-text">' + esc(v.view) + '</div>' +
+      var bvList = r['博主观点'];
+      var views = bvList.map(function (v, i) {
+        var text = String(v.view || '');
+        // 摘要取首行并截断：首行通常是博主的结论句，信息密度最高
+        var firstLine = text.split('\n')[0];
+        var peek = firstLine.length > 46 ? firstLine.slice(0, 46) + '…' : firstLine;
+        if (peek === text) peek = '';       // 短到首行就是全文，不必重复显示摘要
+        return '<div class="blogger-view" id="bv-' + i + '">' +
+          '<button class="blogger-head" type="button" onclick="toggleBlogger(' + i + ')" aria-expanded="false" aria-controls="bv-body-' + i + '">' +
+          '<span class="blogger-arrow">▶</span>' +
+          '<span class="blogger-name">🗣️ ' + esc(v.author) + '</span>' +
+          '<span class="blogger-meta">' + text.length + ' 字</span>' +
+          '</button>' +
+          (peek ? '<div class="blogger-peek" id="bv-peek-' + i + '">' + esc(peek) + '</div>' : '') +
+          '<div class="blogger-body" id="bv-body-' + i + '">' +
+          '<div class="blogger-text">' + esc(text) + '</div>' +
+          '</div>' +
           '</div>';
       }).join('');
-      html += sectionCard('博主观点', 'violet', views);
+      var tools = '<div class="bv-tools">' +
+        '<span class="bv-count">共 ' + bvList.length + ' 位博主 · 点击标题展开</span>' +
+        '<button class="bv-toggle" id="bvToggle" type="button" onclick="toggleAllBlogger()">展开全部</button>' +
+        '</div>';
+      html += sectionCard('博主观点', 'violet', tools + views);
     }
 
     // 大盘概况
@@ -443,6 +460,62 @@
     document.body.style.overflow = 'hidden';
   };
 
+  /* ── 博主观点折叠 ──
+     博主会持续增加，正文人均 400~700 字，默认全部展开会把晚报顶到几千像素。
+     默认收起（只留标题 + 字数 + 首行摘要），点标题展开单篇，或一键展开全部。 */
+  function setBloggerOpen(view, open) {
+    var body = view.querySelector('.blogger-body');
+    var head = view.querySelector('.blogger-head');
+    if (!body) return;
+    view.classList.toggle('open', open);
+    if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    // max-height 过渡需要落到真实像素，写死一个大值会让收起动画变慢，故展开后临时放开
+    if (open) {
+      body.style.maxHeight = body.scrollHeight + 'px';
+      // 图片/字体回流后高度可能变化，动画结束后清掉内联值，交给 CSS 的 4000px 兜底
+      setTimeout(function () { body.style.maxHeight = ''; }, 300);
+    } else {
+      // 先固定当前高度，下一帧归零，否则从 0 到 0 没有过渡
+      body.style.maxHeight = body.scrollHeight + 'px';
+      requestAnimationFrame(function () { body.style.maxHeight = ''; });
+    }
+  }
+
+  window.toggleBlogger = function (i) {
+    var view = document.getElementById('bv-' + i);
+    if (!view) return;
+    setBloggerOpen(view, !view.classList.contains('open'));
+    syncBloggerToggle();
+  };
+
+  window.toggleAllBlogger = function () {
+    var box = document.getElementById('sec-evening');
+    if (!box) return;
+    var views = box.querySelectorAll('.blogger-view');
+    if (!views.length) return;
+    // 只要还有收起的，就全部展开；全展开时再点则全部收起
+    var anyClosed = false;
+    for (var i = 0; i < views.length; i++) {
+      if (!views[i].classList.contains('open')) { anyClosed = true; break; }
+    }
+    for (var j = 0; j < views.length; j++) setBloggerOpen(views[j], anyClosed);
+    syncBloggerToggle();
+  };
+
+  // 总开关文案跟随实际状态（用户单独展开/收起某一位时也要同步）
+  function syncBloggerToggle() {
+    var btn = document.getElementById('bvToggle');
+    var box = document.getElementById('sec-evening');
+    if (!btn || !box) return;
+    var views = box.querySelectorAll('.blogger-view');
+    if (!views.length) return;
+    var openCount = 0;
+    for (var i = 0; i < views.length; i++) {
+      if (views[i].classList.contains('open')) openCount++;
+    }
+    btn.textContent = openCount === views.length ? '收起全部' : '展开全部';
+  }
+
   window.closeCalViewer = function () {
     var v = document.getElementById('calViewer');
     if (v) v.parentNode.removeChild(v);
@@ -714,6 +787,14 @@
 
   // 窗口尺寸变化时重新定位滑动下划线
   window.addEventListener('resize', positionGlider);
+
+  // 博主正文里有 emoji / 长段落，字体回流会让 scrollHeight 变化，展开态重新校准高度
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      var open = document.querySelectorAll('.blogger-view.open .blogger-body');
+      for (var i = 0; i < open.length; i++) open[i].style.maxHeight = open[i].scrollHeight + 'px';
+    });
+  }
 
   // 新数据轮询：先探测 version.json（几百字节），key 变了才拉全量，避免每分钟下载 170KB
   (function () {
