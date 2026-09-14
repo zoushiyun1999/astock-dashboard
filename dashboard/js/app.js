@@ -368,12 +368,16 @@
       '<div class="cal-title">' + esc(c.title) + '</div>' +
       '<div class="cal-meta">发布于 ' + esc(c.publishedAt) + (c.url ? ' · <a href="' + esc(c.url) + '" target="_blank">查看原文 ↗</a>' : '') + '</div></div>';
 
-    // 原图展示
+    // 原图展示 —— 2008×17040 的长图直接铺开会占 2800px 高、且压缩到 1/6 完全不可读。
+    // 改为默认折叠：只留一个入口，点击后全屏看，可双指缩放。
     if (c.images && c.images.length) {
-      var imgs = c.images.map(function (src) {
-        return '<img src="' + esc(src) + '" class="cal-img" alt="投资日历原图">';
-      }).join('');
-      html += sectionCard('日历原图', '#e03131', '<div class="cal-gallery">' + imgs + '</div>');
+      var total = c.images.length;
+      html += sectionCard('日历原图', '#e03131',
+        '<div class="wl-desc">博主原始长图，共 ' + total + ' 张 · 点击放大查看</div>' +
+        '<button class="cal-open" onclick="openCalViewer()">' +
+        '<span>🖼</span><span>查看日历原图</span>' +
+        '<span class="cal-open-meta">（长图 · ' + total + ' 张）</span>' +
+        '</button>');
     }
 
     // 事件列表
@@ -389,6 +393,42 @@
     calIdx = i;
     document.getElementById('sec-calendar').innerHTML = renderCalendar();
   };
+
+  /* ── 日历原图全屏查看器 ── */
+  window.openCalViewer = function () {
+    var cal = (window.REPORTS && window.REPORTS.calendar) || [];
+    var c = cal[calIdx];
+    if (!c || !c.images || !c.images.length) return;
+    var old = document.getElementById('calViewer');
+    if (old) old.parentNode.removeChild(old);
+
+    var v = document.createElement('div');
+    v.id = 'calViewer';
+    v.className = 'cal-viewer';
+    v.innerHTML =
+      '<div class="cal-viewer-bar">' +
+      '<span>' + esc(c.title || '投资日历原图') + '</span>' +
+      '<span class="cv-spacer"></span>' +
+      '<button onclick="closeCalViewer()">关闭</button>' +
+      '</div>' +
+      '<div class="cal-viewer-body">' +
+      c.images.map(function (src) { return '<img src="' + esc(src) + '" alt="投资日历原图">'; }).join('') +
+      '</div>' +
+      '<div class="cal-viewer-tip">双指缩放可放大查看细节</div>';
+    document.body.appendChild(v);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeCalViewer = function () {
+    var v = document.getElementById('calViewer');
+    if (v) v.parentNode.removeChild(v);
+    document.body.style.overflow = '';
+  };
+
+  // Esc 关闭全屏看图
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') window.closeCalViewer();
+  });
 
   /* ── 量价选股渲染（技术面条件筛选，按涨幅降序） ── */
   function scRowsHtml(arr) {
@@ -452,10 +492,31 @@
       picker +
       '<div class="wl-desc">全市场 ' + esc(sc.count) + ' 只符合条件 · 更新于 ' + esc(sc.runAt) + '</div>' +
       '<div class="sc-conds">' + cond + '</div>' +
-      '<div class="sc-wrap"><table class="sc-table">' +
+      // 9 列在手机上会溢出屏外，加提示 + 右侧渐隐遮罩，告诉用户"右边还有"
+      '<div class="sc-hint" id="scHint">← 左右滑动查看全部 9 项指标</div>' +
+      '<div class="sc-scroller">' +
+      '<div class="sc-wrap" id="scWrap"><table class="sc-table">' +
       '<thead><tr><th>#</th><th>名称</th><th>板块</th><th>涨幅</th><th>换手</th><th>市值</th><th>量比</th><th>连阳</th><th>均线上</th></tr></thead>' +
-      '<tbody>' + scRowsHtml(rows) + '</tbody></table></div>') +
+      '<tbody>' + scRowsHtml(rows) + '</tbody></table></div>' +
+      '<span class="sc-fade" id="scFade"></span></div>') +
       '<div class="card tip"><span class="ico">📌</span><span>纯技术面条件筛选，不含题材与基本面判断，仅供盯盘参考，不构成投资建议。带板块标签的为当日主线/博主看好个股。</span></div>';
+  }
+
+  /** 量价表横向滚动：滚到底/不需要滚动时收起渐隐遮罩与提示 */
+  function bindScHint() {
+    var wrap = document.getElementById('scWrap');
+    var fade = document.getElementById('scFade');
+    var hint = document.getElementById('scHint');
+    if (!wrap || !fade) return;
+    function upd() {
+      var more = wrap.scrollWidth - wrap.clientWidth > 4;
+      var atEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 4;
+      fade.classList.toggle('off', !more || atEnd);
+      if (hint) hint.classList.toggle('off', !more);
+    }
+    upd();
+    wrap.addEventListener('scroll', upd, { passive: true });
+    window.addEventListener('resize', upd);
   }
 
   var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
@@ -552,6 +613,7 @@
     updateDateNav();
     positionGlider();
     updateEveningDot();
+    bindScHint();
   }
 
   /** 数据健康条：基于各源最后更新时间，提示是否异常 */
@@ -612,6 +674,8 @@
   // 滚动位置按 Tab 持久化
   window.addEventListener('scroll', function () {
     try { localStorage.setItem('scroll_' + curTab, String(window.scrollY)); } catch (e) {}
+    // 滚动后收起 header 的品牌/日期区，把屏幕让给内容（Tab 栏本身是 sticky，会留在顶部）
+    document.body.classList.toggle('scrolled', window.scrollY > 60);
   }, { passive: true });
 
   // 窗口尺寸变化时重新定位滑动下划线
