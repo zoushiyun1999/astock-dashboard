@@ -25,6 +25,15 @@
  *      现在改为「解析失败即中止」，并在写回前加「规模校验 + 乐观锁」（见 loadDataStrict / saveDataSafe）。
  *      并发场景：晚报 21:00、次日验证 21:30 改同一个文件，若晚报超时到 21:30 之后就会互相覆盖。
  *
+ * v5 修正（2026-09-14 21:30，口径改造）：
+ *   7. **verify 增写实盘口径字段**：open / openPct / buyRet / netRet / locked / basis。
+ *      旧 gain（验证日收盘涨跌幅，相对昨收）不是实盘收益，保留仅为向后兼容。
+ *      回补 6 个交易日 66 条实测：平均低开 -1.71%，开盘买入毛 +0.80%，扣费净 +0.60% —— 
+ *      与"平均高开 3.78%"的旧结论方向相反（旧结论样本有偏）。前端应优先显示 buyRet/netRet。
+ *   8. **一字板必须剔除**：开=高=低=收 → locked=true，netRet 置 null。
+ *   9. 行情池再补**北交所** `m:0+t:81+s:2048`（全池 5913 只，原沪深主板仅 3487）。
+ *   10. `at` 必须是实际取行情那一天；晚报的「明日」若尚无行情则不标，留待下一交易日。
+ *
  * 休市日维护：每年初用 westock data_trade_calendar(year=下一年) 刷新 config/trade_holidays.json。
  *
  * 用法：node tools/verify.js            # 跑验证并写回 data.js
@@ -145,20 +154,26 @@ async function getJSON(url, retry = 2) {
  *  导致早报/晚报推荐的创业板(300/301)、科创板(688) 股**永远拿不到行情**，
  *  findQuote 返回 null 后静默跳过 → 这些推荐永久无 verify 标记、不计入胜率。
  *  已实测 09-03 芒果超媒(300413)、09-04 皖仪科技(688600)、09-09 本川智能(300964)、
- *  南大环境(300864) 共 4 条受影响。现补齐创业板(t:80)与科创板(t:23)。 */
+ *  南大环境(300864) 共 4 条受影响。现补齐创业板(t:80)与科创板(t:23)。
+ *  同日再补北交所(m:0+t:81+s:2048) → 全池 5913 只。 */
 async function fetchQuotes() {
   const map = {};
-  const fsStr = 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23';
+  const fsStr = 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048';
   let total = Infinity;
-  for (let pn = 1; pn <= 80; pn++) {
+  for (let pn = 1; pn <= 90; pn++) {
     const url = `${EM}/api/qt/clist/get?pn=${pn}&pz=100&po=1&np=1&fltt=2&invt=2&fid=f3` +
-      `&fs=${encodeURIComponent(fsStr)}&fields=f12,f14,f3,f2`;
+      `&fs=${encodeURIComponent(fsStr)}&fields=f12,f14,f3,f2,f15,f16,f17,f18`;
     const j = await getJSON(url);
     const dj = (j && j.data) || {};
     const d = dj.diff || [];
     if (dj.total && typeof dj.total === 'number') total = dj.total;
     if (!d.length) break;
-    d.forEach(function (x) { map[x.f12] = { name: x.f14, gain: x.f3, price: x.f2 }; });
+    d.forEach(function (x) {
+      map[x.f12] = {
+        name: x.f14, gain: x.f3, price: x.f2,
+        high: x.f15, low: x.f16, open: x.f17, prevClose: x.f18
+      };
+    });
     if (Object.keys(map).length >= total) break; // 已拉全市场
   }
   return map;
@@ -181,7 +196,7 @@ function isTradingDay(d) {
   return list.indexOf(fmtDate(d)) < 0;
 }
 
-/** 按 name 优先、code 兜底匹配行情，返回 {code,name,gain,price} 或 null */
+/** 按 name 优先、code 兜底匹配行情，返回 {code,name,gain,price,open,high,low,prevClose} 或 null */
 function findQuote(quotes, p) {
   if (!p) return null;
   // 1. 先按名称精确匹配（name 是博主原文，最可靠；顺带纠正可能的错误 code）
@@ -189,25 +204,66 @@ function findQuote(quotes, p) {
   if (key) {
     for (const k in quotes) {
       if (quotes[k].name === key) {
-        return { code: k, name: quotes[k].name, gain: quotes[k].gain, price: quotes[k].price };
+        return {
+          code: k, name: quotes[k].name, gain: quotes[k].gain, price: quotes[k].price,
+          open: quotes[k].open, high: quotes[k].high, low: quotes[k].low, prevClose: quotes[k].prevClose
+        };
       }
     }
   }
   // 2. 名称匹配不到，回退 code 匹配（覆盖个股改名：旧名失效但 code 仍有效）
   if (p.code && quotes[p.code]) {
     const q = quotes[p.code];
-    return { code: p.code, name: q.name, gain: q.gain, price: q.price };
+    return {
+      code: p.code, name: q.name, gain: q.gain, price: q.price,
+      open: q.open, high: q.high, low: q.low, prevClose: q.prevClose
+    };
   }
   return null;
 }
 
-/** 生成 verify 标记：停牌/无数据 → hit=null；正常 → gain/hit */
+/** 手续费口径：双边佣金万五 + 卖出印花千五 */
+const FEE_BUY = 0.0005, FEE_SELL = 0.0005, STAMP = 0.001;
+
+function num(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
+
+/** 生成 verify 标记。
+ *  实盘口径：开盘买入 → 收盘卖出（早报=当日开盘买；晚报=次一交易日开盘买）。
+ *  · 停牌/无数据 → hit=null，只留价格
+ *  · 一字板（开=高=低=收）→ locked=true，netRet=null，统计时必须剔除
+ *  · gain/hit 为旧口径（验证日收盘涨跌幅，相对昨收），保留仅为向后兼容 */
 function markVerify(q, at) {
-  const gain = (typeof q.gain === 'number' && isFinite(q.gain)) ? q.gain : null;
-  if (gain === null) {
-    return { gain: null, hit: null, price: (typeof q.price === 'number' ? q.price : null), code: q.code, note: '停牌/无数据', at: at };
+  const closeGain = num(q.gain);
+  const open = num(q.open), close = num(q.close), high = num(q.high), low = num(q.low);
+  const prevClose = num(q.prevClose);
+
+  if (open === null || close === null || !open) {
+    return {
+      gain: closeGain, hit: null, price: (typeof q.price === 'number' ? q.price : null),
+      code: q.code, note: '停牌/无数据', at: at
+    };
   }
-  return { gain: gain, hit: gain > 0, price: (typeof q.price === 'number' ? q.price : null), code: q.code, at: at };
+
+  const openPct = prevClose ? +((open / prevClose - 1) * 100).toFixed(2) : null;
+  const buyRet = +((close / open - 1) * 100).toFixed(2);
+  const netRet = +(((close / open) * (1 - FEE_SELL - STAMP) / (1 + FEE_BUY) - 1) * 100).toFixed(2);
+  const locked = (high !== null && low !== null && open === high && high === low && low === close);
+
+  const v = {
+    gain: closeGain,
+    hit: closeGain !== null ? closeGain > 0 : null,
+    price: (typeof q.price === 'number' ? q.price : close),
+    code: q.code,
+    at: at,
+    open: open,
+    openPct: openPct,
+    buyRet: buyRet,
+    netRet: locked ? null : netRet,
+    locked: locked,
+    basis: 'open-to-close'
+  };
+  if (locked) v.note = '一字板·无法买入（剔除）';
+  return v;
 }
 
 (async function main() {

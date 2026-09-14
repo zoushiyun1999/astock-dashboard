@@ -473,10 +473,13 @@ body.scrolled header { padding-bottom: var(--sp-3); border-radius: 0 0 16px 16px
 .sc-empty { text-align: center; color: var(--ink-3); padding: var(--sp-5) 0; }
 
 /* ── 短线关注：验证标记 / 重复推荐 ── */
+/* 推荐效果标记 —— 属「价格语义」，用价格层红涨绿跌（不是风险层的蓝/红） */
 .st-verify { display: inline-block; font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: 6px; padding: 1px 6px; margin-left: 5px; }
-.st-verify.v-up { color: var(--risk-low); background: var(--risk-low-bg); }
-.st-verify.v-down { color: var(--risk-high); background: var(--risk-high-bg); }
+.st-verify.v-up { color: var(--up-ink); background: var(--up-soft); }
+.st-verify.v-down { color: var(--down-ink); background: var(--down-soft); }
 .st-verify.v-none { color: var(--risk-none); background: var(--risk-none-bg); font-weight: var(--fw-medium); }
+/* 旧口径（收盘涨跌幅，相对昨收）—— 弱化显示，避免被误读为实盘收益 */
+.st-verify .v-old { opacity: .65; font-weight: var(--fw-medium); margin-left: 3px; }
 .hot-rep { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 .hot-rep li {
   display: inline-flex; align-items: center; gap: 7px; padding: 5px 6px 5px 11px;

@@ -249,15 +249,29 @@
     return '<span class="st-badge ' + cls + '">' + esc(status) + '</span>';
   }
 
-  /** 推荐股次日/当日实际表现标记 */
+  /** 推荐股实际表现标记
+   *  主口径 = 实盘：开盘买入 → 收盘卖出（buyRet / netRet），与博主推荐口径一致
+   *  次口径 = 旧 gain（验证日收盘涨跌幅，相对昨收），弱化显示并明确标注 [收盘]，
+   *           避免被误读为"跟着开盘买能赚这么多"。
+   *  一字板（locked）单独标记，不显示收益（买不进，收益无意义）。 */
   function verifyBadge(v) {
     if (!v) return '';
     if (v.hit === null || v.hit === undefined) {
       return '<span class="st-verify v-none">⏸ 停牌</span>';
     }
-    var cls = v.hit ? 'v-up' : 'v-down';
-    return '<span class="st-verify ' + cls + '">' + (v.hit ? '✅' : '❌') +
-      (v.gain > 0 ? '+' : '') + esc(v.gain) + '%</span>';
+    if (v.locked) {
+      return '<span class="st-verify v-none">🔒 一字板·未成交</span>';
+    }
+    // 实盘口径优先；老数据无 buyRet 时回退旧口径
+    var hasLive = (typeof v.buyRet === 'number' && isFinite(v.buyRet));
+    var r = hasLive ? v.buyRet : v.gain;
+    var cls = r > 0 ? 'v-up' : r < 0 ? 'v-down' : 'v-none';
+    var txt = (r > 0 ? '+' : '') + r + '%';
+    var html = '<span class="st-verify ' + cls + '">' + (r > 0 ? '✅' : r < 0 ? '❌' : '➖') + txt + '</span>';
+    if (hasLive && typeof v.gain === 'number' && isFinite(v.gain)) {
+      html += '<span class="st-verify v-old-note v-old">' + (v.gain > 0 ? '+' : '') + v.gain + '%</span>';
+    }
+    return html;
   }
 
   function todayLi(x) {
