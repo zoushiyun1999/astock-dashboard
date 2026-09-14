@@ -27,7 +27,8 @@
   - 日历图压缩（Pillow，缺依赖自动跳过）：`python tools/optimize_calendar.py`
   - 日历孤儿图回收（`bump_version.sh` 已串联）：`node tools/clean_calendar.js`
   - 本地预览：`python -m http.server <高位端口> --bind 127.0.0.1`（在 `dashboard/` 下）
-  - 微信通知相关命令（`notify_digest.js` / `notify.js`）**已于 2026-09-12 下线**，调用即空转，勿再使用
+  - 微信通知**已于 2026-09-12 下线、2026-09-14 删除脚本**（`tools/notify.js` / `tools/notify_digest.js`
+    已不存在）。任何任务 prompt 都不要再引入；日后若真要恢复推送，从 git 历史（2026-09-14 之前的提交）取回这两个文件
 
 ## 工作约束
 
@@ -99,13 +100,15 @@ docs/              方案与说明文档
     与「管线没跑」（真问题）。定期跑一次，或出问题时先跑它。
 19. **「任务几点该有数据」只在 `dashboard/js/app.js` 的 `DUE` 常量里定义一次**。
     改任何任务时间时：先改 `DUE`，再改页面上出现的文案，最后跑
-    `node tools/_test_health_logic.js`（17 项断言，会捕获阈值/判定写错）。
+    `node tools/test_health_logic.js`（17 项断言，会捕获阈值/判定写错）。
     历史教训：`srcMeta()` 和 `renderHealth()` 曾各写一套阈值，量价任务后移到 15:10 时
     只改了一处，健康条每天 15:00 起误报「量价未更新」。
 20. **改 `srcMeta()` / `renderHealth()` / `updateEveningDot()` 必须跑**
-    `node tools/_test_health_logic.js`。这三个函数是**时间相关**的判定，读代码极容易看走眼
+    `node tools/test_health_logic.js`。这三个函数是**时间相关**的判定，读代码极容易看走眼
     （周末还无法用真实页面触发，因为休市会短路）。测试脚本从 `app.js` 里按大括号配对抽出真函数，
     用假 Date / 假 DOM 跑断言 —— 抽出失败会直接报错，不会静默跳过。
+    ⚠️ **不要把它改回 `_test_` 前缀**：`gh_push_api.js` 的 `SKIP_PATH` 正则会命中 `_test*`，
+    把它当本地临时文件跳过 → 脚本永远上不了云端仓库（2026-09-14 踩过，改名即修）。
 21. **GitHub Pages 的 Source 必须是 `GitHub Actions`，不能选 `Deploy from a branch`**：仓库根没有
     `index.html`，站点根是 `dashboard/` 子目录，而 `publish.yml` 用的正是
     `actions/upload-pages-artifact (path: dashboard)` + `actions/deploy-pages`。
@@ -118,6 +121,14 @@ docs/              方案与说明文档
     只给 Contents 会在 `POST /git/blobs` 报 **403 `Resource not accessible by personal access token`**；
     缺 Workflows 则会在建 tree/commit 阶段被拒。**注意 `.gh-token` 会被 `gh_push_api.js` 主动拦截，
     但 `publish.sh` 失败后不要重复跑**（会多刷一次版本号），直接 `node tools/gh_push_api.js` 重试即可。
+23. **删文件禁止用「一条命令带多个路径」的 `git rm`**（尤其路径里含中文）。2026-09-14 实测：一条
+    `git rm -q "tools/notify.js" … "docs/网页看板-….md"` 执行后，`tools/` 与 `docs/` 下**未被指定的
+    20 多个文件也一起从工作区消失了**（index 里仍在，`git checkout HEAD -- tools docs` 可完整恢复，
+    无永久损失）。安全做法：
+    ① 优先用 Node 删除并**先 dry-run 打印命中列表**：
+    `node -e 'const fs=require("fs");const hit=…;console.log(hit);hit.forEach(f=>fs.unlinkSync(f))'`；
+    ② 或用 shell 通配符/目录名（尽量不出现中文路径参数）；③ **一次只删一个路径**，删完立刻
+    `ls <目录>` + `git status --short` 核对数量。**任何批量删除后必须核对「删除条数 == 预期条数」**。
 
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 

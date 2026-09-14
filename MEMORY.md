@@ -23,7 +23,9 @@
 - **恢复方式**：`robocopy /E` 从隔离区**复制**到新目录（非移动）。隔离区原件 35M / 102 次提交 / `.gh-token` / `tmp_*` **一字未动**（已核验时间戳与工作区状态均与会话前一致）。
 - **排除项**：5 个 `tmp_*` 残留（约 400KB，9/10 中断现场）+ 旧 `.gh-token`（凭据一律不复用）。
 - **验收通过**：`node tools/health_check.js` 0 错误 / 6 条历史告警；`bash tools/bump_version.sh` 四步全过（版本号→sort_reports→sync_holidays→export_json）；本地 `http://127.0.0.1:8899/` 真实渲染，5 个 Tab 全部有内容、历史日期可回看（09-01~09-10；其中 **09-10 无晚报**、**09-08 全天缺失**，均属历史事实而非恢复故障）。
-- **通知功能已下线**：`tools/notify.js` 与 `tools/notify_digest.js` 顶部各加了 2 行禁用开关（打印提示后 `process.exit(0)`），**原始实现完整保留在其下方，删掉那两行即可恢复**。因此 Server酱 key 不再需要提供。
+- **通知功能**：09-12 先加禁用开关 → **09-14 连脚本一起删除**（`tools/notify.js` / `tools/notify_digest.js` 已不存在）。
+  因此 Server酱 key 不再需要提供。日后若真要恢复推送：`git show 7e47e2a:tools/notify.js` 可从历史取回
+  （`7e47e2a` 是删除前的最后一个版本，另 `notify_digest.js` 同）。
 - **验证手段（可复用）**：本机 Edge 无头模式 + DevTools 协议（Node 22 自带 `fetch` + 全局 `WebSocket`，零依赖）真实渲染并逐 Tab 截图；脚本 `verify_page.js` 放在本次恢复会话目录。比装 `agent-browser`（需下 ~500MB Chromium，且本机访问 github.com 不通）可靠得多。
 - ⚠️ **踩坑**：恢复前 8899 端口上已有一个**今天 18:42 启动的残留 `python -m http.server`**，它在服务隔离区的旧副本，会把请求抢走（Windows 下 `http.server` 开了 `SO_REUSEADDR`，多进程可绑同一端口，命中不确定）。表现为「磁盘文件已是新版、浏览器却拿到旧版」。已停掉该残留进程，改为单一服务进程。
 - ⚠️ **git 状态**：`tmp_*` 原本是被提交进 HEAD 的（提交 `16701ef`/`f324111` 为"临时验证"所留），所以按用户要求排除后，工作区会显示这些文件为「已删除」——预期行为，首次 `publish.sh` 会自动带上这个清理提交。
@@ -55,6 +57,9 @@
 | 2026-09-10 | 云化方案暂缓，先出「系统总览文档」作为规划基线 | 用户决定"先不做"；没有准确的现状描述，规划容易基于过时记忆。盘点中发现多处 MEMORY.md 描述已过时（Tab 数、任务数） | 直接开工云化改造 |
 | 2026-09-14 | 恢复云端发布：Pages Source 定为 **`GitHub Actions`** + 新建 fine-grained PAT（Contents / Workflows 双写） | 站点根在 `dashboard/` 子目录，分支部署必然 404；发布链路本就是 `upload-pages-artifact(path: dashboard)` + `deploy-pages` | 继续纯本地模式（线上永久停在恢复前，用户拿不到可用链接） |
 | 2026-09-14 | 站点 404 的诊断顺序定为「**先 Pages，后 DNS**」 | 实测 DNS 一直是对的（`asx` CNAME → `zoushiyun1999.github.io`，阿里云云解析），而 `has_pages` 才是真因。顺序搞反会白折腾 DNS | 见到 404 就去改 DNS 记录 |
+| 2026-09-14 | **清理 11 个文件**：死代码（`notify.js`/`notify_digest.js`）+ 归档遗物（`tools/legacy-sandbox/` 整目录）+ 5 份过时/重复文档（`GitHub上线清单.md`、`测试指南.md`、`网页看板-运行逻辑与数据来源.md`、`ui_report.docx`、`复盘_20260907.html`） | 反复删除/恢复期间积累的**误导性**冗余：`网页看板-…` 与 `系统功能与运行逻辑总览.md` 内容重叠且后者更全、已是基线；`GitHub上线清单` 还在教 gh CLI 登录与"配微信密钥"；通知已下线而脚本留着让人以为功能还在 | 全部保留（占地方、误导后来者） |
+| 2026-09-14 | `tools/_test_health_logic.js` → **`tools/test_health_logic.js`**（去掉 `_test` 前缀） | `gh_push_api.js` 的 `SKIP_PATH` 正则命中 `_test*`，把它当本地临时文件跳过 → 这个被 AGENTS 规则 20 强制要求运行的测试脚本**从未上过云端仓库** | 改 `SKIP_PATH` 正则（影响面更大，且 `_test` 前缀理应留给本地临时件） |
+| 2026-09-14 | **禁止用「一条命令多路径」的 `git rm`**（含中文路径时尤甚）；批量删除改用 Node + 先 dry-run | 实测一次 `git rm -q <11 个路径>` 后，`tools/` 与 `docs/` 下**未被指定的 20 多个文件也一起从工作区消失**（index 未丢，`git checkout HEAD -- tools docs` 完整恢复，零损失）。已写入 AGENTS 硬性规则 23 | 继续用 git rm 并靠运气 |
 
 ## 环境事实
 
@@ -68,7 +73,7 @@
   `__pycache__/*.pyc`）一起提交了。所以：改脚本期间若碰到整点/半点，先把自己的状态提交掉，
   或者事后用 `git log --stat` 复核被卷进去的文件。`.gitignore` 已加 `tmp_*` 与 `__pycache__/`。
 - 默认分支 `main`，无 git remote（推送走 API，仓库名硬编码在 `tools/gh_push_api.js`）。
-- Server酱推送通知**已于 2026-09-12 按用户要求整体下线**（`tools/notify.js` / `tools/notify_digest.js` 顶部加强制开关，调用即空转退出 0）。因此 Server酱 SendKey **不再需要提供、也不再需要轮换**；GitHub Secrets 里若还有旧 `SCT_KEY`，可一并删除。
+- Server酱推送通知**已于 2026-09-12 下线、2026-09-14 删除脚本**（`tools/notify.js` / `tools/notify_digest.js` 已不复存在，需用时从 `7e47e2a` 取回）。因此 Server酱 SendKey **不再需要提供、也不再需要轮换**；GitHub Secrets 里若还有旧 `SCT_KEY`，可一并删除。
 
 ## 云端发布链路（2026-09-10 落地，改动前必读）
 
@@ -91,9 +96,10 @@ bash tools/publish.sh "说明"
 > 微信通知环节已于同日从链路中移除。
 
 - **入口 URL 只存在于 `config/site.json`**：`siteUrl`（主）、`fallbackUrl`（备用）、`domainExpiry`。
-- `tools/notify.js` 内置硬拦截：正文/标题出现 `e2b.*`、`sandbox.cloudstudio.club`、`3000-<hex>` 直接 fail。
+- ~~`tools/notify.js` 内置硬拦截：正文/标题出现 `e2b.*`、`sandbox.cloudstudio.club`、`3000-<hex>` 直接 fail~~
+  （该脚本已于 2026-09-14 删除；同类黑名单仍保留在 `tools/health_site.js` 的 `BAN` 正则里）
 - `tools/health_site.js`：三入口探活 + 数据新鲜度（>26h 且交易日告警）+ 域名到期提醒 + 全仓硬编码链接扫描。本地与 `.github/workflows/health.yml` 各跑一次。
-- `tools/publish_and_notify.sh` **已废弃**（2026-09-12 通知下线后无调用方）。保留仅作参考，勿在新任务里使用。
+- `tools/publish_and_notify.sh` **已于 2026-09-12 删除**（通知下线后无调用方）。
 - `tools/gh_push_api.js` 的三重防护：`SKIP_DIR` / `DENY_FILE`（`.gh-token`、`.env`、`*.key`）+ `DENY_CONTENT`（内容里扫 token 特征）+ 删除保护（文件数骤减时拒绝删远端）。
 - `dashboard/CNAME` = `asx.79zl.cn`（GitHub Pages 自定义域名，必须与 `config/site.json` 的 host 一致）。
 
@@ -162,7 +168,7 @@ bash tools/publish.sh "说明"
 | 数据源清单 | `config/sources.json` | 4 个源，含发布规律 |
 | 站点 URL 单一事实源 | `config/site.json` | `siteUrl` = https://asx.79zl.cn/ ；`fallbackUrl` = https://zoushiyun1999.github.io/astock-dashboard/ |
 | GitHub 仓库 | `zoushiyun1999/astock-dashboard`（Public） | 推送用 PAT，存项目根 `.gh-token`（已 gitignore，勿删勿外传） |
-| Server酱 key | ~~项目根 `.sct-key` / GitHub Secrets `SCT_KEY`~~ **2026-09-12 起不再使用**（推送通知已下线） | 注意：`tools/notify.js` 实际**只读环境变量 `SCT_KEY`**，项目里并**不存在** `.sct-key` 文件（文档与实现不一致）。日后恢复推送需提供新 key 并轮换 |
+| Server酱 key | ~~`.sct-key` / GitHub Secrets `SCT_KEY`~~ **2026-09-12 起不再使用，2026-09-14 相关脚本一并删除** | 历史遗留：`tools/notify.js` 当年实际**只读环境变量 `SCT_KEY`**，项目里从来不存在 `.sct-key` 文件（文档与实现不一致）。日后若恢复推送需**重建脚本** + 新 key |
 | 自建定时任务的 prompt 全文 | `automation_update` 的 view 模式 | 5 个任务 ID 见下 |
 
 ### 6 个定时任务（2026-09-12 重建，全部 ACTIVE）
