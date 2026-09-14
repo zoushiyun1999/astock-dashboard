@@ -5,12 +5,16 @@
   "siteUrl": "https://asx.79zl.cn/",
   "mirrorUrl": "",
   "fallbackUrl": "https://zoushiyun1999.github.io/astock-dashboard/",
-  "domainExpiry": "",
+  "repo": "zoushiyun1999/astock-dashboard",
+  "tokenExpiry": "2026-12-13",
+  "domainExpiry": "2027-09-01",
 
   "_字段注释": {
     "siteUrl": "主入口，自有域名，例如 https://asx.example.com/ 。DNS CNAME 指向主站，换托管商只改 DNS，此值不变。",
     "mirrorUrl": "国内镜像（EdgeOne Pages / Cloudflare Pages 固定域名），主站不可用时切换。",
     "fallbackUrl": "GitHub Pages 官方地址 https://<user>.github.io/<repo>/ ，与主站互为独立。",
-    "domainExpiry": "域名到期日 YYYY-MM-DD，到期前 30/7 天自动推送续费提醒。"
+    "repo": "GitHub 仓库 owner/name，供 health_site.js 的令牌探活使用。",
+    "tokenExpiry": "GitHub PAT 到期日 YYYY-MM-DD（**是日期不是密钥值，可入库**）。health_site.js 探活 + 剩余 <30 天报 ERROR。",
+    "domainExpiry": "域名到期日 YYYY-MM-DD，到期前 30/7 天自动推送续费提醒。2026-09-15 由用户提供：79zl.cn 到期 2027-09-01，同日填入激活 health_site.js 的 domainExpiry 逻辑（此前该段为死代码）。"
   }
 }

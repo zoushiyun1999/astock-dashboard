@@ -27,7 +27,7 @@
       "time": "15:10",
       "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=15;BYMINUTE=10",
       "status": "ACTIVE",
-      "writes": "reports[].screener + dashboard/screener.js",
+      "writes": "dashboard/screener.js（独立文件；data.screener 已停写，前端走 window.SCREENER）",
       "_note": "原为 14:30，2026-09-12 后移 —— 14:30 仍在盘中，行情未定，入选数会被系统性压低"
     },
     {

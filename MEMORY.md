@@ -212,7 +212,12 @@ bash tools/publish.sh "说明"
       - **权限要求（踩过）**：`Contents: Read and write` + `Workflows: Read and write`，**两个都要**。
         只给 Contents 会在 `POST /git/blobs` 报 **403 `Resource not accessible by personal access token`**；
         而 `/git/ref`、`/git/commits`、`/git/trees` 的**读操作会照常成功** —— 别被"能读"骗过去。
-      - **有效期 2026-12-13（90 天）**。⚠️ 到期前 30 天务必换新，否则定时任务会静默降级为「仅本地提交」、线上停更且无告警。
+      - **有效期 2026-12-13（90 天）**。⚠️ 到期前 30 天务必换新。**纠偏（2026-09-14）：真实行为是
+        「硬失败 `exit 1`（但同样无通知）」，不是「静默降级为仅本地提交」** —— `publish.sh` 只在
+        `.gh-token` **文件不存在**时降级；token 存在但过期/吊销时，`gh_push_api.js` 会在
+        `POST /git/blobs`(:152) 或 `POST /git/trees`(:185) 处 401 → `fail()` exit 1 → `publish.sh:79` exit 1。
+        现已由 `tools/health_site.js` 的 `tokenCheck()`（探活 + 读 `config/site.json` 的 `tokenExpiry`，
+        剩余 <30 天报 ERROR）机器探测，不再靠人肉记。
       - 💡 **反直觉结论**：在对话里发 token，轮换多少次新 token 都会再次明文出现，**轮换本身不是有效缓解**。
         真正有效的是「**设 90 天过期** + 最小权限（只授权这 1 个仓库 + 仅 Contents/Workflows 两项）」——
         泄露的影响因此有界、有时限。以后不必为"发过 token"反复重生成。

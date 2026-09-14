@@ -24,7 +24,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
+const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
+const ops = require('./lib/ops');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -86,7 +87,7 @@ function passBase(x) {
   if (typeof x.f3 !== 'number' || !isFinite(x.f3)) return false;
   if (typeof x.f8 !== 'number' || typeof x.f10 !== 'number' || typeof x.f20 !== 'number') return false;
   if (isBadName(x.f14)) return false;
-  if (/^(300|301|688|8|4)/.test(x.f12)) return false;   // 排除创业板/科创板/北交所
+  if (/^(300|301|688|8|4|92)/.test(x.f12)) return false;   // 排除创业板/科创板/北交所（含 920x，P2-9）
   const cap = x.f20 / 1e8;
   return x.f3 >= CFG.gainMin && x.f3 <= CFG.gainMax &&
     x.f8 >= CFG.turnMin && x.f8 <= CFG.turnMax &&
@@ -152,7 +153,18 @@ async function fillAvg(s) {
   });
   s.aboveRate = tot ? +(1 - under / tot).toFixed(3) : 0;
   s.closeAbove = last > lastAvg;
+  s.avgOK = tot > 0;      // 分时数据是否真的取到（用于 P2-7 显式 warnings，区分"网络失败"与"真没票"）
   return s;
+}
+
+/** 汇总网络部分失败信息（P2-7）：把"因网络抖动系统性偏少"与"真的只有 N 只"区分开。
+ *  返回 string[]，写进 result.warnings 并在控制台 ⚠️ 打印。纯函数，便于单测（测试 #12）。 */
+function buildWarnings(o) {
+  o = o || {};
+  const w = [];
+  if (o.yangFail > 0) w.push('K线获取失败 ' + o.yangFail + ' 只');
+  if (o.avgFail > 0) w.push('分时获取失败 ' + o.avgFail + ' 只');
+  return w;
 }
 
 /**
@@ -246,75 +258,13 @@ function fmtDate(d) {
 function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * 数据读写的两道安全阀（2026-09-12 审计后补，与 verify.js 同源）
+ * 数据读写的两道安全阀（2026-09-12 审计后补；2026-09-14 抽为公共模块）
  *
- * 原实现 `try { eval(...) } catch (e) {}` 会在 data.js 解析失败时静默吞掉异常，
- * 让 data 退化成空结构，随后被原样写回 —— 会一次性清空全部 reports 与 calendar。
- * 现在：解析失败即中止；写回前做「规模校验 + 乐观锁」。
+ * loadDataStrict + saveDataSafe 已收敛到 tools/lib/data_store.js，与 verify.js /
+ * check_codes.js / sort_reports.js 共用同一份（规则 16）。此处不再保留本地副本。
  * ───────────────────────────────────────────────────────────────────────────── */
 
-/** 中止执行：抛出可被顶层识别的中断信号。
- *  不用 process.exit(1) —— Windows 下管道输出是异步的，直接退出可能把报错信息截断。
- *  消息由顶层 catch 统一打印。 */
-function abort(msg) {
-  const e = new Error(msg);
-  e.__abort = true;
-  throw e;
-}
-
-/** 严格读取 data.js。任何异常都直接中止，绝不静默降级成空结构。
- *  reports0 / calendar0 是**读取当时的规模快照**（数字，不是引用）——调用方后面会就地改
- *  data，用引用做基线会被自己的修改带跑，安全阀就永远不触发。 */
-function loadDataStrict(file) {
-  if (!fs.existsSync(file)) {
-    return { data: { updatedAt: '', calendar: [], reports: [] }, src: '', reports0: 0, calendar0: 0 };
-  }
-  const src = fs.readFileSync(file, 'utf8');
-  if (!/window\.REPORTS\s*=/.test(src)) {
-    abort('✗ data.js 里找不到 `window.REPORTS =`，为避免清空看板历史，本次中止（未写任何文件）');
-  }
-  let data;
-  try {
-    // 用 vm 而不是 new Function/eval：语法错误会准确指到 data.js 自己的行号
-    const ctx = { window: {} };
-    vm.runInNewContext(src, ctx, { filename: 'dashboard/data.js' });
-    data = ctx.window.REPORTS;
-  } catch (e) {
-    abort('✗ data.js 解析失败：' + e.message +
-      '\n  为避免清空看板历史，本次中止（未写任何文件）。请先人工确认 dashboard/data.js 是否被写坏。');
-  }
-  if (!data || !Array.isArray(data.reports)) {
-    abort('✗ data.js 结构异常（reports 不是数组），本次中止（未写任何文件）');
-  }
-  return {
-    data: data,
-    src: src,
-    reports0: data.reports.length,
-    calendar0: (data.calendar || []).length
-  };
-}
-
-/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
-function saveDataSafe(file, next, baseline, srcAtRead) {
-  const afterN = (next.reports || []).length;
-  const afterC = (next.calendar || []).length;
-
-  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
-    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
-      '），为避免清空看板历史，拒绝写回');
-  }
-  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
-    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
-  }
-  const nowSrc = fs.readFileSync(file, 'utf8');
-  if (nowSrc !== srcAtRead) {
-    abort('✗ data.js 在本次运行期间被其他任务修改过（很可能是早报/晚报并发写），' +
-      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
-  }
-  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
-}
-
-(async function main() {
+async function main() {
   const now = new Date();
   console.log('▶ 量价选股开始 ' + fmtTime(now));
   const market = await fetchMarket();
@@ -324,13 +274,13 @@ function saveDataSafe(file, next, baseline, srcAtRead) {
   console.log('  ① 基础条件命中：' + base.length + ' 只');
 
   await mapLimit(base, 4, fillYang);
-  const yangErr = base.filter(function (s) { return !s.yang; }).length;
+  const yangErr = base.filter(function (s) { return !s.yangOK; }).length;
   const yangPass = base.filter(function (s) { return s.yang >= CFG.yangMin; });
   console.log('  ② 连续收阳 ≥' + CFG.yangMin + ' 天：' + yangPass.length + ' 只' +
     (yangErr ? '（K线获取失败 ' + yangErr + ' 只，已重试）' : ''));
 
   await mapLimit(yangPass, 4, fillAvg);
-  const avgErr = yangPass.filter(function (s) { return !s.aboveRate; }).length;
+  const avgErr = yangPass.filter(function (s) { return !s.avgOK; }).length;
   if (avgErr) console.log('     （分时获取失败 ' + avgErr + ' 只）');
   let final = yangPass.filter(function (s) {
     return s.aboveRate >= CFG.aboveRateMin && s.closeAbove;
@@ -375,8 +325,12 @@ function saveDataSafe(file, next, baseline, srcAtRead) {
       aboveAvg: '≥' + Math.round(CFG.aboveRateMin * 100) + '% 时间在分时均线上',
       exclude: '创业板/科创板/北交所/ST/退市'
     },
-    list: list
+    list: list,
+    warnings: buildWarnings({ yangFail: yangErr, avgFail: avgErr })
   };
+  result.warnings.forEach(function (w) {
+    console.warn('  ⚠️ ' + w + '（入选数可能因网络抖动偏少，不等于"真的只有 N 只符合"）');
+  });
 
   console.log('  ✔ 最终入选 ' + list.length + ' 只');
   list.slice(0, 10).forEach(function (s, i) {
@@ -387,25 +341,86 @@ function saveDataSafe(file, next, baseline, srcAtRead) {
 
   if (process.argv.includes('--dry')) { console.log('（--dry 模式，未写入文件）'); return; }
 
-  // ── 历史归档：screener 改为数组（最新在前），保留最近 HISTORY_MAX 期 ──
-  // 旧版是单对象且每天覆盖写，导致历史选股全部丢失、无法做策略有效性验证。
+  // ── 历史归档：最新在前，保留最近 HISTORY_MAX 期 ──
+  // 唯一历史源 = dashboard/screener.js（SC_FILE）。停写 data.screener 后，若种子仍从
+  // data.screener 读，每次运行历史都会被重置为仅当日 → 历史全丢（P2-4(b) 关键坑）。
+  // loadScreenerFile(): 返回 Array = 正常历史；null = 文件缺失（首次运行，合法空历史）；
+  //   抛 __abort = 文件损坏 → 顶层 catch 记 ALERT 并 exit 2（**绝不静默当首次运行覆盖历史**）。
   const HISTORY_MAX = 10;
+  const seed = loadScreenerFile();
   let hist = [];
-  const old = data.screener;
-  if (Array.isArray(old)) hist = old.slice();
-  else if (old && old.list) hist = [old];   // 兼容旧的单对象结构
+  if (Array.isArray(seed)) hist = seed.slice();
+  else if (seed && seed.list) hist = [seed];   // 兼容旧的单对象结构
   const dup = hist.findIndex(function (x) { return x && x.date === result.date; });
   if (dup >= 0) hist[dup] = result; else hist.unshift(result);   // 同一天重复运行则覆盖当天那期
   hist = hist.slice(0, HISTORY_MAX);
-  data.screener = hist;
 
+  // 停写 data.screener：前端走 window.SCREENER（index.html 先加载 screener.js），
+  // data.screener 那份永不生效，却随 data.js/data.json 每次全量传输（P2-4）。
+  delete data.screener;
   data.updatedAt = fmtTime(now);
-  saveDataSafe(DATA, data, loaded.data, loaded.src);
+  saveDataSafe(DATA, data, loaded, loaded.src);   // data.js 不再含 screener；reports/calendar 不变
   fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(hist, null, 2) + ';\n');
-  console.log('  ✔ 已写入 dashboard/data.js 的 screener 字段 + 独立文件 dashboard/screener.js');
+  console.log('  ✔ 已写回 dashboard/data.js（已移除 data.screener）+ 独立文件 dashboard/screener.js');
   console.log('  ✔ 历史归档 ' + hist.length + ' 期：' + hist.map(function (x) { return x.date + '(' + x.count + ')'; }).join(' → '));
-})().catch(function (e) {
-  if (e && e.__abort) { console.error(e.message); process.exitCode = 1; return; }  // 安全阀主动中止
-  console.error('✗ 未预期错误：' + ((e && e.stack) || e));
-  process.exitCode = 1;
-});
+}
+
+/** 局部中止（与共享 abort() 同构，仅补 link 指向 screener.js）。返回异常由调用处 throw。 */
+function abortSc(msg) {
+  const e = new Error(msg);
+  e.__abort = true;
+  e.link = 'dashboard/screener.js';
+  return e;
+}
+
+/** 从独立文件 dashboard/screener.js 读取历史（停写 data.screener 后的唯一历史源）。
+ *  · 返回 Array = 正常历史（旧的单对象结构会被包成 [obj]）；
+ *  · 返回 null  = **文件不存在** → 首次运行，合法空历史；
+ *  · 抛 __abort = 文件存在但**解析失败 / 结构非法** → 绝不能当作首次运行，
+ *      否则会把已有的 N 期历史静默覆盖成 1 期（P2-4(b) 静默数据丢失）。
+ *  顶层 catch 识别 __abort → 记 ALERT(result=ABORT) + exit 2。
+ *  可选参数 file：仅测试用（默认 SC_FILE）。 */
+function loadScreenerFile(file) {
+  const f = file || SC_FILE;
+  if (!fs.existsSync(f)) return null;                       // 文件缺失 = 首次运行，合法
+  let raw;
+  try {
+    raw = fs.readFileSync(f, 'utf8');
+  } catch (e) {
+    throw abortSc('读取 dashboard/screener.js 失败（拒绝当作首次运行覆盖历史）：' + e.message);
+  }
+  let parsed;
+  try {
+    const ctx = { window: {} };
+    require('vm').runInNewContext(raw, ctx, { filename: 'dashboard/screener.js' });
+    parsed = ctx.window.SCREENER;
+  } catch (e) {
+    throw abortSc('dashboard/screener.js 解析失败（拒绝当作首次运行覆盖历史）：' + e.message);
+  }
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && parsed.list) return [parsed];               // 兼容旧的单对象结构
+  throw abortSc('dashboard/screener.js 结构非法：window.SCREENER 缺失或既非数组也无 list（拒绝当作首次运行覆盖历史）');
+}
+
+if (require.main === module) {
+  main().catch(function (e) {
+    if (e && e.__abort) {                                    // 安全阀主动中止 → 写告警 + 退出码 2
+      console.error(e.message);
+      try {
+        ops.appendAlert({ stage: 'screener', result: 'ABORT', script: 'screener.js',
+          detail: e.message, fix: '确认 data.js 是否被写坏 / 是否有并发写；稍后重跑本任务', link: e.link || 'dashboard/data.js' });
+      } catch (_) { /* 忽略 */ }
+      process.exitCode = 2;
+      return;
+    }
+    console.error('✗ 未预期错误：' + ((e && e.stack) || e));
+    try {
+      ops.appendAlert({ stage: 'screener', result: 'OPEN', script: 'screener.js',
+        detail: String((e && e.stack) || e), fix: '检查网络与行情接口；稍后重跑本任务', link: 'dashboard/data.js' });
+    } catch (_) { /* 忽略 */ }
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, saveDataSafe, main };
+

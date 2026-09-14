@@ -23,7 +23,15 @@ MSG="$(git log -1 --pretty=%s)"
 WIN_ROOT="$(cd "$ROOT" && pwd -W)"
 
 echo "[publish-hook] 同步到 GitHub：$MSG"
-GITHUB_TOKEN="$(cat "$TOKEN_FILE")" "$NODE_BIN" "$WIN_ROOT/tools/gh_push_api.js" -m "$MSG" \
-  || echo "[publish-hook] 同步失败（不影响本地提交）"
+if GITHUB_TOKEN="$(cat "$TOKEN_FILE")" "$NODE_BIN" "$WIN_ROOT/tools/gh_push_api.js" -m "$MSG"; then
+  :
+else
+  # 规则 10：钩子失败不得阻塞本地提交（退出码始终 0）；但「只提交不发布」通道只有这一次
+  # 推送机会（P1-5 的唯一静默丢失窗口），失败必须留痕到 logs/ALERT.md。
+  echo "[publish-hook] 同步失败（不影响本地提交）"
+  "$NODE_BIN" "$WIN_ROOT/tools/lib/ops.js" --append-alert --stage "post-commit钩子" --script "post-commit" \
+    --result OPEN --detail "post-commit 钩子推送失败：$MSG" \
+    --fix "检查 .gh-token / 网络；直接 node tools/gh_push_api.js 重试" --link "logs/ALERT.md" || true
+fi
 
 exit 0

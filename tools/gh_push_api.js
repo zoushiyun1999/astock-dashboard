@@ -21,15 +21,19 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const vm = require('vm');
+const ops = require('./lib/ops');
 
 const ROOT = path.join(__dirname, '..');
+const SC_FILE = path.join(ROOT, 'dashboard', 'screener.js');   // P2-4 后 screener 的真源
 const API = 'https://api.github.com';
 const DEFAULT_REPO = 'zoushiyun1999/astock-dashboard';
 
 // logs/ 也跳过：里面记着本机绝对路径与历史部署链接，公开仓库没必要暴露
 // 归档/ 跳过：docs/归档 是本地历史资料（旧项目源码、诊断报告、工作日志），
 //             含主机名/会话 ID 等本机信息，只留本地，不进公开仓库。
-const SKIP_DIR = new Set(['.git', '.workbuddy', '.gh-config', 'node_modules', '.github-cache', 'logs', '归档']);
+// backups/ 跳过：tools/backups 是本地数据快照（回滚保险），只留本地（规则 25 双闸门）。
+const SKIP_DIR = new Set(['.git', '.workbuddy', '.gh-config', 'node_modules', '.github-cache', 'logs', '归档', 'backups']);
 
 // 安全闸门：这些文件绝不外传。注意 .gitignore 对 API 推送无效，必须在这里硬拦。
 const DENY_FILE = /^(\.gh-token|\.env|\.env\..*|.*\.token|.*\.pem|.*\.key|.*\.p12|id_rsa.*)$/i;
@@ -43,7 +47,18 @@ const DENY_CONTENT = [
 ];
 const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.docx', '.xlsx']);
 
-function fail(msg) { console.error('✗ ' + msg); process.exit(1); }
+function fail(msg) {
+  console.error('✗ ' + msg);
+  // 通知已下线（规则 18）：失败必须落到 logs/ALERT.md，否则静默丢失（P1-5）。
+  try {
+    ops.appendAlert({
+      stage: 'gh_push_api', result: 'OPEN', script: 'gh_push_api.js',
+      detail: String(msg), fix: '检查 .gh-token 有效性 / 网络 / data.js 规模，详见上方日志',
+      link: 'logs/ALERT.md'
+    });
+  } catch (e) { /* 告警写入失败不叠加故障 */ }
+  process.exit(1);
+}
 
 const TOKEN = (function () {
   if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN.trim();
@@ -75,6 +90,94 @@ async function api(method, urlPath, body) {
 function gitBlobSha(buf) {
   const header = Buffer.from('blob ' + buf.length + '\0', 'utf8');
   return crypto.createHash('sha1').update(Buffer.concat([header, buf])).digest('hex');
+}
+
+/** 解析 `window.REPORTS = {...}` 源码，取回对象（用于读取条数）。 */
+function parseDataSrc(src) {
+  const ctx = { window: {} };
+  vm.runInNewContext(src, ctx, { filename: 'dashboard/data.js' });
+  const d = ctx.window.REPORTS;
+  if (!d || typeof d !== 'object') return null;
+  return d;
+}
+
+/** 取远端 dashboard/data.js 的 blob 内容并解析出条数（主闸基线）。
+ *  远端无该文件 / 取 blob 失败 → 返回 null（调用方据此跳过闸门，不阻断正常发布）。 */
+async function remoteDataCounts(repo, blobSha) {
+  if (!blobSha) return null;
+  const blob = await api('GET', '/repos/' + repo + '/git/blobs/' + blobSha);
+  if (!blob || !blob.content) return null;
+  const buf = blob.encoding === 'base64'
+    ? Buffer.from(blob.content, 'base64')
+    : Buffer.from(blob.content, 'utf8');
+  const d = parseDataSrc(buf.toString('utf8'));
+  if (!d) return null;
+  const counts = ops.readCounts(d);
+  counts.hasScreener = ops.hasScreenerField(d);   // 远端(=基线) data.js 是否仍带 screener 字段
+  return counts;
+}
+
+/** 取远端 dashboard/screener.js 的 blob 内容并解析出**历史期数**（主闸基线）。
+ *  该文件约 24KB，与已拉取的 216KB data.js 相比成本可忽略；两边口径必须与副闸一致。
+ *  远端无该文件 / 取 blob 失败 / 解析失败 → 返回 null（调用方据此跳过，不阻断正常发布）。 */
+async function remoteScreenerCount(repo, blobSha) {
+  if (!blobSha) return null;
+  const blob = await api('GET', '/repos/' + repo + '/git/blobs/' + blobSha);
+  if (!blob || !blob.content) return null;
+  const buf = blob.encoding === 'base64'
+    ? Buffer.from(blob.content, 'base64')
+    : Buffer.from(blob.content, 'utf8');
+  return ops.screenerHistCount(buf.toString('utf8'));
+}
+
+/** 主闸：比较远端（公开现状）与本地待推版本的 data.js 规模，骤减则拦截。
+ *  口径与副闸（publish.sh 比 HEAD）完全一致：同一纯函数 scaleBlocked + 同一阈值 SCALE。
+ *  screener 迁移豁免**显式且会消失**：仅当**远端(基线)仍带 screener 字段**且**本地已删该字段**
+ *  （即一次「首次迁移」）才豁免；其余照常 scaleBlocked。判据看**远端(基线)侧**，
+ *  否则本地一旦删字段就永不复原 → 会**永久拦截**量价任务。
+ *  取远端 blob 失败则**跳过闸门**（宁可无闸也不阻断正常发布）。 */
+async function scaleGate(repo, remoteMap) {
+  if (process.env.ASTOCK_SKIP_GATE === '1') {
+    console.log('⚠️ ASTOCK_SKIP_GATE=1 → 已旁路规模骤减主闸（紧急模式）');
+    return;
+  }
+  try {
+    const localSrc = fs.readFileSync(path.join(ROOT, 'dashboard', 'data.js'), 'utf8');
+    const localD = parseDataSrc(localSrc);
+    if (!localD) { console.log('· 主闸：本地 data.js 结构异常，跳过规模闸门'); return; }
+    const localC = ops.readCounts(localD);
+    const remoteC = await remoteDataCounts(repo, remoteMap['dashboard/data.js']);
+    if (!remoteC) {
+      console.log('· 主闸：远端尚无 data.js 或无法取回内容 → 跳过规模闸门');
+      return;
+    }
+    const blocked = [];
+    ['reports', 'calendar'].forEach(function (k) {
+      if (ops.scaleBlocked(remoteC[k], localC[k], k)) blocked.push(k + ' ' + remoteC[k] + ' → ' + localC[k]);
+    });
+    // screener 迁移豁免：远端(基线)仍带 screener 字段 且 本地已删该字段（首次迁移）→ 放行；
+    // 其余（含两侧都带字段却 5→0 = 迁移没发生 / 并存期损坏）照常 scaleBlocked。
+    const screenerExempt = remoteC.hasScreener === true && !ops.hasScreenerField(localD);
+    if (!screenerExempt && ops.scaleBlocked(remoteC.screener, localC.screener, 'screener')) {
+      blocked.push('screener ' + remoteC.screener + ' → ' + localC.screener);
+    }
+    // screener.js（P2-4 后的**真源**）期数主闸：与副闸同口径（同 scaleBlocked / 同阈值）。
+    // 远端约 24KB，成本可忽略；解析失败(null) 交由 Fix#2a 处理，不重复报。
+    const remoteSC = await remoteScreenerCount(repo, remoteMap['dashboard/screener.js']);
+    const localSC = fs.existsSync(SC_FILE) ? ops.screenerHistCount(fs.readFileSync(SC_FILE, 'utf8')) : null;
+    if (remoteSC != null && localSC != null && ops.scaleBlocked(remoteSC, localSC, 'screenerHist')) {
+      blocked.push('screener.js ' + remoteSC + ' → ' + localSC + ' 期');
+    }
+    if (blocked.length) {
+      fail('规模骤减主闸拦截（远端 → 本地）：' + blocked.join('；') +
+        '。已阻止推送以免公开仓库历史被截断；确属正常请用 ASTOCK_SKIP_GATE=1 重试。');
+    }
+    console.log('✔ 主闸通过（远端→本地 reports ' + remoteC.reports + '→' + localC.reports +
+      '，calendar ' + remoteC.calendar + '→' + localC.calendar +
+      (remoteSC != null && localSC != null ? ('，screener.js ' + remoteSC + '→' + localSC + ' 期') : '') + '）');
+  } catch (e) {
+    console.log('· 主闸异常，跳过（不阻断发布）：' + e.message);
+  }
 }
 
 function collect(onlyList) {
@@ -173,6 +276,9 @@ function collect(onlyList) {
     console.log('⚠️ 本地文件数异常偏少（' + files.length + ' vs 线上 ' + remoteCount +
       '），本次跳过删除以保护仓库。');
   }
+
+  // 2.5 主闸：比较远端公开现状与本地待推 data.js 的规模，骤减即拦截（P1-1 的唯一必经咽喉）
+  await scaleGate(repo, remoteMap);
 
   if (!tree.length) {
     console.log('✓ 无变化（扫描 ' + files.length + ' 个文件，全部与线上一致）');

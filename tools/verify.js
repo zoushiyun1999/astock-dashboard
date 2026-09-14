@@ -44,7 +44,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
+const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
+const ops = require('./lib/ops');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -56,80 +57,12 @@ const H = { 'User-Agent': UA, 'Referer': 'https://quote.eastmoney.com/' };
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * 数据读写的两道安全阀（2026-09-12 审计后补）
+ * 数据读写的两道安全阀（2026-09-12 审计后补；2026-09-14 抽为公共模块）
  *
- * 背景：原实现是
- *     let data = { updatedAt:'', calendar:[], reports:[] };
- *     try { eval(readFileSync(DATA).replace('window.REPORTS =','data =')); } catch (e) {}
- *     ... data.updatedAt = ...; writeFileSync(DATA, ...)
- * 只要 data.js 有任何语法问题（例如晚报 21:00 写到一半、文件被截断），eval 抛错被 `catch {}`
- * 静默吃掉，data 停留在这个**空结构**上，然后被原样写回 —— **7 天历史 + 全部日历一次性清空**。
- * 而晚报（21:00）与次日验证（21:30）本来就紧挨着改同一个文件，触发条件相当现实。
- *
- * 现在：解析失败一律中止；写回前再做「规模校验 + 乐观锁」。
+ * loadDataStrict（解析失败即中止）+ saveDataSafe（规模骤减拦截 + 乐观锁防并发覆盖）
+ * 已收敛到 tools/lib/data_store.js，与 screener.js / check_codes.js / sort_reports.js 共用同一份，
+ * 阈值只改一处（规则 16）。此处不再保留本地副本。
  * ───────────────────────────────────────────────────────────────────────────── */
-
-/** 中止执行：抛出可被顶层识别的中断信号。
- *  不用 process.exit(1) —— Windows 下管道输出是异步的，直接退出可能把报错信息截断，
- *  而这恰恰是运维最需要看到的内容。消息由顶层 catch 统一打印。 */
-function abort(msg) {
-  const e = new Error(msg);
-  e.__abort = true;
-  throw e;
-}
-
-/** 严格读取 data.js。任何异常都直接中止，绝不静默降级成空结构。
- *  返回值里的 reports0 / calendar0 是**读取当时的规模快照**（数字，不是引用）——
- *  调用方后面会就地改 data，用引用做基线会被自己的修改带跑，安全阀就永远不触发。 */
-function loadDataStrict(file) {
-  if (!fs.existsSync(file)) {
-    return { data: { updatedAt: '', calendar: [], reports: [] }, src: '', reports0: 0, calendar0: 0 };
-  }
-  const src = fs.readFileSync(file, 'utf8');
-  if (!/window\.REPORTS\s*=/.test(src)) {
-    abort('✗ data.js 里找不到 `window.REPORTS =`，为避免清空看板历史，本次中止（未写任何文件）');
-  }
-  let data;
-  try {
-    // 用 vm 而不是 new Function/eval：语法错误会准确指到 data.js 自己的行号
-    const ctx = { window: {} };
-    vm.runInNewContext(src, ctx, { filename: 'dashboard/data.js' });
-    data = ctx.window.REPORTS;
-  } catch (e) {
-    abort('✗ data.js 解析失败：' + e.message +
-      '\n  为避免清空看板历史，本次中止（未写任何文件）。请先人工确认 dashboard/data.js 是否被写坏。');
-  }
-  if (!data || !Array.isArray(data.reports)) {
-    abort('✗ data.js 结构异常（reports 不是数组），本次中止（未写任何文件）');
-  }
-  return {
-    data: data,
-    src: src,
-    reports0: data.reports.length,
-    calendar0: (data.calendar || []).length
-  };
-}
-
-/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
-function saveDataSafe(file, next, baseline, srcAtRead) {
-  const afterN = (next.reports || []).length;
-  const afterC = (next.calendar || []).length;
-
-  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
-    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
-      '），为避免清空看板历史，拒绝写回');
-  }
-  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
-    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
-  }
-  // 乐观锁：读到这里之间文件被别的任务（早报/晚报/选股）改过 → 中止，别覆盖别人的成果
-  const nowSrc = fs.readFileSync(file, 'utf8');
-  if (nowSrc !== srcAtRead) {
-    abort('✗ data.js 在本次运行期间被其他任务修改过（很可能是晚报/早报并发写），' +
-      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
-  }
-  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
-}
 
 async function getJSON(url, retry = 2) {
   for (let i = 0; i <= retry; i++) {
@@ -170,7 +103,7 @@ async function fetchQuotes() {
     if (!d.length) break;
     d.forEach(function (x) {
       map[x.f12] = {
-        name: x.f14, gain: x.f3, price: x.f2,
+        name: x.f14, gain: x.f3, price: x.f2, close: x.f2,
         high: x.f15, low: x.f16, open: x.f17, prevClose: x.f18
       };
     });
@@ -196,7 +129,7 @@ function isTradingDay(d) {
   return list.indexOf(fmtDate(d)) < 0;
 }
 
-/** 按 name 优先、code 兜底匹配行情，返回 {code,name,gain,price,open,high,low,prevClose} 或 null */
+/** 按 name 优先、code 兜底匹配行情，返回 {code,name,gain,price,close,open,high,low,prevClose} 或 null */
 function findQuote(quotes, p) {
   if (!p) return null;
   // 1. 先按名称精确匹配（name 是博主原文，最可靠；顺带纠正可能的错误 code）
@@ -206,7 +139,8 @@ function findQuote(quotes, p) {
       if (quotes[k].name === key) {
         return {
           code: k, name: quotes[k].name, gain: quotes[k].gain, price: quotes[k].price,
-          open: quotes[k].open, high: quotes[k].high, low: quotes[k].low, prevClose: quotes[k].prevClose
+          close: quotes[k].close, open: quotes[k].open, high: quotes[k].high, low: quotes[k].low,
+          prevClose: quotes[k].prevClose
         };
       }
     }
@@ -216,7 +150,7 @@ function findQuote(quotes, p) {
     const q = quotes[p.code];
     return {
       code: p.code, name: q.name, gain: q.gain, price: q.price,
-      open: q.open, high: q.high, low: q.low, prevClose: q.prevClose
+      close: q.close, open: q.open, high: q.high, low: q.low, prevClose: q.prevClose
     };
   }
   return null;
@@ -266,7 +200,7 @@ function markVerify(q, at) {
   return v;
 }
 
-(async function main() {
+async function main() {
   const now = new Date();
   const todayStr = fmtDate(now);
   console.log('▶ 次日验证开始 ' + todayStr + ' ' +
@@ -321,10 +255,32 @@ function markVerify(q, at) {
   if (process.argv.includes('--dry')) { console.log('（--dry 模式，未写入文件）'); return; }
 
   data.updatedAt = fmtDate(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-  saveDataSafe(DATA, data, loaded.data, loaded.src);
+  saveDataSafe(DATA, data, loaded, loaded.src);   // baseline 传 loadDataStrict 的返回对象（含 reports0/calendar0 数字快照）
   console.log('   ✔ 已写回 dashboard/data.js');
-})().catch(function (e) {
-  if (e && e.__abort) { console.error(e.message); process.exitCode = 1; return; }  // 安全阀主动中止
-  console.error('✗ 未预期错误：' + ((e && e.stack) || e));
-  process.exitCode = 1;
-});
+}
+
+if (require.main === module) {
+  main().catch(function (e) {
+    if (e && e.__abort) {                                   // 安全阀主动中止 → 写告警 + 退出码 2
+      console.error(e.message);
+      try {
+        ops.appendAlert({
+          stage: 'verify', result: 'ABORT', script: 'verify.js',
+          detail: e.message, fix: '确认 data.js 是否被写坏 / 是否有并发写；稍后重跑本任务', link: 'dashboard/data.js'
+        });
+      } catch (_) { /* 忽略 */ }
+      process.exitCode = 2;
+      return;
+    }
+    console.error('✗ 未预期错误：' + ((e && e.stack) || e));
+    try {
+      ops.appendAlert({
+        stage: 'verify', result: 'OPEN', script: 'verify.js',
+        detail: String((e && e.stack) || e), fix: '检查网络与行情接口；稍后重跑本任务', link: 'dashboard/data.js'
+      });
+    } catch (_) { /* 忽略 */ }
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { markVerify, findQuote, fetchQuotes, num, main };

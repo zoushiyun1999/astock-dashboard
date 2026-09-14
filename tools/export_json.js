@@ -37,7 +37,17 @@ if (!REPORTS) {
 }
 const SCREENER = loadJsVar(path.join(DASH, 'screener.js'), 'SCREENER');
 
-const payload = JSON.stringify({ REPORTS: REPORTS, SCREENER: SCREENER });
+/** 复制 REPORTS 并剔除 .screener 字段（**不改原对象**）。
+ *  data.json 顶层已有独立的 SCREENER；REPORTS.screener 那份前端永不生效
+ *  （app.js 优先取 window.SCREENER），却是约 7.6% 的重复传输（P2-4a）。 */
+function stripScreener(r) {
+  if (!r || typeof r !== 'object') return r;
+  const copy = Object.assign({}, r);
+  delete copy.screener;
+  return copy;
+}
+
+const payload = JSON.stringify({ REPORTS: stripScreener(REPORTS), SCREENER: SCREENER });
 const key = crypto.createHash('md5').update(payload).digest('hex').slice(0, 16);
 
 fs.writeFileSync(path.join(DASH, 'data.json'), payload, 'utf8');

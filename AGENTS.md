@@ -88,8 +88,10 @@ docs/              方案与说明文档
     `tools/optimize_calendar.py` 压缩，**不要手工塞未压缩的长图**——它是站点体积最大的来源。
 15. **不要在 `bump_version.sh` 之外单独跑 `git commit` + `bump_version.sh`**：`publish.sh`
     已串联全部收尾步骤，重复执行只会制造空提交。需要只提交不发布时，用 `git add -A && git commit`。
-16. **写 `data.js` 的脚本必须保留安全阀**：`tools/verify.js`、`tools/screener.js`、`tools/check_codes.js`
-    用 `loadDataStrict()`（解析失败即中止）+ `saveDataSafe()`（规模骤减拦截 + 乐观锁防并发覆盖）。
+16. **写 `data.js` 的脚本必须保留安全阀**：**单一定义在 `tools/lib/data_store.js`**
+    （`loadDataStrict()` 解析失败即中止 + `saveDataSafe()` 规模骤减拦截 + 乐观锁防并发覆盖）。
+    `tools/verify.js`、`tools/screener.js`、`tools/check_codes.js`、`tools/sort_reports.js`
+    **共同 require 这一份**，禁止各自复制或在本地重写。
     **禁止改回 `try { eval(...) } catch (e) {}` 那种静默降级**——data.js 一旦写坏，下一步就会把
     全部历史 reports 与 calendar 覆盖成空。改这些脚本后请用 `--dry`（选股）或沙箱验证安全阀仍生效。
     ⚠️ **适用对象是所有「写入型」脚本，不只上面点名的三个**：新增任何会重写 `data.js` 的脚本，
@@ -200,6 +202,39 @@ docs/              方案与说明文档
       看最新 run 的 `head_sha` 与 `status / conclusion`；或逐文件比对本地 blob sha 与远端 tree
       （`git/ref/heads/main` → `git/commits/<sha>` → `git/trees/<tree>?recursive=1`）。
     - 正常耗时：push 后约 45s 完成，完成后站点即更新。
+
+28. **失败必须落到 `logs/ALERT.md`（告警通道）**：通知已于 2026-09-12 下线，机器可见的失败出口
+    只剩这一个（本地模式下 `health_check.js` 是唯一的停摆检测，规则 18）。写告警统一走
+    `tools/lib/ops.js` 的 `appendAlert({stage,result,detail,fix})`（CLI：`--append-alert`），
+    入口已接：`publish.sh` 各步、`git-hooks/post-commit`、`gh_push_api.js` 的 `fail()`、
+    `bump_version.sh` 的 `export_json` 失败分支、`sort_reports.js` 的阀中止。**已处理完的条目请把
+    其 `result` 改为 `CLOSED`**，否则 `health_check.js` 会一直报 ERROR。`logs/` 已在
+    `gh_push_api.js` 的 `SKIP_DIR` 内，不会外传。
+
+29. **发布链路有应用级互斥锁（`tools/lib/lock.sh`）**：`publish.sh` 开头 `lock_acquire` +
+    `trap lock_release` 包住「bump → commit → push」全程；`bump_version.sh` 用 `lock_guard`
+    **可重入**（环境变量 `PUBLISH_LOCK_HELD=1`，被 publish 调用时不再重复加锁，避免自死锁）。
+    锁文件 `.git/astock-publish.lock`（在 `.git/` 内，天然不进版本库）。活性用 Git Bash 的
+    `kill -0`（**绝不用 `tasklist`**，Windows PID 与 bash MSYS PID 不同名）；30 分钟超时兜底陈旧。
+    仍被占用则 `exit 0` 跳过本次发布 + 写 ALERT（数据已在盘上，下次发布会自动带上）。
+    **与规则 24 的陈旧 `index.lock` 守卫正交，不要互相替代。**
+
+30. **`tools/backups/` 是本地快照目录，必须双闸门**：`.gitignore` 的 `tools/backups/`
+    **与** `gh_push_api.js` 的 `SKIP_DIR` 里的 `backups`（规则 25 同构，只改一处 = 漏一半）。
+    内容为 `data.js.<YYYYMMDD-HHmmss>`（HEAD 版），保留 7 份，由 `publish.sh` 成功收尾时
+    `node tools/lib/ops.js --snapshot` 生成（失败不影响发布）。回滚：
+    `cp tools/backups/data.js.<ts> dashboard/data.js && bash tools/publish.sh "回滚到 <ts>"`。
+
+31. **`DUE` 新增 `verify: 1300`（次日验证 21:30→21:40）**：`srcMeta()` 有「次日验证」行、
+    `renderHealth()` 有「🔬验证未跑」项。判定统一走顶层 `scRanToday()` / `verifyRanToday()`
+    （量价判定只看 `date`，不看 `list.length`，规则 19/20）。改这三个函数仍必须跑
+    `node tools/test_health_logic.js`（现有 35 项断言）。
+
+32. **量价选股只写独立文件 `dashboard/screener.js`（`window.SCREENER`）**：`data.js` 的
+    `data.screener` 已停写（`screener.js` 会 `delete data.screener`）。**唯一历史源是
+    `dashboard/screener.js`**：脚本/体检/前端一律读它；`screener.js` 的「历史累积种子」也必须
+    从它读（否则每次运行历史被重置为仅当日）。`export_json.js` 从 `data.json` 的 REPORTS 副本里
+    剔除 `.screener`（顶层 SCREENER 仍在），消除 7.6% 重复传输。
 
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 

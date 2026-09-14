@@ -45,7 +45,8 @@ function extractFn(src, name) {
 }
 
 const PARTS = {};
-['isTradingToday', 'screenerList', 'srcMeta', 'metaTime', 'renderHealth', 'updateEveningDot']
+['isTradingToday', 'todayYmd', 'screenerList', 'scRanToday', 'verifyRanToday',
+  'srcMeta', 'metaTime', 'renderHealth', 'updateEveningDot']
   .forEach(n => { PARTS[n] = extractFn(SRC, n); });
 
 const dueMatch = SRC.match(/var DUE = \{[^}]*\};/);
@@ -97,15 +98,16 @@ function makeHarness(nowTs, opts) {
     window: {
       REPORTS: reports,
       SCREENER: opts.screener || null,
-      TRADE_HOLIDAYS: HOLIDAYS
+      TRADE_HOLIDAYS: opts.tradeHolidays || HOLIDAYS
     },
     list: opts.list || [],
     idx: opts.idx === undefined ? 0 : opts.idx,
     curTab: opts.curTab || 'morning'
   };
   vm.createContext(ctx);
-  vm.runInContext([PARTS.DUE, PARTS.isTradingToday, PARTS.screenerList, PARTS.srcMeta,
-    PARTS.metaTime, PARTS.renderHealth, PARTS.updateEveningDot].join('\n\n'), ctx);
+  vm.runInContext([PARTS.DUE, PARTS.isTradingToday, PARTS.todayYmd, PARTS.screenerList,
+    PARTS.scRanToday, PARTS.verifyRanToday, PARTS.srcMeta, PARTS.metaTime,
+    PARTS.renderHealth, PARTS.updateEveningDot].join('\n\n'), ctx);
   return { ctx: ctx, els: els, store: store };
 }
 
@@ -220,6 +222,122 @@ console.log('\n场景 6 · 量价今天没跑时，15:10 必须标记为「计�
   eq(h.ctx.metaTime(sc), '15:10(计划)', 'metaTime 应输出 15:10(计划)');
   eq(mo.planned, false, '真实 generatedAt → planned 应为 false');
   eq(h.ctx.metaTime(mo), '08:33', 'metaTime 应输出真实时间 08:33');
+}
+
+/* ════════════════ 场景 7 · 休市分支（P2-6 原本零覆盖） ════════════════ */
+console.log('\n场景 7 · 休市分支 —— 节假日 / 周末走 if(!isTradingToday()) return "close"');
+{
+  // 2026-09-25 周五，在 trade_holidays.json 内（中秋）
+  let h = makeHarness(T(2026, 9, 25, 10, 0), { list: [REC('2026-09-24', { morning: {}, evening: {} })] });
+  h.ctx.renderHealth();
+  eq(h.els['healthBar'].className, 'health close', '节假日应显示「休市」');
+  ok(/休市/.test(h.els['healthBar'].innerHTML), '节假日文案含「休市」');
+  // 2026-09-12 周六
+  h = makeHarness(T(2026, 9, 12, 22, 0), { list: [REC('2026-09-11', { morning: {}, evening: {} })] });
+  h.ctx.renderHealth();
+  eq(h.els['healthBar'].className, 'health close', '周末应显示「休市」');
+}
+
+/* ════════════════ 场景 8 · TRADE_HOLIDAYS 结构回归（防 16c 回退） ════════════════ */
+console.log('\n场景 8 · window.TRADE_HOLIDAYS 必须是扁平 {"2026":[…]}');
+{
+  const flat = { '2026': HOLIDAYS['2026'] };
+  let h = makeHarness(T(2026, 9, 25, 10, 0), { list: [], tradeHolidays: flat });
+  eq(h.ctx.isTradingToday(), false, '扁平 {"2026":[…]} → 节假日判为休市');
+  h = makeHarness(T(2026, 9, 14, 10, 0), { list: [], tradeHolidays: flat });
+  eq(h.ctx.isTradingToday(), true, '普通交易日（周一）判为交易日');
+  // 若 app.js 误改成读 .years[年]（正是 health_site.js 曾犯的 P0）→ 扁平数据下节假日识别失败
+  const nested = { years: { '2026': HOLIDAYS['2026'] } };
+  h = makeHarness(T(2026, 9, 25, 10, 0), { list: [], tradeHolidays: nested });
+  eq(h.ctx.isTradingToday(), true, '{years:{…}} 形态识别不到节假日 → 证明 app.js 取扁平结构');
+}
+
+/* ════════════════ 场景 9 · 跨日不沿用昨日 ════════════════ */
+console.log('\n场景 9 · 跨日：新交易日不得沿用昨日记录');
+{
+  const list = [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33' },
+                                    evening: { generatedAt: '2026-09-14 21:05' } })];
+  const scr = [{ date: '2026-09-14', list: [1], runAt: '2026-09-14 15:12' }];
+  // 09-15 00:05：新交易日、尚无当日数据，但未到任何到期点
+  let h = makeHarness(T(2026, 9, 15, 0, 5), { list: list, screener: scr });
+  h.ctx.renderHealth();
+  ok(h.els['healthBar'].className.indexOf('close') < 0, '00:05 新交易日不应显示「休市」');
+  ok(!/早报缺失|晚报缺失/.test(h.els['healthBar'].innerHTML),
+    '00:05 不得把昨日记录当成今日（不误报字段缺失）');
+  // 09-15 22:00：已过所有到期点仍无当日数据 → 报「今日无任何数据」
+  h = makeHarness(T(2026, 9, 15, 22, 0), { list: list, screener: scr });
+  h.ctx.renderHealth();
+  ok(/今日无任何数据/.test(h.els['healthBar'].innerHTML), '22:00 跨日无数据 → 报「今日无任何数据」');
+}
+
+/* ════════════════ 场景 10 · 状态 miss → ok 翻转 ════════════════ */
+console.log('\n场景 10 · 早报 miss → 补齐后翻转 ok');
+{
+  let h = makeHarness(T(2026, 9, 14, 9, 0), {
+    list: [REC('2026-09-14', { evening: { generatedAt: '2026-09-14 21:05' } })],
+    screener: [{ date: '2026-09-14', list: [1] }]
+  });
+  h.ctx.renderHealth();
+  ok(/早报缺失/.test(h.els['healthBar'].innerHTML), '09:00 缺早报 → 报「早报缺失」');
+  h = makeHarness(T(2026, 9, 14, 9, 0), {
+    list: [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33' },
+                              evening: { generatedAt: '2026-09-14 21:05' } })],
+    screener: [{ date: '2026-09-14', list: [1] }]
+  });
+  h.ctx.renderHealth();
+  eq(h.els['healthBar'].className, 'health ok', '补上早报后 → 「各源运行正常」');
+}
+
+/* ════════════════ 场景 11 · evening 到期点边界（DUE.evening=1270） ════════════════ */
+console.log('\n场景 11 · 晚报到期点边界 21:09 / 21:11');
+{
+  const list = [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33' } })];
+  const scr = [{ date: '2026-09-14', list: [1] }];
+  let h = makeHarness(T(2026, 9, 14, 21, 9), { list: list, screener: scr });
+  h.ctx.renderHealth();
+  ok(!/晚报缺失/.test(h.els['healthBar'].innerHTML), '21:09 未到点 → 不报晚报缺失');
+  h = makeHarness(T(2026, 9, 14, 21, 11), { list: list, screener: scr });
+  h.ctx.renderHealth();
+  ok(/晚报缺失/.test(h.els['healthBar'].innerHTML), '21:11 过点 → 报晚报缺失');
+}
+
+/* ════════════════ 场景 12 · renderHealth 与 srcMeta 对量价判据一致（P2-3） ════════════════ */
+console.log('\n场景 12 · 量价「跑了但选 0 只」时两处判据一致');
+{
+  const list = [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33' },
+                                    evening: { generatedAt: '2026-09-14 21:05' } })];
+  const h = makeHarness(T(2026, 9, 14, 16, 0), {
+    list: list,
+    screener: [{ date: '2026-09-14', count: 0, list: [], runAt: '2026-09-14 15:12' }]
+  });
+  h.ctx.renderHealth();
+  ok(!/量价未更新/.test(h.els['healthBar'].innerHTML), 'run 过（选 0 只）→ 健康条不报「量价未更新」');
+  const scRow = h.ctx.srcMeta(list[0]).filter(s => s.name === '量价选股')[0];
+  eq(scRow.state, 'ok', 'srcMeta 量价行判为 ok（与健康条自洽）');
+}
+
+/* ════════════════ 场景 13 · 次日验证监控项（P1-3） ════════════════ */
+console.log('\n场景 13 · 次日验证：无 verify.at=今天 → 报未跑');
+{
+  const scr = [{ date: '2026-09-14', list: [1] }];
+  let h = makeHarness(T(2026, 9, 14, 21, 50), {
+    list: [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33', '今日关注': [{ name: 'A' }] },
+                              evening: { generatedAt: '2026-09-14 21:05' } })],
+    screener: scr
+  });
+  h.ctx.renderHealth();
+  ok(/验证未跑/.test(h.els['healthBar'].innerHTML), '21:50 无 verify.at=今天 → 报「验证未跑」');
+
+  h = makeHarness(T(2026, 9, 14, 21, 50), {
+    list: [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33',
+                                          '今日关注': [{ name: 'A', verify: { at: '2026-09-14' } }] },
+                              evening: { generatedAt: '2026-09-14 21:05' } })],
+    screener: scr
+  });
+  h.ctx.renderHealth();
+  ok(!/验证未跑/.test(h.els['healthBar'].innerHTML), '有 verify.at=今天 → 不报「验证未跑」');
+  const vrRow = h.ctx.srcMeta(null || { morning: {}, evening: {} }).filter(s => s.name === '次日验证')[0];
+  eq(vrRow.state, 'ok', 'srcMeta 次日验证行判为 ok');
 }
 
 console.log('\n' + '─'.repeat(58));

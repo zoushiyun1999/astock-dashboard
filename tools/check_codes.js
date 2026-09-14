@@ -24,6 +24,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { saveDataSafe } = require('./lib/data_store');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -62,7 +63,17 @@ function norm(s) {
 }
 
 function secidOf(code) {
-  return (/^[46]/.test(code) ? '1.' : '0.') + code;
+  // 沪市（6xxxxx，含科创板 688）前缀 '1.'；其余（000/001/002/003 深主板、300/301 创业板、
+  // 430/830/870/920 北交所）前缀 '0.'。原 `/^[46]/` 把 4xxxxx 北交所误判成沪市（P2-9）。
+  return (/^6/.test(code) ? '1.' : '0.') + code;
+}
+
+/** A 股代码格式白名单（P2-9）：必须 6 位数字，且段前缀合法。
+ *  用于拒绝非法码（避免拿着"看似代码"的字符串去拼 secid 复核）。 */
+function isValidCode(code) {
+  const c = String(code == null ? '' : code).trim();
+  if (!/^\d{6}$/.test(c)) return false;
+  return /^(600|601|603|605|688|000|001|002|003|300|301|430|830|870|920)/.test(c);
 }
 
 // ── 索引1：全市场快照（沪深京：主板 + 创业板 + 科创板 + 北交所）──
@@ -118,39 +129,13 @@ function loadData() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * 数据写入安全阀（与 verify.js / screener.js 同源，2026-09-14 补）
+ * 数据写入安全阀（2026-09-14 补；2026-09-14 抽为公共模块）
  *
  * 背景：本脚本带 --fix 时会直接重写 data.js，而它跑一轮网络校验要几分钟，
  * 期间早报/晚报任务完全可能已经改过 data.js；原来的裸 writeFileSync
  * 会毫无察觉地把对方的改动整体覆盖掉。同时也没有「规模骤减」保护。
+ * 现已收敛到 tools/lib/data_store.js（saveDataSafe），与 verify/screener/sort_reports 同源。
  * ───────────────────────────────────────────────────────────────────────────── */
-
-/** 中止信号：抛给顶层 catch，避免 process.exit 截断 Windows 下的管道输出 */
-function abort(msg) {
-  const e = new Error(msg);
-  e.__abort = true;
-  throw e;
-}
-
-/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
-function saveDataSafe(file, next, baseline, srcAtRead) {
-  const afterN = (next.reports || []).length;
-  const afterC = (next.calendar || []).length;
-
-  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
-    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
-      '），为避免清空看板历史，拒绝写回');
-  }
-  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
-    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
-  }
-  const nowSrc = fs.readFileSync(file, 'utf8');
-  if (nowSrc !== srcAtRead) {
-    abort('✗ data.js 在本次校验期间被其他任务修改过（很可能是早报/晚报并发写），' +
-      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
-  }
-  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
-}
 
 /** 收集 data.js 中所有推荐条目（带数组与索引，便于回写/删除） */
 function collectPicks(data) {
@@ -173,7 +158,7 @@ function collectPicks(data) {
   return out;
 }
 
-(async function main() {
+async function main() {
   console.log('▶ 个股代码校验开始');
   const idx = await fetchNameIndex();
   console.log('  全市场索引：' + idx.total + ' 只');
@@ -298,4 +283,8 @@ function collectPicks(data) {
   }
 
   process.exit(ghost.length || mismatched.length || renamed.length ? 1 : 0);
-})();
+}
+
+if (require.main === module) main();
+
+module.exports = { secidOf, isValidCode, saveDataSafe, collectPicks };

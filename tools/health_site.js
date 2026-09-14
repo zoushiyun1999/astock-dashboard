@@ -105,6 +105,52 @@ function domainExpiry() {
   else if (days <= 30) issues.push('域名 ' + days + ' 天后到期，记得续费');
 }
 
+/** GitHub 令牌探活 + 到期提醒（P1-4）。
+ *  · 探活：GET /repos/{repo}，401/403 → 令牌无效/过期（ERROR）。
+ *  · 到期：fine-grained PAT 不通过 API 暴露 expires_at，只能读 config/site.json 的 tokenExpiry；
+ *    剩余 <30 天报 ERROR，<7 天更紧急。到期日不是密钥，可入库（规则 6 只禁密钥"值"）。 */
+async function tokenCheck() {
+  const repo = SITE.repo || 'zoushiyun1999/astock-dashboard';
+  const TOKEN = process.env.GITHUB_TOKEN ||
+    (fs.existsSync(path.join(ROOT, '.gh-token')) ? fs.readFileSync(path.join(ROOT, '.gh-token'), 'utf8').trim() : '');
+  if (!TOKEN) {
+    log('· GitHub 令牌：未配置（无 .gh-token / GITHUB_TOKEN），跳过探活');
+  } else {
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15000);
+      const res = await fetch('https://api.github.com/repos/' + repo, {
+        headers: {
+          'Authorization': 'Bearer ' + TOKEN,
+          'Accept': 'application/vnd.github+json',
+          'User-Agent': 'astock-health'
+        },
+        signal: ctl.signal, cache: 'no-store'
+      });
+      clearTimeout(timer);
+      if (res.status === 401 || res.status === 403) {
+        log('✗ GitHub 令牌探活：HTTP ' + res.status + '（无效或权限不足）');
+        issues.push('GitHub 令牌无效/已过期（HTTP ' + res.status + '）→ 发布将硬失败、线上停更');
+      } else if (!res.ok) {
+        log('· GitHub 令牌探活：HTTP ' + res.status + '（非 401/403，暂不判为失效）');
+      } else {
+        const j = await res.json().catch(() => null);
+        log('✓ GitHub 令牌有效（repo ' + repo + (j && j.private === false ? '，public' : '') + '）');
+      }
+    } catch (e) {
+      log('· GitHub 令牌探活失败（网络）：' + e.message);
+    }
+  }
+  // ② 到期日
+  const exp = process.env.TOKEN_EXPIRY || SITE.tokenExpiry || '';
+  if (!exp) { log('· 令牌到期日未配置，跳过提醒'); return; }
+  const t = new Date(exp + 'T00:00:00+08:00').getTime();
+  const days = Math.ceil((t - Date.now()) / 86400000);
+  log('· 令牌到期：' + exp + '（还有 ' + days + ' 天）');
+  if (days <= 7) issues.push('GitHub 令牌 ' + days + ' 天后到期，请立即轮换（到期后发布硬失败、线上停更且无通知）');
+  else if (days <= 30) issues.push('GitHub 令牌 ' + days + ' 天后到期，记得轮换');
+}
+
 function scanHardcoded() {
   const BAN = /(e2b\.[a-z0-9.-]+|sandbox\.cloudstudio\.club|3000-[a-f0-9]{8,})/i;
   const files = ['README.md', path.join('dashboard', 'index.html'), path.join('dashboard', 'js', 'app.js')];
@@ -127,6 +173,7 @@ function scanHardcoded() {
   await probe('镜像（国内）', MIRROR_URL, false);
   await freshness();
   domainExpiry();
+  await tokenCheck();
   scanHardcoded();
 
   if (!issues.length) {

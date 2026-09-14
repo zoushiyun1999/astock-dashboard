@@ -22,3 +22,8 @@ __pycache__/
 #       .gitignore 只管 git 提交，API 推送脚本不读它。
 docs/归档/
 
+# 数据快照目录（发布成功后自动快照 HEAD 版 data.js，保留 7 份）
+# 体积大且是本地回滚保险，只留本地，不进版本库与公开仓库。
+# 注意：gh_push_api.js 的 SKIP_DIR 也硬拦了「backups」，两道闸门缺一不可（规则 25）。
+tools/backups/
+

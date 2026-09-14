@@ -15,9 +15,12 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
+const ops = require('./lib/ops');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
+const SC_FILE = path.join(ROOT, 'dashboard', 'screener.js');   // 停写 data.screener 后的唯一历史源
 
 const issues = [];
 const notes = [];   // 提示：不参与退出码，只打印给人工参考（历史遗留、按设计跳过等）
@@ -32,12 +35,31 @@ function load() {
   return data;
 }
 
+/** 读取独立文件 dashboard/screener.js（停写 data.screener 后的唯一历史源）。
+ *  返回 { state, value }：
+ *    state='missing'     文件不存在（可能首次运行，尚未跑过 screener）
+ *    state='parse-error' 文件存在但解析失败 / window.SCREENER 缺失（数据损坏）
+ *    state='ok'          解析成功，value = 数组或单对象
+ *  注意：screener 是「量价 Tab」的唯一数据源，故 parse-error 与「空数组」在第 5 节均为 ERROR。 */
+function loadScreener() {
+  if (!fs.existsSync(SC_FILE)) return { state: 'missing', value: null };
+  try {
+    const ctx = { window: {} };
+    vm.runInNewContext(fs.readFileSync(SC_FILE, 'utf8'), ctx, { filename: 'dashboard/screener.js' });
+    const v = ctx.window.SCREENER;
+    if (v == null) return { state: 'parse-error', value: null };
+    return { state: 'ok', value: v };
+  } catch (e) { return { state: 'parse-error', value: null }; }
+}
+
 const data = load();
 if (!data) { console.log('✗ 读取 data.js 失败'); process.exit(1); }
 
 const reports = data.reports || [];
+const screenerState = loadScreener();
+const screenerRaw = screenerState.value;
 console.log('📦 reports: ' + reports.length + ' 条 | calendar: ' + ((data.calendar || []).length) +
-  ' 篇 | screener: ' + (Array.isArray(data.screener) ? data.screener.length + ' 期' : (data.screener ? '单对象(旧结构)' : '无')));
+  ' 篇 | screener: ' + (Array.isArray(screenerRaw) ? screenerRaw.length + ' 期' : (screenerRaw ? '单对象(旧结构)' : '无')));
 
 // ── 1. 日期排序与重复 ──
 const dates = reports.map(function (r) { return r.date; });
@@ -123,10 +145,16 @@ console.log('✅ verify 标记：' + vTotal + ' 条，其中上涨 ' + vHit + ' 
   });
 });
 
-// ── 5. screener 结构 ──
-if (data.screener) {
-  const arr = Array.isArray(data.screener) ? data.screener : [data.screener];
-  if (!Array.isArray(data.screener)) err('screener 仍是旧的单对象结构（应为数组）');
+// ── 5. screener 结构（停写 data.screener 后改读独立文件 dashboard/screener.js）──
+// screener 是「量价 Tab」的唯一数据源：解析失败 / 空数组都必须是 ERROR（否则静默空 Tab）。
+if (screenerState.state === 'parse-error') {
+  err('dashboard/screener.js 解析失败 / window.SCREENER 缺失（数据损坏；量价 Tab 将无数据）');
+} else if (screenerState.state === 'missing') {
+  notes.push('dashboard/screener.js 缺失（尚未跑过 screener？量价 Tab 暂无数据；data.screener 已停写，不再作为来源）');
+} else {
+  const arr = Array.isArray(screenerRaw) ? screenerRaw : [screenerRaw];
+  if (!Array.isArray(screenerRaw)) err('screener 仍是旧的单对象结构（应为数组）');
+  if (!arr.length) err('dashboard/screener.js 为空数组（量价 Tab 将无数据；screener 是量价 Tab 的唯一数据源）');
   arr.forEach(function (s, i) {
     if (!s.date) err('screener[' + i + '] 缺 date');
     if (!Array.isArray(s.list)) err('screener[' + i + '] 缺 list');
@@ -177,6 +205,44 @@ function isTradingDay(d) {
   }
 })();
 
+// ── 6b. verify 覆盖度（P1-3）──
+// 原 :98 `if (!p || !p.verify) return;` 只校验"已存在 verify 的格式"，查不出"该标却没标"。
+// 这里对「最近一个已过验证窗口的交易日」统计应标 picks 中有 verify.at 的比例，<80% 报 ERROR。
+// 历史教训：5 个交易日 85 条推荐从未验证，靠人肉翻字段才发现。
+(function verifyCoverage() {
+  const pad = function (n) { return String(n).padStart(2, '0'); };
+  const now = new Date();
+  const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  // 最近一个 date < today 且为交易日的报告（其验证窗口已过）
+  let d0 = null;
+  for (let i = reports.length - 1; i >= 0; i--) {
+    const dt = reports[i].date;
+    if (dt < today && isTradingDay(new Date(dt + 'T00:00:00'))) { d0 = reports[i]; break; }
+  }
+  if (!d0) return;
+  const cands = [];
+  ((d0.morning && d0.morning['今日关注']) || []).forEach(function (p) { if (p && p.name) cands.push(p); });
+  // 前一篇有「明日关注」的晚报，其 picks 应在 d0 当天被标（verify.js 的"最近一篇早于今天的晚报"逻辑）
+  for (let i = reports.length - 1; i >= 0; i--) {
+    const r = reports[i];
+    if (r.date < d0.date && r.evening && Array.isArray(r.evening['明日关注']) && r.evening['明日关注'].length) {
+      r.evening['明日关注'].forEach(function (g) {
+        (g.picks || []).forEach(function (p) { if (p && p.name) cands.push(p); });
+      });
+      break;
+    }
+  }
+  if (!cands.length) return;
+  const done = cands.filter(function (p) { return p.verify && p.verify.at; }).length;
+  const ratio = done / cands.length;
+  console.log('🔬 verify 覆盖度：' + d0.date + ' 应标 ' + cands.length + ' 条，已标 ' + done +
+    ' 条（' + (ratio * 100).toFixed(0) + '%）');
+  if (ratio < 0.8) {
+    err('次日验证覆盖度不足：' + d0.date + ' 应标 ' + cands.length + ' 条，仅标 ' + done +
+      ' 条（' + (ratio * 100).toFixed(0) + '% < 80%）—— 检查「A股次日验证」任务是否在跑');
+  }
+})();
+
 // ── 7. 晚报双结构一致性 ──
 // evening 里有两套描述同一批板块的结构，服务两个 Tab：
 //   · 板块热点 → 晚报 Tab 的扁平摘要（name/strength/stocks/catalyst）
@@ -196,10 +262,10 @@ reports.forEach(function (r) {
     err(r.date + ' 晚报有「明日关注」但缺「板块热点」（晚报 Tab 的板块热点会是空的）');
   }
   if (Array.isArray(hot) && Array.isArray(tmr) && tmr.length &&
-      Math.abs(hot.length - tmr.length) >= 2) {
+      hot.length !== tmr.length) {
     const msg = r.date + ' 晚报「板块热点」(' + hot.length + ') 与「明日关注」(' + tmr.length +
       ') 条数不一致，两个 Tab 会显示不同的板块数';
-    if (r.date === latestDate) warn(msg + ' ← 本期数据，请修正 prompt 执行结果');
+    if (r.date === latestDate) err(msg + ' ← 本期数据，请修正 prompt 执行结果');
     else notes.push(msg + '（历史遗留，不影响新数据）');
   }
 });
@@ -209,6 +275,16 @@ const idxHtml = fs.readFileSync(path.join(ROOT, 'dashboard', 'index.html'), 'utf
 const need = ['data.js', 'app.js', 'holidays.js', 'screener.js'];
 need.forEach(function (n) { if (idxHtml.indexOf(n) < 0) err('index.html 未引用 ' + n); });
 if (!/window\.REPORTS\s*=/.test(fs.readFileSync(DATA, 'utf8'))) err('data.js 格式异常（缺少 window.REPORTS =）');
+
+// ── 7b. 告警通道（P1-5）──
+// 通知已下线；logs/ALERT.md 有未闭环条目 → ERROR。本地模式下这是唯一的停摆检测（规则 18）。
+(function scanAlerts() {
+  const open = ops.listOpen();
+  if (open.length) {
+    const tail = open.slice(-3).map(function (a) { return a.when + ' ' + (a.stage || a.script || ''); }).join('；');
+    err('logs/ALERT.md 有 ' + open.length + ' 条未闭环告警：' + tail + '（详见 logs/ALERT.md，处理完请把对应条目改为 CLOSED）');
+  }
+})();
 
 // ── 输出 ──
 if (notes.length) {

@@ -19,10 +19,11 @@
 
   /* 数据源「到期时间」（当天分钟数）= 任务开始时间 + 约 10 分钟运行余量。
      早报 08:30→520(8:40) ／ 晚报 21:00→1270(21:10) ／ 量价选股 15:10→920(15:20)
+     ／ 次日验证 21:30→1300(21:40)
      ⚠️ 只在这里定义一次。原先 srcMeta() 和 renderHealth() 各写一套数字，
         改任务时间时改了一处漏了另一处 —— 结果健康条每天 15:00 就误报"量价未更新"。
      新任务的改动请先改这里，再改 page 上的文案。 */
-  var DUE = { morning: 520, evening: 1270, screener: 920 };
+  var DUE = { morning: 520, evening: 1270, screener: 920, verify: 1300 };
   function fmtDate(ds) {
     var p = ds.split('-');
     return { ymd: p[0] + '年' + +p[1] + '月' + +p[2] + '日', week: WEEK[new Date(+p[0], +p[1] - 1, +p[2]).getDay()] };
@@ -53,6 +54,45 @@
     return Array.isArray(raw) ? raw : [raw];
   }
 
+  /** 今天（本地）的日期串 YYYY-MM-DD */
+  function todayYmd() {
+    var now = new Date();
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  }
+
+  /** 量价选股今天跑过没？判据**只看日期**（不看 list.length）：
+   *  写 {date:today,count:0,list:[]} = 任务跑了、只是选出 0 只，应判"已更新"。
+   *  「有没有票」是 renderScreener() 的事，不该影响"任务跑没跑"的判定（P2-3）。
+   *  srcMeta() 与 renderHealth() 共用此函数，杜绝两处判据不一致。
+   *  ⚠️ 必须保持顶层 `function name(){}` 形态 —— test_health_logic.js 按大括号配对抽源码。 */
+  function scRanToday() {
+    var sc = screenerList()[0];
+    return !!(sc && sc.date === todayYmd());
+  }
+
+  /** 次日验证今天跑过没？扫描所有推荐，是否存在 verify.at === 今天（P1-3）。
+   *  verify.js 每天 21:30 给推荐股写 verify.at = 当天。 */
+  function verifyRanToday() {
+    var t = todayYmd();
+    for (var i = 0; i < list.length; i++) {
+      var rec = list[i];
+      if (!rec) continue;
+      var groups = [];
+      if (rec.morning && rec.morning['今日关注']) groups.push(rec.morning['今日关注']);
+      if (rec.evening && rec.evening['明日关注']) {
+        rec.evening['明日关注'].forEach(function (g) { if (g && g.picks) groups.push(g.picks); });
+      }
+      for (var j = 0; j < groups.length; j++) {
+        for (var k = 0; k < groups[j].length; k++) {
+          var p = groups[j][k];
+          if (p && p.verify && p.verify.at === t) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /** 汇总各数据源的时间与状态（供顶部状态区与 footer 使用） */
   function srcMeta(r) {
     var sc = screenerList()[0];
@@ -63,7 +103,7 @@
     var todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
     var hm = now.getHours() * 60 + now.getMinutes();
     var trading = isTradingToday();
-    var scToday = !!(sc && sc.date === todayStr && sc.list && sc.list.length);
+    var scToday = scRanToday();   // 只看日期（P2-3），与 renderHealth 同判据
 
     // 状态：ok=已生成 / wait=待更新(未到点) / miss=未更新(已过点仍无) / close=休市
     function st(done, dueMin) {
@@ -87,6 +127,7 @@
       row('早报', mo && mo.generatedAt, !!mo, DUE.morning, '8:30'),
       row('晚报', ev && ev.generatedAt, !!ev, DUE.evening, '21:00'),
       row('量价选股', scToday && sc.runAt, scToday, DUE.screener, '15:10'),
+      row('次日验证', '', verifyRanToday(), DUE.verify, '21:30'),
       {
         name: '投资日历',
         time: (cal.length && cal[0].publishedAt) ? cal[0].publishedAt.slice(5, 10) : '',
@@ -753,8 +794,9 @@
       if (!newest.evening && h >= DUE.evening) issues.push('🌙晚报缺失');
     }
 
-    var sc = screenerList()[0];
-    if (!sc || sc.date !== todayStr) { if (h >= DUE.screener) issues.push('🔍量价未更新'); }
+    // 量价：与 srcMeta() 同判据（只看日期，P2-3）；验证：新增监控项（P1-3）
+    if (!scRanToday()) { if (h >= DUE.screener) issues.push('🔍量价未更新'); }
+    if (h >= DUE.verify && !verifyRanToday()) issues.push('🔬验证未跑');
 
     var level = issues.length ? (issues.length >= 2 ? 'bad' : 'warn') : 'ok';
     bar.className = 'health ' + level;

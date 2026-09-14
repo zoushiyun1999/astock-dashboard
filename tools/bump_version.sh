@@ -2,6 +2,13 @@
 # 刷新 dashboard/index.html 中资源引用的版本号（v=时间戳），防止浏览器缓存旧文件
 # 用法：bash tools/bump_version.sh（可在任意目录运行）
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 应用级互斥锁（可重入，P2-5）：被 publish.sh 调用时 PUBLISH_LOCK_HELD=1 → 直接返回，避免自死锁；
+# 被任务（早报/晚报链路）直接调用时自行加锁，退出时释放。锁被占满重试则 exit 0（跳过，安全）。
+source "$SCRIPT_DIR/lib/lock.sh"
+lock_guard
+trap 'lock_release' EXIT INT TERM
+
 INDEX="$SCRIPT_DIR/../dashboard/index.html"
 TS=$(date +%Y%m%d%H%M)
 if [ -f "$INDEX" ]; then
@@ -17,7 +24,15 @@ fi
 NODE_BIN="/c/Users/zoush/.workbuddy/binaries/node/versions/22.22.2-2/node.exe"
 [ -x "$NODE_BIN" ] || NODE_BIN="node"
 WIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd -W)"
-"$NODE_BIN" "$WIN_DIR/tools/sort_reports.js" || true
+# 安全阀感知（缺口 A）：sort_reports 因「规模骤减 / 解析失败 / 乐观锁冲突」主动中止时退出码 2，
+# 表示 data.js 已异常，此时继续 commit+push 无意义且危险 → 硬中止发布；
+# 退出码 1 等其他错误仍软放行（符合规则 16b：日历压缩/排序等软步骤失败不阻塞发布）。
+rc=0
+"$NODE_BIN" "$WIN_DIR/tools/sort_reports.js" || rc=$?
+if [ "$rc" -eq 2 ]; then
+  echo "✗ sort_reports 安全阀触发（规模骤减/解析失败/并发写）→ 中止发布，详见 logs/ALERT.md" >&2
+  exit 1
+fi
 
 # 同步休市日到前端（config/trade_holidays.json -> dashboard/holidays.js）
 "$NODE_BIN" "$WIN_DIR/tools/sync_holidays.js" || true
@@ -45,5 +60,8 @@ fi
 #    结果是「看着发布成功、线上数据却停在上一期」。故不加 `|| true`。
 if ! "$NODE_BIN" "$WIN_DIR/tools/export_json.js"; then
   echo "✗ export_json.js 失败：data.json/version.json 未更新，中止发布（避免线上数据与 data.js 不一致）" >&2
+  "$NODE_BIN" "$WIN_DIR/tools/lib/ops.js" --append-alert --stage "bump/export_json" --script "bump_version.sh" \
+    --result OPEN --detail "export_json.js 失败，data.json / version.json 未更新" \
+    --fix "检查 dashboard/data.js / screener.js 是否可解析；修复后重发" --link "dashboard/data.json" || true
   exit 1
 fi
