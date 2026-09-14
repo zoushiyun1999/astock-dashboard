@@ -16,6 +16,32 @@ MSG="${1:-看板数据 $(date +%Y-%m-%d)}"
 NODE_BIN="/c/Users/zoush/.workbuddy/binaries/node/versions/22.22.2-2/node.exe"
 [ -x "$NODE_BIN" ] || NODE_BIN="node"
 
+# ── 陈旧 git 锁守卫 ──────────────────────────────────────────────
+# 症状：git commit 报 'Unable to create index.lock: File exists'，
+#       而第 1/4 步（刷版本号/导出）已正常跑完 → 发布静默中断，数据只落一半。
+# 成因：上一轮任务被中断/杀掉（超时、调度重启），锁未回收留下 0 字节空文件。
+# 处置：仅当「锁存在」且「当前无 git 进程」时才删除 —— 有活跃 git 进程时绝不动，
+#       避免打断正在进行的提交。删除后打印告警，便于事后回溯中断原因。
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  GIT_DIR_PATH="$(git rev-parse --git-dir)"
+  LOCK_FILE="$GIT_DIR_PATH/index.lock"
+  if [ -f "$LOCK_FILE" ]; then
+    # 统计活跃 git 进程。两个坑：
+    #   1) tasklist 在 Git Bash 下要用单破折号 `-FI`，`//FI` 会报「无效参数」；
+    #   2) `grep -c` 无匹配时输出 0 但退出码为 1，若写成 `|| echo 0` 会拼出 "0\n0"
+    #      让 [ -eq ] 崩掉。故先取原始输出再 tr 清空白，最后兜底赋 0。
+    GIT_PROCS="$(tasklist -FI "IMAGENAME eq git.exe" -NH 2>/dev/null | grep -ci "git.exe" | tr -d '[:space:]')"
+    [ -n "$GIT_PROCS" ] || GIT_PROCS=0
+    if [ "$GIT_PROCS" -eq 0 ] 2>/dev/null; then
+      echo "⚠️  检测到陈旧 git 锁（$LOCK_FILE，无活跃 git 进程）→ 自动清除"
+      echo "    成因通常是上一轮任务被中断/杀掉，锁未回收。"
+      rm -f "$LOCK_FILE"
+    else
+      echo "⚠️  检测到 git 锁且有 $GIT_PROCS 个 git 进程在运行 → 不干预，等待其自行释放"
+    fi
+  fi
+fi
+
 echo "== 1/4 刷新版本号与数据产物 =="
 bash "$SCRIPT_DIR/bump_version.sh"
 
