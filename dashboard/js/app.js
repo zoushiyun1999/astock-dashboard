@@ -102,8 +102,12 @@
     return s.time + (s.planned ? '(计划)' : '');
   }
 
-  function sectionCard(title, color, inner) {
-    return '<div class="card"><h3><span class="dot" style="background:' + color + '"></span>' + esc(title) + '</h3>' + inner + '</div>';
+  /* 卡片标题点：颜色一律走 CSS 语义变量，不在 JS 里写死色值。
+     传入的是「语义名」，由 style.css 的 [data-dot=...] 决定实际颜色 ——
+     这样换配色只需要改一处，也避免再出现"红绿被用到非价格场景"。 */
+  function sectionCard(title, tone, inner) {
+    return '<div class="card"><h3 data-dot="' + esc(tone) + '">' +
+      '<span class="dot"></span>' + esc(title) + '</h3>' + inner + '</div>';
   }
 
   /* ── 早报渲染 ── */
@@ -118,7 +122,7 @@
         if (i === 0) return '<li class="headline"><span class="hl-tag">头条</span><span>' + esc(t) + '</span></li>';
         return '<li><span class="idx">' + (i + 1) + '</span><span>' + esc(t) + '</span></li>';
       }).join('');
-      html += sectionCard('要闻简讯', '#0F172A', '<ul class="news">' + lis + '</ul>');
+      html += sectionCard('要闻简讯', 'brand', '<ul class="news">' + lis + '</ul>');
     }
 
     // 盘前人气股
@@ -128,7 +132,7 @@
       var rows = keys.filter(function (k) { return plats[k]; }).map(function (k, i) {
         return '<div class="row"><span class="plat' + (i === 0 ? ' b1' : '') + '">' + esc(k) + '</span><span class="stocks">' + esc(plats[k]) + '</span></div>';
       }).join('');
-      if (rows) html += sectionCard('盘前人气股', '#6741d9', '<div class="hot">' + rows + '</div>');
+      if (rows) html += sectionCard('盘前人气股', 'violet', '<div class="hot">' + rows + '</div>');
     }
 
     // 重点公告
@@ -137,12 +141,13 @@
         var warn = /⚠️|风险|退市/.test(t);
         return '<li class="' + (warn ? 'warn' : '') + '"><span class="bullet"></span><span>' + esc(t) + '</span></li>';
       }).join('');
-      html += sectionCard('重点公告', '#f59f00', '<ul class="ann">' + lis2 + '</ul>');
+      html += sectionCard('重点公告', 'amber', '<ul class="ann">' + lis2 + '</ul>');
     }
 
     // 今日新股
     if (s['今日新股']) {
-      html += sectionCard('今日新股', '#0ca678', '<div style="font-size:13.5px">' + esc(s['今日新股']) + '</div>');
+      // 今日新股：结构色（藏青），不用绿色 —— 绿色已被价格层占用
+      html += sectionCard('今日新股', 'info', '<div style="font-size:14px">' + esc(s['今日新股']) + '</div>');
     }
 
     html += linkRow(r.sourceUrl, '🔗 原文：' + esc(r.title || '开盘必读'));
@@ -162,7 +167,7 @@
           '<div class="blogger-text">' + esc(v.view) + '</div>' +
           '</div>';
       }).join('');
-      html += sectionCard('博主观点', '#6741d9', views);
+      html += sectionCard('博主观点', 'violet', views);
     }
 
     // 大盘概况
@@ -188,7 +193,7 @@
         }).join('') + '</div>';
       }
       var sumHtml = m.summary ? '<div class="summary">' + esc(m.summary) + '</div>' : '';
-      html += sectionCard('大盘概况', '#e03131', metHtml + sumHtml);
+      html += sectionCard('大盘概况', 'up', metHtml + sumHtml);
     }
 
     // 连板梯队
@@ -198,7 +203,7 @@
         var board = m2 ? m2[1] : '连板';
         return '<li><span class="board">' + esc(board) + '</span><span>' + esc(t.replace(/^\d+板[：:]/, '')) + '</span></li>';
       }).join('');
-      html += sectionCard('连板梯队', '#d9480f', '<ul class="ladder">' + lis + '</ul>');
+      html += sectionCard('连板梯队', 'rank1', '<ul class="ladder">' + lis + '</ul>');
     }
 
     // 板块热点
@@ -212,12 +217,12 @@
           (x.catalyst ? '<div class="cat"><b>催化</b>' + esc(x.catalyst) + '</div>' : '') +
           '</div>';
       }).join('');
-      html += sectionCard('板块热点', '#f08c00', secs);
+      html += sectionCard('板块热点', 'rank3', secs);
     }
 
     // 市场情绪
     if (r['市场情绪']) {
-      html += sectionCard('市场情绪', '#1971c2', '<div class="mood">' + esc(r['市场情绪']) + '</div>');
+      html += sectionCard('市场情绪', 'info', '<div class="mood">' + esc(r['市场情绪']) + '</div>');
     }
 
     // 原文链接
@@ -299,7 +304,7 @@
     var html = '';
 
     if (today.length) {
-      html += sectionCard('今日可关注 · 来自早报', '#1971c2',
+      html += sectionCard('今日可关注 · 来自早报', 'info',
         '<div class="wl-desc">早盘 8:30 生成 · 盘前人气股 + 公告利好 · 共 ' + today.length + ' 只，带状态标签</div>' +
         '<ul class="watch watch-today">' + today.map(todayLi).join('') + '</ul>');
     }
@@ -307,7 +312,7 @@
     if (tmr.length) {
       var cards = tmr.map(pickCard).join('');
       var cnt = tmr.reduce(function (n, g) { return n + (g.picks || []).length; }, 0);
-      html += sectionCard('明日可关注 · 来自晚报', '#7048e8',
+      html += sectionCard('明日可关注 · 来自晚报', 'violet',
         '<div class="wl-desc">晚盘 21:00 生成 · 博主主线板块 + 个股状态 · 共 ' + cnt + ' 只，按板块分组</div>' + cards);
     }
 
@@ -334,7 +339,7 @@
     var lis = rep.map(function (x) {
       return '<li><span class="rn">' + esc(x.n) + '</span><span class="rc">' + x.c + '次</span></li>';
     }).join('');
-    return sectionCard('📈 近期重复推荐（近7日）', '#0ca678',
+    return sectionCard('📈 近期重复推荐（近7日）', 'down',
       '<ul class="hot-rep">' + lis + '</ul>' +
       '<div class="wl-desc">被多次推荐的个股，值得重点跟踪其持续性</div>');
   }
@@ -377,7 +382,7 @@
     // 改为默认折叠：只留一个入口，点击后全屏看，可双指缩放。
     if (c.images && c.images.length) {
       var total = c.images.length;
-      html += sectionCard('日历原图', '#e03131',
+      html += sectionCard('日历原图', 'up',
         '<div class="wl-desc">博主原始长图，共 ' + total + ' 张 · 点击放大查看</div>' +
         '<button class="cal-open" onclick="openCalViewer()">' +
         '<span>🖼</span><span>查看日历原图</span>' +
@@ -390,7 +395,7 @@
       if (typeof x === 'string') return '<li><span class="dt">近期</span><span>' + esc(x) + '</span></li>';
       return '<li><span class="dt">' + esc(x.date) + '</span><span>' + esc(x.event) + '</span></li>';
     }).join('');
-    html += sectionCard('事件日历', '#f59f00', '<ul class="cal">' + evs + '</ul>');
+    html += sectionCard('事件日历', 'amber', '<ul class="cal">' + evs + '</ul>');
     return html;
   }
 
@@ -493,7 +498,7 @@
 
     var rows = sc.list.slice().sort(function (a, b) { return (b.gain || 0) - (a.gain || 0); });
 
-    return sectionCard('量价选股 · ' + esc(sc.date), '#1971c2',
+    return sectionCard('量价选股 · ' + esc(sc.date), 'info',
       picker +
       '<div class="wl-desc">全市场 ' + esc(sc.count) + ' 只符合条件 · 更新于 ' + esc(sc.runAt) + '</div>' +
       '<div class="sc-conds">' + cond + '</div>' +
@@ -514,14 +519,20 @@
     var hint = document.getElementById('scHint');
     if (!wrap || !fade) return;
     function upd() {
+      // ⚠️ 必须判 clientWidth>0：render() 时 section 还是 display:none（.hide），
+      //    此时 clientWidth/scrollWidth 全为 0，"需不需要滚动"会算错成 false，
+      //    遮罩和提示会被永久关掉。隐藏状态下直接返回，等切到该 Tab 再算。
+      if (!wrap.clientWidth) return;
       var more = wrap.scrollWidth - wrap.clientWidth > 4;
       var atEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 4;
       fade.classList.toggle('off', !more || atEnd);
       if (hint) hint.classList.toggle('off', !more);
     }
-    upd();
     wrap.addEventListener('scroll', upd, { passive: true });
     window.addEventListener('resize', upd);
+    upd();
+    // switchTab 里 section 变可见后再跑一次（此时才有真实宽度）
+    window.__scHintRefresh = upd;
   }
 
   var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
@@ -595,8 +606,10 @@
         var label = s.state === 'ok' ? (s.name === '投资日历' ? '已收录' : '已生成')
           : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
         var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
-        return '<i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml + ' <span class="st-state">' + label + '</span>';
-      }).join('<br>');
+        // 每项一个 div（网格子项），不再用 <br> 分隔 —— 网格才能稳定 2 列
+        return '<div><i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml +
+          ' <span class="st-state">' + label + '</span></div>';
+      }).join('');
     } else {
       st.textContent = '';
     }
@@ -619,6 +632,8 @@
     positionGlider();
     updateEveningDot();
     bindScHint();
+    // section 由 hide 变可见后，量价表的真实宽度才存在，此时刷新遮罩判定
+    if (typeof window.__scHintRefresh === 'function') window.__scHintRefresh();
   }
 
   /** 数据健康条：基于各源最后更新时间，提示是否异常 */
