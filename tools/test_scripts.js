@@ -376,6 +376,317 @@ console.log('\n#19 · gap_check.computeGaps：交易日早于 08:30 不报今天
   ok(!/d <= today/.test(hc), 'health_check.js 不再用「d <= today」无条件纳入今天');
 }
 
+/* ════════════ #20 · merge_report（早报/晚报 JSON 中间件安全落盘） ════════════ */
+console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留 / 幂等与裁剪');
+{
+  const mr = require('./merge_report');
+  // 包裹：所有落盘测试都把 WARN 日志写到临时目录，绝不污染仓库 logs/<date>.md
+  const rawMerge = mr.mergeReport.bind(mr);
+  const run = (kind, jf, f, opts) => rawMerge(kind, jf, f, Object.assign({ logDir: tmpDir }, opts || {}));
+
+  const jsonFile = (obj) => tmpFile(JSON.stringify(obj, null, 2), '.json');
+  const readData = (f) => JSON.parse(fs.readFileSync(f, 'utf8')
+    .replace('window.REPORTS =', '').replace(/;\s*$/, ''));
+  const fileText = (f) => fs.readFileSync(f, 'utf8');
+  const reportsData = (dates) => 'window.REPORTS = ' + JSON.stringify({
+    updatedAt: '', calendar: [], reports: dates.map((dt) => ({ date: dt }))
+  }) + ';\n';
+
+  // —— 合法样本构建器（字段名逐字取自 dashboard/data.js 真实数据）——
+  function morningJson(over) {
+    const j = {
+      date: '2026-09-15', at: '2026-09-15 08:35',
+      morning: {
+        title: '9月15日开盘必读资讯', source: '韭研公社·开盘必读',
+        sourceUrl: 'https://www.jiuyangongshe.com/a/20azl1mf7re',
+        generatedAt: '2026-09-15 08:35',
+        sections: {
+          '要闻简讯': ['a', 'b', 'c', 'd', 'e'],
+          '盘前人气股': { '韭研公社': 'x', '同花顺': 'y', '东方财富': 'z', '淘股吧': 'w' },
+          '重点公告': ['p1', 'p2'],
+          '今日新股': '今日无新股申购/上市安排'
+        },
+        '今日关注': [
+          { name: '超声电子', code: '000823', sector: '覆铜板/PCB', status: '3板·中位·板块核心', reason: 'r' },
+          { name: '中新赛克', code: '002912', sector: 'AI安全', status: '3板·中位·题材龙头', reason: 'r' }
+        ]
+      }
+    };
+    return Object.assign(j, over || {});
+  }
+  function tmrGroup(sector) {
+    return { sector: sector, stage: '主升延续·最强主线', why: 'w', chain: 'c',
+      picks: [{ name: '超声电子', code: '000823', role: '3板·板块最高身位',
+        status: '3板·中位·板块情绪核心', reason: 'r' }] };
+  }
+  function hotItem(name) {
+    return { name: name, strength: 'st', stocks: 'sk', catalyst: 'ca' };
+  }
+  function eveningJson(over) {
+    const j = {
+      date: '2026-09-15', at: '2026-09-15 21:05',
+      evening: {
+        sources: ['湖南人', '行鱼复盘'], generatedAt: '2026-09-15 21:05',
+        '博主观点': [{ author: '行鱼复盘', view: 'v' }],
+        '大盘概况': { summary: 's', metrics: [{ k: '上证指数', v: '3885.33', d: '-0.07%', up: false }] },
+        '连板梯队': ['4板：闽东电力（...）'],
+        '明日关注': [tmrGroup('PCB/覆铜板（CCL）')],
+        '板块热点': [hotItem('PCB/覆铜板')]
+      },
+      calendar: [{ id: 'cal-new', title: 't', author: 'a', publishedAt: '2026-09-15 16:00',
+        url: 'u', images: [], events: [] }]
+    };
+    return Object.assign(j, over || {});
+  }
+
+  // 1 正常合并（早报）
+  {
+    const f = tmpFile(dataSrc(0));
+    run('morning', jsonFile(morningJson()), f, { now: '2026-09-15 08:35' });
+    const d = readData(f);
+    eq(d.reports.length, 1, '#20.1 早报合并：reports=1');
+    eq(d.reports[0].date, '2026-09-15', '#20.1 早报合并：date 正确');
+    eq(d.reports[0].morning['今日关注'].length, 2, '#20.1 早报合并：今日关注 2 条');
+    eq(d.updatedAt, '2026-09-15 08:35', '#20.1 updatedAt 更新为 JSON.at');
+  }
+
+  // 2 正常合并（晚报，含 calendar）
+  {
+    const f = tmpFile(dataSrc(0));
+    run('evening', jsonFile(eveningJson()), f, { now: '2026-09-15 21:05' });
+    const d = readData(f);
+    eq(d.reports.length, 1, '#20.2 晚报合并：reports=1');
+    ok(!!d.reports[0].evening, '#20.2 晚报合并：含 evening');
+    eq(d.calendar.length, 1, '#20.2 晚报合并：calendar 追加 1 篇');
+    eq(d.calendar[0].id, 'cal-new', '#20.2 calendar 内容正确');
+  }
+
+  // 3 当日已有条目更新（不新增第 2 条）
+  {
+    const f = tmpFile('window.REPORTS = ' + JSON.stringify({
+      updatedAt: '', calendar: [], reports: [{ date: '2026-09-15', morning: { '今日关注': [] } }]
+    }) + ';\n');
+    run('evening', jsonFile(eveningJson()), f, { now: '2026-09-15 21:05' });
+    const d = readData(f);
+    eq(d.reports.length, 1, '#20.3 同一条更新：仍是 1 条（不新增）');
+    ok(!!d.reports[0].morning && !!d.reports[0].evening, '#20.3 同一条变 {date,morning,evening}');
+  }
+
+  // 4 规则17 条数不一致拒绝（H7）+ exit 3 + 文件未变
+  {
+    const bad = eveningJson();
+    bad.evening['明日关注'] = [tmrGroup('A'), tmrGroup('B'), tmrGroup('C'), tmrGroup('D')];
+    bad.evening['板块热点'] = [hotItem('A'), hotItem('B'), hotItem('C'), hotItem('D'), hotItem('E')];
+    ok(mr.validate('evening', bad, {}).errors.some((e) => e.code === 'H7'), '#20.4 validate 命中 H7');
+    const f = tmpFile(dataSrc(0));
+    const before = fileText(f);
+    let threw = null; try { run('evening', jsonFile(bad), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__validation, '#20.4 整体 exit 3（__validation）');
+    eq(fileText(f), before, '#20.4 文件未变');
+  }
+
+  // 5 日期格式错误（H1）
+  {
+    const bad = morningJson({ date: '2026/09/15' });
+    ok(mr.validate('morning', bad, {}).errors.some((e) => e.code === 'H1'), '#20.5 validate 命中 H1');
+    const f = tmpFile(dataSrc(0));
+    const before = fileText(f);
+    let threw = null; try { run('morning', jsonFile(bad), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__validation, '#20.5 exit 3（__validation）');
+    eq(fileText(f), before, '#20.5 文件未变');
+  }
+
+  // 6 幂等重复跑
+  {
+    const f = tmpFile(dataSrc(0));
+    const jf = jsonFile(morningJson());
+    run('morning', jf, f, { now: '2026-09-15 08:35' });
+    const t1 = fileText(f);
+    run('morning', jf, f, { now: '2026-09-15 08:35' });
+    const t2 = fileText(f);
+    eq(readData(f).reports.length, 1, '#20.6 幂等：第二次 reports 条数不变');
+    eq(t1, t2, '#20.6 幂等：两次写入内容一致');
+  }
+
+  // 7 reports 超 7 裁剪（升序，最新在末尾）
+  {
+    const f = tmpFile(reportsData(['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04',
+      '2026-09-05', '2026-09-06', '2026-09-07']));
+    run('morning', jsonFile(morningJson({ date: '2026-09-08' })), f, { now: '2026-09-08 08:35' });
+    const d = readData(f);
+    eq(d.reports.length, 7, '#20.7 超 7 → slice(-7) 保留 7');
+    eq(d.reports[0].date, '2026-09-02', '#20.7 最旧（09-01）被裁');
+    eq(d.reports[d.reports.length - 1].date, '2026-09-08', '#20.7 最新在末尾（升序）');
+  }
+
+  // 8 calendar 去重 + 保留5（降序）
+  {
+    const cal = [];
+    for (let i = 1; i <= 5; i++) cal.push({ id: 'c' + i, title: 't', author: 'a',
+      publishedAt: '2026-09-0' + i + ' 10:00', url: 'u', images: [], events: [] });
+    const f = tmpFile('window.REPORTS = ' + JSON.stringify({ updatedAt: '', calendar: cal, reports: [] }) + ';\n');
+    const j = eveningJson();
+    j.calendar = [
+      { id: 'c3', title: 't', author: 'a', publishedAt: '2026-09-03 10:00', url: 'u', images: [], events: [] },
+      { id: 'new9', title: 't', author: 'a', publishedAt: '2026-09-09 10:00', url: 'u', images: [], events: [] }
+    ];
+    run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+    const d = readData(f);
+    eq(d.calendar.length, 5, '#20.8 去重 + 保留 5 篇');
+    eq(d.calendar[0].id, 'new9', '#20.8 最新在最前（降序）');
+    eq(new Set(d.calendar.map((x) => x.id)).size, 5, '#20.8 无重复 id');
+    ok(d.calendar.every((x, i, a) => i === 0 || a[i - 1].publishedAt >= x.publishedAt),
+      '#20.8 publishedAt 降序');
+  }
+
+  // 9 规模骤减 → 阀中止（9 → 7，暴露 baseline 传参：传 loaded.data 则此例会漏拦）
+  {
+    const f = tmpFile(reportsData(['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04',
+      '2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09']));
+    const before = fileText(f);
+    let threw = null;
+    try { run('morning', jsonFile(morningJson({ date: '2026-09-10' })), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__abort, '#20.9 规模骤减 9→7 → __abort（exit 2）');
+    eq(fileText(f), before, '#20.9 文件未变');
+  }
+
+  // 10 解析失败 → 阀中止
+  {
+    const f = tmpFile('window.REPORTS = { broken');
+    let threw = null;
+    try { run('morning', jsonFile(morningJson()), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__abort, '#20.10 data.js 解析失败 → __abort（exit 2）');
+  }
+
+  // 11 乐观锁冲突 → 阀中止
+  {
+    const f = tmpFile(dataSrc(0));
+    let threw = null;
+    try {
+      run('morning', jsonFile(morningJson()), f, {
+        now: '2026-09-15 08:35',
+        __beforeSave: () => fs.appendFileSync(f, '\n// 被并发任务改过')
+      });
+    } catch (e) { threw = e; }
+    ok(threw && threw.__abort, '#20.11 读后文件被篡改 → 乐观锁拦截（__abort）');
+  }
+
+  // 12 --dry 不落盘
+  {
+    const f = tmpFile(dataSrc(0));
+    const before = fileText(f);
+    run('morning', jsonFile(morningJson()), f, { dry: true, now: '2026-09-15 08:35' });
+    eq(fileText(f), before, '#20.12 --dry 不落盘（文件未变）');
+  }
+
+  // 13 输入在 dashboard/ 下 → 拒绝（exit 1）
+  {
+    const f = tmpFile(dataSrc(0));
+    let threw = null;
+    try { run('morning', path.join('dashboard', 'x.json'), f, {}); } catch (e) { threw = e; }
+    ok(threw && !threw.__abort && !threw.__validation, '#20.13 dashboard/ 路径 → 非阀中止非校验（→ exit 1）');
+    ok(threw && /dashboard/.test(threw.message), '#20.13 错误信息明确拒绝 dashboard/');
+  }
+
+  // 14 code 非 6 位（H6）
+  {
+    const bad = morningJson();
+    bad.morning['今日关注'][0].code = '0008';
+    ok(mr.validate('morning', bad, {}).errors.some((e) => e.code === 'H6'), '#20.14 validate 命中 H6');
+    const f = tmpFile(dataSrc(0));
+    let threw = null; try { run('morning', jsonFile(bad), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__validation, '#20.14 exit 3');
+  }
+
+  // 15 H8 高板股缺口径词
+  {
+    const bad = morningJson();
+    bad.morning['今日关注'][0].status = '5连板·核心';
+    ok(mr.validate('morning', bad, {}).errors.some((e) => e.code === 'H8'), '#20.15 validate 命中 H8');
+    const f = tmpFile(dataSrc(0));
+    let threw = null; try { run('morning', jsonFile(bad), f, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__validation, '#20.15 exit 3');
+  }
+
+  // 16 verify 保留（早报 + 晚报）
+  {
+    const f = tmpFile('window.REPORTS = ' + JSON.stringify({
+      updatedAt: '', calendar: [],
+      reports: [{ date: '2026-09-15', morning: { '今日关注': [
+        { name: '超声电子', code: '000823', sector: 'x', status: '3板·中位', reason: 'r',
+          verify: { at: '2026-09-15', buyRet: 8.8, netRet: 8.58 } }
+      ] } }]
+    }) + ';\n');
+    run('morning', jsonFile(morningJson()), f, { now: '2026-09-15 09:00' });
+    const p = readData(f).reports[0].morning['今日关注'].find((x) => x.code === '000823');
+    ok(p && p.verify && p.verify.buyRet === 8.8, '#20.16 早报 verify 保留（重跑不清零）');
+
+    const f2 = tmpFile('window.REPORTS = ' + JSON.stringify({
+      updatedAt: '', calendar: [],
+      reports: [{ date: '2026-09-15', evening: { '明日关注': [
+        { sector: 'A', stage: 's', why: 'w', chain: 'c', picks: [
+          { name: '超声电子', code: '000823', role: 'r', status: '3板·中位', reason: 'rr',
+            verify: { at: '2026-09-15', buyRet: 4.2 } }
+        ] } ] } }]
+    }) + ';\n');
+    run('evening', jsonFile(eveningJson()), f2, { now: '2026-09-15 22:00' });
+    const pick = readData(f2).reports[0].evening['明日关注'][0].picks[0];
+    ok(pick.verify && pick.verify.buyRet === 4.2, '#20.16 晚报 picks verify 保留');
+  }
+
+  // 17 源码守卫
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'tools', 'merge_report.js'), 'utf8');
+    ok(/loadDataStrict\(/.test(src), '#20.17 源码含 loadDataStrict(');
+    ok(/saveDataSafe\(/.test(src), '#20.17 源码含 saveDataSafe(');
+    ok(/require\.main === module/.test(src), '#20.17 源码含 require.main === module 守卫');
+    ok(!/fs\.writeFileSync\(\s*DATA/.test(src), '#20.17 无裸 fs.writeFileSync(DATA');
+    ok(/saveDataSafe\(file, next, loaded, loaded\.src\)/.test(src), '#20.17 baseline 传整个 loaded（非 loaded.data）');
+    ok(/slice\(-MAX\)/.test(src), '#20.17 reports 升序裁剪 slice(-MAX)');
+    ok(/slice\(0, CAL_MAX\)/.test(src), '#20.17 calendar 降序裁剪 slice(0, CAL_MAX)');
+  }
+
+  // 18 metrics[].v 空值放宽（Fix #1，go-live 风险：09-11 晚报曾因 metrics v="" 被拒）
+  {
+    const j = eveningJson();
+    j.evening['大盘概况'].metrics = [{ k: '上证指数', v: '3885.33' }, { k: '深证成指', v: '' }];
+    const v = mr.validate('evening', j, {});
+    ok(!v.errors.some((e) => e.code === 'H3'), '#20.18 metrics[].v 空 → 不再 H3 硬拦');
+    ok(v.warnings.some((w) => w.code === 'W6'), '#20.18 metrics[].v 空 → 新增 WARN（W6）');
+    const f = tmpFile(dataSrc(0));
+    run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+    const dd = readData(f);
+    eq(dd.reports[0].evening['大盘概况'].metrics.length, 2, '#20.18 整体可写入（exit 0），指标 2 条落盘');
+
+    // metrics[].k 为空 → 仍 H3 硬拦（只有名字没数值可接受，只有数值没名字不行）
+    const j2 = eveningJson();
+    j2.evening['大盘概况'].metrics = [{ k: '', v: '1' }];
+    ok(mr.validate('evening', j2, {}).errors.some((e) => e.code === 'H3'), '#20.18 metrics[].k 为空 → 仍 H3 硬拦');
+    const f2 = tmpFile(dataSrc(0));
+    const before2 = fileText(f2);
+    let threw = null; try { run('evening', jsonFile(j2), f2, {}); } catch (e) { threw = e; }
+    ok(threw && threw.__validation, '#20.18 metrics[].k 空 → exit 3 拒写');
+    eq(fileText(f2), before2, '#20.18 metrics[].k 空 → 文件未变');
+  }
+
+  // 19 CLI 层显式拒绝「data.js 不存在」（Fix #2：把隐式 ENOENT 保障变成显式契约）
+  {
+    const cp = require('child_process');
+    const missing = path.join(tmpDir, 'no-such-data.js');
+    const jf = jsonFile(morningJson());
+    const alertFile = path.join(ROOT, 'logs', 'ALERT.md');
+    const beforeAlert = fs.existsSync(alertFile) ? fs.readFileSync(alertFile, 'utf8') : '';
+    const r = cp.spawnSync(process.execPath,
+      [path.join(ROOT, 'tools', 'merge_report.js'), '--kind', 'morning', '--in', jf],
+      { env: Object.assign({}, process.env, { ASTOCK_DATA_FILE: missing }), encoding: 'utf8' });
+    eq(r.status, 1, '#20.19 data.js 不存在 → exit 1');
+    ok(!fs.existsSync(missing), '#20.19 目标文件未被创建（默认拒绝，非默认修复）');
+    ok(/data\.js 不存在/.test(r.stderr || ''), '#20.19 stderr 含明确拒绝文案');
+    const afterAlert = fs.existsSync(alertFile) ? fs.readFileSync(alertFile, 'utf8') : '';
+    eq(afterAlert, beforeAlert, '#20.19 未写 ALERT');
+  }
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 

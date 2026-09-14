@@ -285,5 +285,6 @@ module.exports = {
   SCALE, scaleBlocked, readCounts, hasScreenerField, parseDataSrc,
   gitShowHead, gitShowHeadData, screenerHistCount,
   appendAlert, listOpen, snapshotData,
+  stampMin,                       // ← 新增（供 merge_report 复用，避免各脚本抄多份导致格式漂移）
   ROOT, DATA, SC_FILE, BACKUP_DIR, ALERT_FILE, BACKUP_KEEP
 };
