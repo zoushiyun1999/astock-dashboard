@@ -1,57 +1,76 @@
 {
+  "_说明": "数据源与调度的事实清单。改任务时间/数据源时，这个文件要跟着改。",
   "system": {
     "name": "A股推送系统",
-    "version": "1.2.1",
-    "channel": "网页看板 + 微信通知（Server酱）",
-    "rule": "有发就推、没发就停"
+    "version": "1.3.0",
+    "channel": "网页看板（唯一渠道）",
+    "rule": "有发就推、没发就停",
+    "_更新": "2026-09-12 微信通知（Server酱）已整体下线，别再往里加通知相关的源"
   },
   "automations": [
     {
-      "id": "automation-1788184424861",
       "name": "A股早报-开盘必读资讯",
       "time": "08:30",
       "rule": "FREQ=DAILY;BYHOUR=8;BYMINUTE=30",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "writes": "reports[].morning"
     },
     {
-      "id": "automation-1788187841979",
-      "name": "A股量价选股（技术面筛选）",
-      "time": "14:30",
-      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=14;BYMINUTE=30",
-      "status": "ACTIVE"
+      "name": "A股早报补跑看门狗",
+      "time": "10:00",
+      "rule": "FREQ=DAILY;BYHOUR=10;BYMINUTE=0",
+      "status": "ACTIVE",
+      "writes": "仅在当日 morning 缺失时补跑"
     },
     {
-      "id": "automation-1788184401617",
+      "name": "A股量价选股",
+      "time": "15:10",
+      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=15;BYMINUTE=10",
+      "status": "ACTIVE",
+      "writes": "reports[].screener + dashboard/screener.js",
+      "_note": "原为 14:30，2026-09-12 后移 —— 14:30 仍在盘中，行情未定，入选数会被系统性压低"
+    },
+    {
       "name": "A股晚报-AI读图复盘+投资日历专版",
       "time": "21:00",
       "rule": "FREQ=DAILY;BYHOUR=21;BYMINUTE=0",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "writes": "reports[].evening + calendar"
     },
     {
-      "id": "automation-1788328556486",
       "name": "A股次日验证",
       "time": "21:30",
       "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=21;BYMINUTE=30",
       "status": "ACTIVE",
-      "note": "给推荐个股补当日实际涨跌标记，不发微信通知"
+      "writes": "各推荐股的 verify 字段"
+    },
+    {
+      "name": "A股晚报补跑看门狗",
+      "time": "22:30",
+      "rule": "FREQ=DAILY;BYHOUR=22;BYMINUTE=30",
+      "status": "ACTIVE",
+      "writes": "仅在当日 evening 缺失时补跑",
+      "_note": "原系统为 PAUSED，2026-09-12 改为 ACTIVE"
     }
   ],
   "morning": {
     "brief_name": "A股早报",
-    "content": ["要闻简讯(5-8条)", "盘前人气股(四平台)", "重点公司公告", "今日新股"],
+    "content": ["要闻简讯(5-12条)", "盘前人气股(四平台)", "重点公告(约10条)", "今日新股", "今日关注(约8只，带代码/板块/状态/理由)"],
     "sources": [
       {
         "name": "韭研公社·开盘必读",
         "type": "user_home",
         "url": "https://www.jiuyangongshe.com/u/df07647c21594f8c9c382304128c08f3/",
         "article_pattern": "https://www.jiuyangongshe.com/a/{id}",
-        "publish_time": "每日 7:30-8:10"
+        "publish_time": "每日 07:30-08:10",
+        "note": "Nuxt SSR，数据内联在 window.__NUXT__ 里且被压缩成 IIFE；article_id 是 8-32 位短 ID，不是 32 位哈希"
       }
     ]
   },
   "evening": {
     "brief_name": "A股复盘晚报",
-    "content": ["博主复盘标题+摘要+原文链接", "投资日历仅在「📅 专版」展示（不在晚报正文）"],
+    "content": ["博主观点(150-300字)", "大盘概况(指标+摘要)", "连板梯队", "板块热点(扁平摘要)", "明日关注(带 picks 明细)", "市场情绪"],
+    "_结构说明": "板块热点与明日关注是同一批板块的两种结构，服务两个 Tab（板块热点→晚报 Tab，明日关注→短线 Tab），条数必须一致",
     "sources": [
       {
         "name": "淘股吧·湖南人",
@@ -59,27 +78,52 @@
         "url": "https://m.tgb.cn/blog/444409",
         "article_pattern": "https://m.tgb.cn/a/{id}",
         "publish_time": "16:08-17:28",
-        "note": "正文为图片，通过AI逐张读图识别后提炼成结构化文字总结（大盘概况/连板梯队/板块热点/市场情绪）"
+        "note": "正文为图片，需逐张下载 + AI 读图；同时可从 div#gtgioMsg* 的 subject 属性拿到约 4000 字正文。博客列表按时间正序，需自行倒序取最新"
       },
       {
         "name": "淘股吧·行鱼复盘(shenghuo329)",
         "type": "blog",
         "url": "https://m.tgb.cn/blog/563404",
         "article_pattern": "https://m.tgb.cn/a/{id}",
-        "publish_time": "20:00-20:30"
+        "publish_time": "20:00-20:30",
+        "note": "正文是文字，WebFetch 直取。章节固定：复盘总结/涨停原因/特色数据/龙虎榜/情绪指数/个股解析"
       }
     ]
   },
   "calendar": {
-    "brief_name": "📅 投资日历专版（看板第四Tab）",
+    "brief_name": "📅 投资日历专版（第 5 个 Tab）",
     "sources": [
       {
         "name": "韭研公社·A股投资日历",
         "type": "user_home",
         "url": "https://www.jiuyangongshe.com/u/648089de4f1649de9e18b8285faca8b8",
         "article_pattern": "https://www.jiuyangongshe.com/a/{id}",
-        "note": "博主昵称「绝不追高的老韭菜」，月度长文+原图，仅写入看板顶层 calendar 专版；不设时效，跟随博主发帖节奏"
+        "note": "博主昵称「绝不追高的老韭菜」，月度长文+原图。只写看板顶层 calendar 数组，不进晚报正文。原图下载后必须肉眼校验是否真含日历（博主常发封面/装饰图）；压缩与孤儿图回收由 tools/optimize_calendar.py + clean_calendar.js 自动完成"
       }
     ]
+  },
+  "screener": {
+    "brief_name": "🔍 量价选股",
+    "script": "tools/screener.js",
+    "data_sources": [
+      { "name": "东方财富行情(延迟)", "host": "push2delay.eastmoney.com", "used_for": "涨幅/换手/市值/量比/代码" },
+      { "name": "新浪日K", "host": "money.finance.sina.com.cn", "used_for": "连续收阳天数（主源）" },
+      { "name": "腾讯日K", "host": "web.ifzq.gtimg.cn", "used_for": "日K备用源（高频会触发 WAF）" },
+      { "name": "东方财富分时", "host": "push2delay.eastmoney.com", "used_for": "分时均线占比" }
+    ],
+    "_note": "push2 / push2his 在本机网络下不通，必须用 push2delay"
+  },
+  "verify": {
+    "brief_name": "✅ 次日验证",
+    "script": "tools/verify.js",
+    "data_sources": [{ "name": "东方财富行情(延迟)", "host": "push2delay.eastmoney.com" }],
+    "_口径": {
+      "早报推荐": "推荐日开盘买入",
+      "晚报推荐": "次日开盘买入",
+      "卖出": "区间末盘中价",
+      "成本": "双边万五 + 印花千五",
+      "一字板": "必须剔除（买入日 开=高=低=收），否则高估收益",
+      "_警告": "verify.gain 目前记的是「验证日收盘涨跌幅（相对昨收）」，不是实盘收益 —— 推荐股平均高开 3.78%，按开盘买入实际是亏的。这是已知语义坑"
+    }
   }
 }

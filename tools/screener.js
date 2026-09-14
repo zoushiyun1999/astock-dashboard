@@ -15,10 +15,16 @@
  *       node tools/screener.js --dry      # 只打印结果，不写文件
  *
  * 数据源：东方财富行情(延迟) + 腾讯日K + 东财分时
+ *
+ * 2026-09-12 审计修复：
+ *   · 原实现用 `try { eval(readFileSync(data.js)) } catch (e) {}` 读数据，解析失败被静默吞掉后
+ *     data 退化成空结构并被原样写回，**会一次性清空全部 reports 与 calendar**。
+ *     现在改为 loadDataStrict（解析失败即中止）+ saveDataSafe（规模校验 + 乐观锁，防并发覆盖）。
  */
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -235,6 +241,75 @@ function fmtDate(d) {
 }
 function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 数据读写的两道安全阀（2026-09-12 审计后补，与 verify.js 同源）
+ *
+ * 原实现 `try { eval(...) } catch (e) {}` 会在 data.js 解析失败时静默吞掉异常，
+ * 让 data 退化成空结构，随后被原样写回 —— 会一次性清空全部 reports 与 calendar。
+ * 现在：解析失败即中止；写回前做「规模校验 + 乐观锁」。
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** 中止执行：抛出可被顶层识别的中断信号。
+ *  不用 process.exit(1) —— Windows 下管道输出是异步的，直接退出可能把报错信息截断。
+ *  消息由顶层 catch 统一打印。 */
+function abort(msg) {
+  const e = new Error(msg);
+  e.__abort = true;
+  throw e;
+}
+
+/** 严格读取 data.js。任何异常都直接中止，绝不静默降级成空结构。
+ *  reports0 / calendar0 是**读取当时的规模快照**（数字，不是引用）——调用方后面会就地改
+ *  data，用引用做基线会被自己的修改带跑，安全阀就永远不触发。 */
+function loadDataStrict(file) {
+  if (!fs.existsSync(file)) {
+    return { data: { updatedAt: '', calendar: [], reports: [] }, src: '', reports0: 0, calendar0: 0 };
+  }
+  const src = fs.readFileSync(file, 'utf8');
+  if (!/window\.REPORTS\s*=/.test(src)) {
+    abort('✗ data.js 里找不到 `window.REPORTS =`，为避免清空看板历史，本次中止（未写任何文件）');
+  }
+  let data;
+  try {
+    // 用 vm 而不是 new Function/eval：语法错误会准确指到 data.js 自己的行号
+    const ctx = { window: {} };
+    vm.runInNewContext(src, ctx, { filename: 'dashboard/data.js' });
+    data = ctx.window.REPORTS;
+  } catch (e) {
+    abort('✗ data.js 解析失败：' + e.message +
+      '\n  为避免清空看板历史，本次中止（未写任何文件）。请先人工确认 dashboard/data.js 是否被写坏。');
+  }
+  if (!data || !Array.isArray(data.reports)) {
+    abort('✗ data.js 结构异常（reports 不是数组），本次中止（未写任何文件）');
+  }
+  return {
+    data: data,
+    src: src,
+    reports0: data.reports.length,
+    calendar0: (data.calendar || []).length
+  };
+}
+
+/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
+function saveDataSafe(file, next, baseline, srcAtRead) {
+  const afterN = (next.reports || []).length;
+  const afterC = (next.calendar || []).length;
+
+  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
+    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
+      '），为避免清空看板历史，拒绝写回');
+  }
+  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
+    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
+  }
+  const nowSrc = fs.readFileSync(file, 'utf8');
+  if (nowSrc !== srcAtRead) {
+    abort('✗ data.js 在本次运行期间被其他任务修改过（很可能是早报/晚报并发写），' +
+      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
+  }
+  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
+}
+
 (async function main() {
   const now = new Date();
   console.log('▶ 量价选股开始 ' + fmtTime(now));
@@ -262,10 +337,8 @@ function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2,
   final = final.slice(0, CFG.maxHold);
 
   // 读取现有数据（用于热点归属标注 + 保留其他字段）
-  let data = { updatedAt: '', calendar: [], reports: [] };
-  if (fs.existsSync(DATA)) {
-    try { eval(fs.readFileSync(DATA, 'utf8').replace('window.REPORTS =', 'data =')); } catch (e) { }
-  }
+  const loaded = loadDataStrict(DATA);
+  const data = loaded.data;
   const sectorMap = buildSectorMap(data.reports || []);
   const activeKws = collectActiveKws(data.reports || []);
 
@@ -323,8 +396,12 @@ function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2,
   data.screener = hist;
 
   data.updatedAt = fmtTime(now);
-  fs.writeFileSync(DATA, 'window.REPORTS = ' + JSON.stringify(data, null, 2) + ';\n');
+  saveDataSafe(DATA, data, loaded.data, loaded.src);
   fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(hist, null, 2) + ';\n');
   console.log('  ✔ 已写入 dashboard/data.js 的 screener 字段 + 独立文件 dashboard/screener.js');
   console.log('  ✔ 历史归档 ' + hist.length + ' 期：' + hist.map(function (x) { return x.date + '(' + x.count + ')'; }).join(' → '));
-})();
+})().catch(function (e) {
+  if (e && e.__abort) { console.error(e.message); process.exitCode = 1; return; }  // 安全阀主动中止
+  console.error('✗ 未预期错误：' + ((e && e.stack) || e));
+  process.exitCode = 1;
+});

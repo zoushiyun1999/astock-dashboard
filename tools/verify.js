@@ -19,6 +19,12 @@
  *   5. 推荐股优先用 code 匹配（改名免疫）：早报/晚报若已带 code 字段则直接按代码查；
  *      无 code 才回退名称精确匹配。匹配成功后把 code 回写到推荐股，此后改名也不漏标。
  *
+ * v4 修正（2026-09-12 审计）：
+ *   6. **修掉一个会静默清空全部历史的 bug**：原实现用 `try { eval(...) } catch (e) {}` 读 data.js，
+ *      解析失败会被静默吞掉，data 退化成空结构后又被原样写回 —— 7 天历史 + 全部日历一次性清空。
+ *      现在改为「解析失败即中止」，并在写回前加「规模校验 + 乐观锁」（见 loadDataStrict / saveDataSafe）。
+ *      并发场景：晚报 21:00、次日验证 21:30 改同一个文件，若晚报超时到 21:30 之后就会互相覆盖。
+ *
  * 休市日维护：每年初用 westock data_trade_calendar(year=下一年) 刷新 config/trade_holidays.json。
  *
  * 用法：node tools/verify.js            # 跑验证并写回 data.js
@@ -29,6 +35,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -38,6 +45,82 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 const H = { 'User-Agent': UA, 'Referer': 'https://quote.eastmoney.com/' };
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 数据读写的两道安全阀（2026-09-12 审计后补）
+ *
+ * 背景：原实现是
+ *     let data = { updatedAt:'', calendar:[], reports:[] };
+ *     try { eval(readFileSync(DATA).replace('window.REPORTS =','data =')); } catch (e) {}
+ *     ... data.updatedAt = ...; writeFileSync(DATA, ...)
+ * 只要 data.js 有任何语法问题（例如晚报 21:00 写到一半、文件被截断），eval 抛错被 `catch {}`
+ * 静默吃掉，data 停留在这个**空结构**上，然后被原样写回 —— **7 天历史 + 全部日历一次性清空**。
+ * 而晚报（21:00）与次日验证（21:30）本来就紧挨着改同一个文件，触发条件相当现实。
+ *
+ * 现在：解析失败一律中止；写回前再做「规模校验 + 乐观锁」。
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** 中止执行：抛出可被顶层识别的中断信号。
+ *  不用 process.exit(1) —— Windows 下管道输出是异步的，直接退出可能把报错信息截断，
+ *  而这恰恰是运维最需要看到的内容。消息由顶层 catch 统一打印。 */
+function abort(msg) {
+  const e = new Error(msg);
+  e.__abort = true;
+  throw e;
+}
+
+/** 严格读取 data.js。任何异常都直接中止，绝不静默降级成空结构。
+ *  返回值里的 reports0 / calendar0 是**读取当时的规模快照**（数字，不是引用）——
+ *  调用方后面会就地改 data，用引用做基线会被自己的修改带跑，安全阀就永远不触发。 */
+function loadDataStrict(file) {
+  if (!fs.existsSync(file)) {
+    return { data: { updatedAt: '', calendar: [], reports: [] }, src: '', reports0: 0, calendar0: 0 };
+  }
+  const src = fs.readFileSync(file, 'utf8');
+  if (!/window\.REPORTS\s*=/.test(src)) {
+    abort('✗ data.js 里找不到 `window.REPORTS =`，为避免清空看板历史，本次中止（未写任何文件）');
+  }
+  let data;
+  try {
+    // 用 vm 而不是 new Function/eval：语法错误会准确指到 data.js 自己的行号
+    const ctx = { window: {} };
+    vm.runInNewContext(src, ctx, { filename: 'dashboard/data.js' });
+    data = ctx.window.REPORTS;
+  } catch (e) {
+    abort('✗ data.js 解析失败：' + e.message +
+      '\n  为避免清空看板历史，本次中止（未写任何文件）。请先人工确认 dashboard/data.js 是否被写坏。');
+  }
+  if (!data || !Array.isArray(data.reports)) {
+    abort('✗ data.js 结构异常（reports 不是数组），本次中止（未写任何文件）');
+  }
+  return {
+    data: data,
+    src: src,
+    reports0: data.reports.length,
+    calendar0: (data.calendar || []).length
+  };
+}
+
+/** 写回前校验：① 历史不得骤减 ② 文件不得被并发任务改过 */
+function saveDataSafe(file, next, baseline, srcAtRead) {
+  const afterN = (next.reports || []).length;
+  const afterC = (next.calendar || []).length;
+
+  if (baseline.reports0 > 0 && afterN < baseline.reports0 * 0.5) {
+    abort('✗ reports 数量骤减（' + baseline.reports0 + ' → ' + afterN +
+      '），为避免清空看板历史，拒绝写回');
+  }
+  if (baseline.calendar0 > 0 && afterC < baseline.calendar0 * 0.5) {
+    abort('✗ calendar 数量骤减（' + baseline.calendar0 + ' → ' + afterC + '），拒绝写回');
+  }
+  // 乐观锁：读到这里之间文件被别的任务（早报/晚报/选股）改过 → 中止，别覆盖别人的成果
+  const nowSrc = fs.readFileSync(file, 'utf8');
+  if (nowSrc !== srcAtRead) {
+    abort('✗ data.js 在本次运行期间被其他任务修改过（很可能是晚报/早报并发写），' +
+      '为避免覆盖对方的改动，本次中止。请稍后重跑本任务。');
+  }
+  fs.writeFileSync(file, 'window.REPORTS = ' + JSON.stringify(next, null, 2) + ';\n');
+}
 
 async function getJSON(url, retry = 2) {
   for (let i = 0; i <= retry; i++) {
@@ -132,10 +215,8 @@ function markVerify(q, at) {
     return;
   }
 
-  let data = { updatedAt: '', calendar: [], reports: [] };
-  if (fs.existsSync(DATA)) {
-    try { eval(fs.readFileSync(DATA, 'utf8').replace('window.REPORTS =', 'data =')); } catch (e) { }
-  }
+  const loaded = loadDataStrict(DATA);
+  const data = loaded.data;
 
   const quotes = await fetchQuotes();
   console.log('   行情样本 ' + Object.keys(quotes).length + ' 只');
@@ -177,6 +258,10 @@ function markVerify(q, at) {
   if (process.argv.includes('--dry')) { console.log('（--dry 模式，未写入文件）'); return; }
 
   data.updatedAt = fmtDate(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-  fs.writeFileSync(DATA, 'window.REPORTS = ' + JSON.stringify(data, null, 2) + ';\n');
+  saveDataSafe(DATA, data, loaded.data, loaded.src);
   console.log('   ✔ 已写回 dashboard/data.js');
-})();
+})().catch(function (e) {
+  if (e && e.__abort) { console.error(e.message); process.exitCode = 1; return; }  // 安全阀主动中止
+  console.error('✗ 未预期错误：' + ((e && e.stack) || e));
+  process.exitCode = 1;
+});

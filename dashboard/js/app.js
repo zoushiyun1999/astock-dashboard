@@ -16,6 +16,13 @@
   var curTab = 'morning';
 
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  /* 数据源「到期时间」（当天分钟数）= 任务开始时间 + 约 10 分钟运行余量。
+     早报 08:30→520(8:40) ／ 晚报 21:00→1270(21:10) ／ 量价选股 15:10→920(15:20)
+     ⚠️ 只在这里定义一次。原先 srcMeta() 和 renderHealth() 各写一套数字，
+        改任务时间时改了一处漏了另一处 —— 结果健康条每天 15:00 就误报"量价未更新"。
+     新任务的改动请先改这里，再改 page 上的文案。 */
+  var DUE = { morning: 520, evening: 1270, screener: 920 };
   function fmtDate(ds) {
     var p = ds.split('-');
     return { ymd: p[0] + '年' + +p[1] + '月' + +p[2] + '日', week: WEEK[new Date(+p[0], +p[1] - 1, +p[2]).getDay()] };
@@ -65,12 +72,34 @@
       return hm < dueMin ? 'wait' : 'miss';
     }
 
+    // planned=true 表示 time 是「计划时间」（任务还没跑，拿计划点兜底），不是真实生成时间。
+    // 不加这个标记的话，「量价选股 15:10」和「早报 08:33」外观一样，会被读成"15:10 更新过"。
+    function row(name, at, done, due, plannedAt) {
+      return {
+        name: name,
+        time: at ? String(at).slice(11, 16) : (plannedAt || ''),
+        planned: !at && !!plannedAt,
+        state: st(done, due)
+      };
+    }
+
     return [
-      { name: '早报', time: (mo && mo.generatedAt) ? mo.generatedAt.slice(11, 16) : '8:30', state: st(!!mo, 510) },
-      { name: '晚报', time: (ev && ev.generatedAt) ? ev.generatedAt.slice(11, 16) : '21:00', state: st(!!ev, 1260) },
-      { name: '量价选股', time: (scToday && sc.runAt) ? sc.runAt.slice(11, 16) : '14:30', state: st(scToday, 870) },
-      { name: '投资日历', time: (cal.length && cal[0].publishedAt) ? cal[0].publishedAt.slice(5, 10) : '', state: cal.length ? 'ok' : 'wait' }
+      row('早报', mo && mo.generatedAt, !!mo, DUE.morning, '8:30'),
+      row('晚报', ev && ev.generatedAt, !!ev, DUE.evening, '21:00'),
+      row('量价选股', scToday && sc.runAt, scToday, DUE.screener, '15:10'),
+      {
+        name: '投资日历',
+        time: (cal.length && cal[0].publishedAt) ? cal[0].publishedAt.slice(5, 10) : '',
+        planned: false,
+        state: cal.length ? 'ok' : 'wait'
+      }
     ];
+  }
+
+  /** header / footer 里展示某一行数据源的时间（计划时间加标注，免被误读成真实更新时间） */
+  function metaTime(s) {
+    if (!s.time) return '';
+    return s.time + (s.planned ? '(计划)' : '');
   }
 
   function sectionCard(title, color, inner) {
@@ -446,14 +475,22 @@
     }
   }
 
-  /** 晚报未读红点：最新一期有晚报且用户尚未查看时显示 */
+  /** 晚报未读红点：最新一期有晚报、且用户没在"最新一期"上打开过晚报时显示 */
   function updateEveningDot() {
     var dot = document.getElementById('eveningDot');
     if (!dot) return;
     var newest = list[list.length - 1];
     var hasEvening = !!(newest && newest.evening);
-    var seen;
+    // ⚠️ 只有真正停在最新一期看晚报才算已读。
+    //    以前是在 switchTab 里无脑记 list[length-1].date，导致"翻回历史日期看晚报"
+    //    也会把最新一期的未读红点清掉。
+    var isOnNewest = idx === list.length - 1;
+    var seen = null;
     try { seen = localStorage.getItem('lastSeenEvening'); } catch (e) {}
+    if (hasEvening && isOnNewest && curTab === 'evening') {
+      try { localStorage.setItem('lastSeenEvening', newest.date); } catch (e) {}
+      seen = newest.date;
+    }
     dot.classList.toggle('show', hasEvening && seen !== newest.date);
   }
 
@@ -461,10 +498,7 @@
     if (TABS.indexOf(tab) < 0) tab = 'morning';
     curTab = tab;
     try { localStorage.setItem('curTab', tab); } catch (e) {}
-    if (tab === 'evening') {
-      var newest = list[list.length - 1];
-      if (newest) { try { localStorage.setItem('lastSeenEvening', newest.date); } catch (e) {} }
-    }
+    // 「晚报已读」的记账放在 updateEveningDot() 里统一处理（它知道当前在看哪一天）
     document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
     document.getElementById('sec-morning').classList.toggle('hide', tab !== 'morning');
     document.getElementById('sec-evening').classList.toggle('hide', tab !== 'evening');
@@ -494,7 +528,7 @@
       st.innerHTML = srcMeta(r).map(function (s) {
         var label = s.state === 'ok' ? (s.name === '投资日历' ? '已收录' : '已生成')
           : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
-        var timeHtml = (s.state === 'close') ? '' : (s.time ? ' ' + s.time : '');
+        var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
         return '<i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml + ' <span class="st-state">' + label + '</span>';
       }).join('<br>');
     } else {
@@ -511,7 +545,9 @@
     // footer（按数据源展示最新更新时间）
     var upd = document.getElementById('ftUpd');
     var newest = list[list.length - 1];
-    upd.textContent = newest ? srcMeta(newest).map(function (s) { return s.name + (s.time ? ' ' + s.time : ''); }).join(' · ') : '—';
+    upd.textContent = newest ? srcMeta(newest).map(function (s) {
+      return s.name + (metaTime(s) ? ' ' + metaTime(s) : '');
+    }).join(' · ') : '—';
     renderHealth();
     updateDateNav();
     positionGlider();
@@ -534,10 +570,23 @@
     var h = now.getHours() * 60 + now.getMinutes();
     var newest = list[list.length - 1];
     var issues = [];
-    if (!newest || !newest.morning) { if (h >= 570) issues.push('🌅早报缺失'); }
-    if (!newest || !newest.evening) { if (h >= 1290) issues.push('🌙晚报缺失'); }
+
+    // ① 先判"最新一期到底是不是今天"
+    //    以前只查「最新一期有没有 morning/evening」—— 周一管线全挂时，最新一期还是上周五的记录，
+    //    而周五的字段齐全，于是三项检查全过，健康条显示"🟢 各源运行正常"。
+    //    换句话说：**越是彻底断更，越不报警**。这才是最该修的地方。
+    var hasToday = !!(newest && newest.date === todayStr);
+    if (!hasToday) {
+      // 在没有今天任何数据的前提下，过了最早的到期点就该报（不能用晚报的 21:10，那太晚了）
+      if (h >= DUE.morning) issues.push('今日无任何数据（管线可能没跑）');
+    } else {
+      if (!newest.morning && h >= DUE.morning) issues.push('🌅早报缺失');
+      if (!newest.evening && h >= DUE.evening) issues.push('🌙晚报缺失');
+    }
+
     var sc = screenerList()[0];
-    if (!sc || sc.date !== todayStr) { if (h >= 900) issues.push('🔍量价未更新'); }
+    if (!sc || sc.date !== todayStr) { if (h >= DUE.screener) issues.push('🔍量价未更新'); }
+
     var level = issues.length ? (issues.length >= 2 ? 'bad' : 'warn') : 'ok';
     bar.className = 'health ' + level;
     bar.innerHTML = level === 'ok' ? '🟢 各源运行正常' : (level === 'warn' ? '🟡 注意：' : '🔴 异常：') + issues.join('、');

@@ -8,13 +8,13 @@
  *  3. 域名到期提醒（域名过期是"链接丢失"最常见的真实死因）
  *  4. 仓库里是否残留硬编码的失效链接
  *
- * 任一项异常 → 通过 Server酱推送微信告警（没有 key 时只打印，不报错）。
+ * 任一项异常 → 打印问题清单并以退出码 1 结束（GitHub Actions 会在运行历史里标红，不等你去发现）。
+ * 本脚本**不发送任何推送通知**（Server酱已于 2026-09-12 整体下线）。
  *
- * 环境变量：SITE_URL / FALLBACK_URL / MIRROR_URL / DOMAIN_EXPIRY / SCT_KEY
+ * 环境变量：SITE_URL / FALLBACK_URL / MIRROR_URL / DOMAIN_EXPIRY
  */
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const SITE = (function () {
@@ -30,9 +30,8 @@ const STALE_HOURS = Number(process.env.STALE_HOURS || 26);
 
 const KEYWORD = 'A股';                    // 页面必须含此关键字，防"200 但是空白页"
 const issues = [];
-const lines = [];
 
-function log(s) { console.log(s); lines.push(s); }
+function log(s) { console.log(s); }
 
 async function probe(name, url, required) {
   if (!url) {
@@ -131,16 +130,6 @@ function scanHardcoded() {
     return;
   }
   log('\n⚠️ 发现 ' + issues.length + ' 项问题：\n- ' + issues.join('\n- '));
-  if (process.env.SCT_KEY) {
-    const r = spawnSync(process.execPath, [
-      path.join(__dirname, 'notify.js'),
-      '⚠️ 看板健康检查：' + issues.length + ' 项异常',
-      lines.join('\n')
-    ], { encoding: 'utf8', env: process.env });
-    if (r.stdout) console.log(r.stdout.trim());
-    if (r.stderr) console.error(r.stderr.trim());
-  } else {
-    log('（未配置 SCT_KEY，仅打印不推送）');
-  }
+  // 通知功能已于 2026-09-12 下线：不再推送，只靠退出码 1 让 GitHub Actions 标红。
   process.exitCode = 1;
 })();

@@ -22,5 +22,22 @@ WIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd -W)"
 # 同步休市日到前端（config/trade_holidays.json -> dashboard/holidays.js）
 "$NODE_BIN" "$WIN_DIR/tools/sync_holidays.js" || true
 
+# 压缩新下载的日历原图（可选步骤：本机没有 Python/Pillow 时自动跳过，不阻塞发布）
+#   实测：2 张 2008px 宽的长图 10.96MB -> 4.24MB（-61%），PSNR 50-55dB（肉眼无损），分辨率不变
+#   幂等：产物是调色板 PNG，第二次运行会直接跳过
+PY_BIN=""
+for c in "/c/Users/zoush/.workbuddy/binaries/python/envs/default/Scripts/python.exe" python3 python; do
+  if [ -x "$c" ] || command -v "$c" >/dev/null 2>&1; then PY_BIN="$c"; break; fi
+done
+if [ -n "$PY_BIN" ]; then
+  "$PY_BIN" "$WIN_DIR/tools/optimize_calendar.py" --quiet || true
+else
+  echo "（未找到 Python，跳过日历图压缩）"
+fi
+
+# 回收日历孤儿图：data.js 的 calendar 只保留最近 5 篇，磁盘图片必须同步删，
+# 否则 dashboard/calendar/ 会无限膨胀并拖慢每次发布。
+"$NODE_BIN" "$WIN_DIR/tools/clean_calendar.js" --quiet || true
+
 # 导出 data.json / version.json（前端按 version.json 轻量轮询，避免每分钟拉全量 data.js）
 "$NODE_BIN" "$WIN_DIR/tools/export_json.js" || true

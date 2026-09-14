@@ -9,3 +9,10 @@
 .env
 *.token
 
+# 任务临时文件（tmp_ 前缀，仅本地使用，绝不提交）
+tmp_*
+
+# Python 编译产物（tools/optimize_calendar.py 会生成，绝不提交）
+__pycache__/
+*.py[cod]
+

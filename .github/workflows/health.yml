@@ -1,6 +1,7 @@
 name: 看板健康检查
 
-# 每天北京时间 04:00 体检一次，异常直接推微信，不等用户发现。
+# 每天北京时间 04:00 体检一次。异常时以退出码 1 结束，运行历史里会标红。
+# 通知功能已于 2026-09-12 下线，不再推送微信。
 on:
   schedule:
     - cron: '0 20 * * *'      # UTC 20:00 = 北京时间次日 04:00
@@ -24,5 +25,4 @@ jobs:
           FALLBACK_URL: ${{ vars.FALLBACK_URL }}
           MIRROR_URL: ${{ vars.MIRROR_URL }}
           DOMAIN_EXPIRY: ${{ vars.DOMAIN_EXPIRY }}
-          SCT_KEY: ${{ secrets.SCT_KEY }}
         run: node tools/health_site.js

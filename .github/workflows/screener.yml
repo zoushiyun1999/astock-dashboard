@@ -57,7 +57,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dashboard/data.js dashboard/screener.js dashboard/index.html
+          # 用 -A 而不是逐个列文件：bump_version.sh 会产出 data.json / version.json / holidays.js，
+          # 早期只 add 了 data.js / screener.js / index.html，导致这几个派生产物长期漏提交。
+          git add -A dashboard/
           git commit -m "量价选股 $(date +%Y-%m-%d) [skip ci]" || echo "无变化"
           git push
 
@@ -72,15 +74,5 @@ jobs:
         if: env.skip != '1'
         uses: actions/deploy-pages@v4
 
-      - name: 微信通知（Server酱）
-        if: env.skip != '1' && success()
-        env:
-          SCT_KEY: ${{ secrets.SCT_KEY }}
-        run: |
-          INFO=$(node -e "const fs=require('fs');const s=fs.readFileSync('dashboard/data.js','utf8');eval(s.replace('window.REPORTS =','global.R='));const list=(R.screener&&R.screener.list)||[];const top=list.slice(0,5).map(x=>x.name+'('+x.gain+'%)').join('、');console.log(list.length+'|'+top);")
-          COUNT=$(echo "$INFO" | cut -d'|' -f1)
-          TOP=$(echo "$INFO" | cut -d'|' -f2)
-          DESP=$(printf '今日技术面筛选完成，共 %s 只符合条件。\n\n前 5 只：%s\n\n🔗 看板链接：%s\n\n—— 由 GitHub Actions 自动推送' "$COUNT" "$TOP" "${{ steps.deploy.outputs.page_url }}")
-          curl -s --max-time 20 -X POST "https://sctapi.ftqq.com/${SCT_KEY}.send" \
-            --data-urlencode "title=🔍 量价选股已更新（$(date +%Y-%m-%d)）" \
-            --data-urlencode "desp=${DESP}"
+      # 微信通知已于 2026-09-12 下线（原步骤调用 sctapi.ftqq.com，已移除）。
+      # 如需恢复，请重新评估：通知是唯一需要长期保管凭据的环节。

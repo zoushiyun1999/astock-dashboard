@@ -4,6 +4,13 @@
  *
  * 用法：node tools/health_check.js
  * 退出码：0 = 无问题；1 = 发现问题（WARNING/ERROR 均计）
+ *
+ * 2026-09-12 审计补充：
+ *   6. 断更检测 —— 交易日无数据时，用 logs/<date>.md 是否存在来区分
+ *      「数据源当日没发内容」（正常）与「管线压根没跑」（真问题）。
+ *      本地模式下 health_site.js 不会运行，这里是唯一能发现停摆的地方。
+ *   7. 晚报双结构一致性 —— evening['板块热点']（晚报 Tab）与 evening['明日关注']（短线 Tab）
+ *      描述同一批板块，条数不一致时用户会在两个 Tab 看到不同的板块数。
  */
 'use strict';
 const fs = require('fs');
@@ -13,6 +20,7 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
 
 const issues = [];
+const notes = [];   // 提示：不参与退出码，只打印给人工参考（历史遗留、按设计跳过等）
 function err(msg) { issues.push({ lv: 'ERROR', msg: msg }); }
 function warn(msg) { issues.push({ lv: 'WARN', msg: msg }); }
 
@@ -128,13 +136,85 @@ if (data.screener) {
   });
 }
 
-// ── 6. 前端关键依赖 ──
+// ── 6. 断更检测 ──
+// 为什么需要：新鲜度检查原本只在 tools/health_site.js 里，而它只被 .github/workflows/health.yml
+// 调用 —— 当前是「本地模式」（不推 GitHub），等于**根本没有任何机制发现管线停摆**。
+// 一个交易日没数据，有两种完全不同的原因，必须区分开：
+//   · reports 里没这天 + logs/这天.md 存在  → 当日数据源没发内容，系统行为正确，不算问题
+//   · reports 里没这天 + logs/这天.md 也没有 → 管线压根没跑（PC 关机/任务失败），这才是真问题
+const HOLIDAYS = (function () {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {}; }
+  catch (e) { return {}; }
+})();
+function isTradingDay(d) {
+  const w = d.getDay();
+  if (w === 0 || w === 6) return false;
+  const p = function (n) { return String(n).padStart(2, '0'); };
+  const key = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  return ((HOLIDAYS[String(d.getFullYear())]) || []).indexOf(key) < 0;
+}
+(function checkGaps() {
+  if (!reports.length) return;
+  const have = new Set(dates);
+  const first = new Date(dates[0] + 'T00:00:00');
+  const today = new Date();
+  const gaps = [];
+  for (let d = new Date(first); d <= today; d.setDate(d.getDate() + 1)) {
+    if (!isTradingDay(d)) continue;
+    const p = function (n) { return String(n).padStart(2, '0'); };
+    const ds = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    if (have.has(ds)) continue;
+    const hasLog = fs.existsSync(path.join(ROOT, 'logs', ds + '.md'));
+    gaps.push({ ds: ds, ran: hasLog });
+  }
+  if (!gaps.length) return;
+  const stalled = gaps.filter(function (g) { return !g.ran; }).map(function (g) { return g.ds; });
+  const skipped = gaps.filter(function (g) { return g.ran; }).map(function (g) { return g.ds; });
+  if (skipped.length) notes.push('交易日无数据但已运行（数据源未发布，属正常）：' + skipped.join(', '));
+  if (stalled.length) {
+    warn('交易日无数据且无运行日志（管线未运行，需排查）：' + stalled.join(', ') +
+      '。检查 logs/ 与任务执行记录，常见原因是 PC 关机/休眠或任务报错。');
+  }
+})();
+
+// ── 7. 晚报双结构一致性 ──
+// evening 里有两套描述同一批板块的结构，服务两个 Tab：
+//   · 板块热点 → 晚报 Tab 的扁平摘要（name/strength/stocks/catalyst）
+//   · 明日关注 → 短线 Tab 的板块卡片（sector/stage/why/chain/picks）
+// 两者条数应当一致；历史上出现过 09-03 板块热点 10 条 vs 明日关注 8 条，用户同一天看到两个数字。
+// 只有**最新一期**计入 WARN —— 它的目的是抓"这期又写歪了"，而不是让历史陈账把体检永久标红。
+const latestDate = dates[dates.length - 1];
+reports.forEach(function (r) {
+  const ev = r.evening;
+  if (!ev) return;
+  const hot = ev['板块热点'], tmr = ev['明日关注'];
+  if (Array.isArray(hot)) {
+    hot.forEach(function (x, i) {
+      if (!x || !x.name) err(r.date + ' 晚报板块热点[' + i + '] 缺 name（晚报 Tab 会显示空板块）');
+    });
+  } else if (Array.isArray(tmr) && tmr.length) {
+    err(r.date + ' 晚报有「明日关注」但缺「板块热点」（晚报 Tab 的板块热点会是空的）');
+  }
+  if (Array.isArray(hot) && Array.isArray(tmr) && tmr.length &&
+      Math.abs(hot.length - tmr.length) >= 2) {
+    const msg = r.date + ' 晚报「板块热点」(' + hot.length + ') 与「明日关注」(' + tmr.length +
+      ') 条数不一致，两个 Tab 会显示不同的板块数';
+    if (r.date === latestDate) warn(msg + ' ← 本期数据，请修正 prompt 执行结果');
+    else notes.push(msg + '（历史遗留，不影响新数据）');
+  }
+});
+
+// ── 8. 前端关键依赖 ──
 const idxHtml = fs.readFileSync(path.join(ROOT, 'dashboard', 'index.html'), 'utf8');
 const need = ['data.js', 'app.js', 'holidays.js', 'screener.js'];
 need.forEach(function (n) { if (idxHtml.indexOf(n) < 0) err('index.html 未引用 ' + n); });
 if (!/window\.REPORTS\s*=/.test(fs.readFileSync(DATA, 'utf8'))) err('data.js 格式异常（缺少 window.REPORTS =）');
 
 // ── 输出 ──
+if (notes.length) {
+  console.log('\nℹ️  提示 ' + notes.length + ' 条（不影响退出码）：');
+  notes.forEach(function (m) { console.log('   · ' + m); });
+}
 const errs = issues.filter(function (x) { return x.lv === 'ERROR'; });
 const warns = issues.filter(function (x) { return x.lv === 'WARN'; });
 if (!issues.length) {

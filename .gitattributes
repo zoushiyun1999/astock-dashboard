@@ -1,0 +1,34 @@
+# 换行符策略
+#
+# 为什么需要这个文件：
+#   本机 git 的 core.autocrlf=true，且此前仓库没有 .gitattributes。
+#   结果：git 会在下次 checkout/clone 时把工作区的脚本文件写成 CRLF，
+#   而 CRLF 的 shell 脚本在 bash 下会报 `bad interpreter: /bin/bash^M`，
+#   直接打断发布链路（publish.sh / bump_version.sh / post-commit 钩子）。
+#   历史上没炸只是因为文件恰好没被重新 checkout 过 —— 这是颗定时炸弹。
+
+# shell 脚本必须 LF，否则 bash 无法执行
+*.sh            text eol=lf
+tools/git-hooks/* text eol=lf
+
+# 零依赖脚本与站点产物，统一 LF（Node / 浏览器都能正确处理）
+*.js            text eol=lf
+*.json          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.md            text eol=lf
+*.html          text eol=lf
+*.css           text eol=lf
+*.svg           text eol=lf
+
+# Windows 批处理必须 CRLF
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# 二进制，禁止任何转换
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.docx          binary

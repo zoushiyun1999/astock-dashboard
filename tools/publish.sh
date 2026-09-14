@@ -36,12 +36,26 @@ else
 fi
 
 echo "== 3/4 推送到 GitHub =="
+# 本地模式守卫：未配置令牌时「跳过推送」而不是「报错退出」。
+# 否则每次定时任务都会在最后一步硬失败（数据其实已提交，但任务被判失败）。
+TOKEN_FILE="$ROOT/.gh-token"
+if [ ! -f "$TOKEN_FILE" ] && [ -z "$GITHUB_TOKEN" ]; then
+  echo "（未找到 .gh-token，本地模式：跳过云端推送）"
+  echo "== 4/4 完成（仅本地仓库）=="
+  WIN_ROOT_DISPLAY="$(cd "$ROOT" && pwd -W 2>/dev/null || echo "$ROOT")"
+  printf '提示：把 GitHub PAT 写入 %s\\.gh-token 后，本命令会自动上线。\n' "$WIN_ROOT_DISPLAY"
+  exit 0
+fi
+
 # node.exe 是 Windows 程序，需要 Windows 风格路径（/c/... → C:/...）
 WIN_SCRIPT="$(cd "$SCRIPT_DIR" && pwd -W)"
+WIN_ROOT="$(cd "$ROOT" && pwd -W)"
 "$NODE_BIN" "$WIN_SCRIPT/gh_push_api.js" -m "$MSG" || {
   echo "✗ 推送失败，请检查 .gh-token 是否有效";
   exit 1;
 }
 
 echo "== 4/4 完成 =="
-echo "云端发布中，约 1 分钟后生效：https://asx.79zl.cn/"
+# 链接唯一事实源是 config/site.json，禁止硬编码
+SITE_URL="$("$NODE_BIN" -e "try{console.log(require('$WIN_ROOT/config/site.json').siteUrl||'')}catch(e){console.log('')}")"
+echo "云端发布中，约 1 分钟后生效：${SITE_URL:-（config/site.json 未配置 siteUrl）}"

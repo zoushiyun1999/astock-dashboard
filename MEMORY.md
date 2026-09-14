@@ -7,8 +7,22 @@
 ## 项目快照
 
 - **项目名**：A股推送系统
-- **当前阶段**：**云端发布链路已全量切换完成**（静态托管 + 自有域名 `https://asx.79zl.cn/`）。5 个定时任务 prompt 均已剥离沙箱部署，改走 `tools/publish.sh` + `tools/notify_digest.js`。
-- **最后更新**：2026-09-10
+- **当前阶段**：**2026-09-12 已从删除隔离区完整恢复，当前运行在本地**（`D:\workbuddylujing\A股推送系统\`；隔离区原件保留在 `D:\WorkBuddy_删除隔离_2026-09-10\`）。6 个定时任务已重建并全部 ACTIVE；**微信推送通知功能已按用户要求下线**；GitHub 推送待用户确认仓库状态后再启用（暂无 `.gh-token`，post-commit 会安全跳过）。
+- **最后更新**：2026-09-12
+- **系统总览文档**：`docs/系统功能与运行逻辑总览.md`（2026-09-10 建）。改动系统前先读它——含 5 个 Tab 的数据结构、全景数据流、6 个定时任务、前端三层防缓存、工具脚本清单、「想改 X 改哪里」对照表、硬性规则。比本文件更完整的对照基线。
+
+> ⚠️ **看板实际是 5 个 Tab**（早报 / 晚报 / 短线 / 量价 / 日历），不是"四类简报"。另外「短线」Tab 的数据源是 `evening.明日关注`（即板块热点），**不是** `watchlist` 字段。
+
+## 2026-09-12 恢复重建记录（本次）
+
+- **恢复方式**：`robocopy /E` 从隔离区**复制**到新目录（非移动）。隔离区原件 35M / 102 次提交 / `.gh-token` / `tmp_*` **一字未动**（已核验时间戳与工作区状态均与会话前一致）。
+- **排除项**：5 个 `tmp_*` 残留（约 400KB，9/10 中断现场）+ 旧 `.gh-token`（凭据一律不复用）。
+- **验收通过**：`node tools/health_check.js` 0 错误 / 6 条历史告警；`bash tools/bump_version.sh` 四步全过（版本号→sort_reports→sync_holidays→export_json）；本地 `http://127.0.0.1:8899/` 真实渲染，5 个 Tab 全部有内容、历史日期可回看（09-01~09-10；其中 **09-10 无晚报**、**09-08 全天缺失**，均属历史事实而非恢复故障）。
+- **通知功能已下线**：`tools/notify.js` 与 `tools/notify_digest.js` 顶部各加了 2 行禁用开关（打印提示后 `process.exit(0)`），**原始实现完整保留在其下方，删掉那两行即可恢复**。因此 Server酱 key 不再需要提供。
+- **验证手段（可复用）**：本机 Edge 无头模式 + DevTools 协议（Node 22 自带 `fetch` + 全局 `WebSocket`，零依赖）真实渲染并逐 Tab 截图；脚本 `verify_page.js` 放在本次恢复会话目录。比装 `agent-browser`（需下 ~500MB Chromium，且本机访问 github.com 不通）可靠得多。
+- ⚠️ **踩坑**：恢复前 8899 端口上已有一个**今天 18:42 启动的残留 `python -m http.server`**，它在服务隔离区的旧副本，会把请求抢走（Windows 下 `http.server` 开了 `SO_REUSEADDR`，多进程可绑同一端口，命中不确定）。表现为「磁盘文件已是新版、浏览器却拿到旧版」。已停掉该残留进程，改为单一服务进程。
+- ⚠️ **git 状态**：`tmp_*` 原本是被提交进 HEAD 的（提交 `16701ef`/`f324111` 为"临时验证"所留），所以按用户要求排除后，工作区会显示这些文件为「已删除」——预期行为，首次 `publish.sh` 会自动带上这个清理提交。
+
 
 ## 架构决策记录（ADR）
 
@@ -19,6 +33,21 @@
 | 2026-09-10 | 生成层保留 LLM 依赖，调度/发布层先上云（分阶段迁移） | 早报/晚报的读图与摘要强依赖 LLM，一次性重写风险高 | 一次性全量迁云 |
 | 2026-09-10 | 定时任务统一改为「`bash tools/publish.sh "<说明>"` → `node tools/notify_digest.js <type> <标题>`」两步，prompt 内不出现任何 URL | 链接来源收敛到 `config/site.json` 一处；避免 prompt 硬编码导致域名变更后死链 | 在 prompt 里调 `workbuddy_sites_deploy` 再手动 curl Server酱 |
 | 2026-09-10 | 用 git `post-commit` 钩子自动推 GitHub | 让存量 automation 的 `git commit` 步骤零改动即可自动发布，不必逐条改 prompt | 逐条改 prompt 里的提交步骤 |
+| 2026-09-12 | 服务器推送通知整体下线（脚本 + 任务 prompt + 文档） | 用户明确要求删除；通知是唯一需要长期保管凭据的环节，去掉后本地模式零凭据依赖 | 保留通知但换新 key |
+| 2026-09-12 | `publish.sh` 无令牌时降级为"仅本地提交"并 `exit 0` | 本地模式下 4 个任务每次都硬失败；任务失败态会掩盖真实问题、污染日志 | 保持报错（用户一看到红就以为系统挂了） |
+| 2026-09-12 | 新增根目录 `.gitattributes` 固定脚本为 LF | 本机 `core.autocrlf=true` 且此前无 `.gitattributes`，任何一次 checkout /fresh clone 都会把 `.sh`/钩子写成 CRLF，bash 直接 `bad interpreter` 哑火 | 依赖"目前恰好没被重写过"的运气 |
+| 2026-09-12 | 清理 3 处通知残留（两个 workflow + `health_site.js`） | 本地脚本下线了但 `.github/` 里还留着 Server酱 步骤，一推 GitHub 就会"复活"每天发微信 | 只删本地脚本，靠"反正不推"规避 |
+| 2026-09-12 | 死代码：删 `verify_data.js`/`_morning_today.py`/`publish_and_notify.sh`；`dashboard/server.js`+`package.json` 移到 `tools/legacy-sandbox/` | 前两者硬编码早已不存在的旧路径 `C:\Users\zoush\WorkBuddy\...`，跑必崩且误导；后两者是沙箱遗物，却在公网站点根目录里会随发布上传 | 直接删（想保留本地起服务能力） |
+| 2026-09-12 | 日历图片方案选「调色板量化 PNG」而不是 WebP | 实测：两类长图（2008×20640 / 2008×23960）量化 256 色后 10.96MB→4.24MB（-61%），**分辨率不变、PSNR 50-55dB**；而 WebP 受单边 16383 限制必须先缩放，且缩放插值让压缩率反而变差（1594×16383 只有 2.89MB，比原尺寸的 1.86MB 还大） | 转 WebP（要改 data.js 路径 + 牺牲分辨率） |
+| 2026-09-12 | 新增 `tools/clean_calendar.js` 回收日历孤儿图，接入 `bump_version.sh` | `calendar` 数组只留最近 5 篇，但磁盘图片从不删 → `dashboard/calendar/` 无限膨胀、每次发布都要重传 | 靠人工定期清理 |
+| 2026-09-12 | `verify.js` / `screener.js` 读 data.js 改为 `loadDataStrict` + `saveDataSafe` | 原实现 `try { eval } catch {}` 会在 data.js 写坏时静默降级成空结构，再被原样写回 → **7 天历史 + 全部日历一次性清空**。且 21:00 晚报与 21:30 次日验证本来就改同一个文件 | 保持 catch 吞异常（等于把数据安全押在"data.js 永远不坏"上） |
+| 2026-09-12 | 安全阀的基线用**数字快照**而不是对象引用 | 第一版写成 `saveDataSafe(DATA, data, loaded.data, ...)`，`next` 与 `prevData` 是同一个对象引用，调用方就地修改会连带改掉基线 → "骤减"检查永远不触发。是测试时发现的 | — |
+| 2026-09-12 | 中止统一走 `abort()` 抛错 + 顶层 `.catch()`，不用 `process.exit(1)` | Windows 下管道输出是异步的，`process.exit` 可能把报错信息截断，而这正是运维最需要看到的 | `process.exit(1)`（实测会把关键报错吞掉） |
+| 2026-09-12 | `health_check.js` 新增断更检测 + 晚报双结构一致性检查 | 本地模式下 `health_site.js` 不运行，**没有任何机制发现管线停摆**。断更检测用「交易日无数据 + `logs/<日期>.md` 是否存在」区分"数据源没发布"（正常）与"管线没跑"（真问题） | 只做结构校验 |
+| 2026-09-12 | 一致性检查只对**最新一期**计入 WARN，历史遗留降为提示 | 09-03 那条历史漂移会让体检永久退出码 1，噪声会让真正的告警被忽略 | 历史与新问题一起报警 |
+| 2026-09-12 | 09-02/09-03 的 `generatedAt` 依 `logs/` 记载据实补回 | 缺字段是历史遗留，但运行时间在日志里有据可查，补回后可让体检输出变得可信 | 一直留着 3 条 WARN |
+| 2026-09-12 | `一键推送GitHub.bat` 归档到 `tools/legacy-sandbox/`；删除空的 `.gh-config/` | 该脚本依赖 `gh` CLI + git 协议，本机访问不了 github.com，且仓库早已存在，放在根目录会误导 | 留在根目录 |
+| 2026-09-10 | 云化方案暂缓，先出「系统总览文档」作为规划基线 | 用户决定"先不做"；没有准确的现状描述，规划容易基于过时记忆。盘点中发现多处 MEMORY.md 描述已过时（Tab 数、任务数） | 直接开工云化改造 |
 
 ## 环境事实
 
@@ -27,7 +56,12 @@
 - 仓库已有 remote：`zoushiyun1999/astock-dashboard`（**必须 Public**，免费账号私有仓库不能用 Pages）。
 - `dashboard/` 纯静态，`data.js` 为 `window.REPORTS = {...}` 全局变量，顶层字段：`updatedAt / calendar / reports / screener`。
 - 数据源：韭研公社（开盘必读、A股投资日历）、淘股吧（湖南人、行鱼复盘）。
-- Server酱 key **曾明文写在 automation prompt 里**（错误做法），现已从全部 prompt 移除，改由 `tools/notify.js` 读取；GitHub 侧存于 Secrets `SCT_KEY`。**仍建议轮换**（历史明文已进入对话记录）。
+- ⚠️ **定时任务会真的跑，并在提交时 `git add -A`**：2026-09-12 21:00 的晚报任务在人工操作期间自动运行，
+  它 `git add -A && commit` 把当时**所有未提交的改动**（包括人正在写、还是半成品的脚本，甚至
+  `__pycache__/*.pyc`）一起提交了。所以：改脚本期间若碰到整点/半点，先把自己的状态提交掉，
+  或者事后用 `git log --stat` 复核被卷进去的文件。`.gitignore` 已加 `tmp_*` 与 `__pycache__/`。
+- 默认分支 `main`，无 git remote（推送走 API，仓库名硬编码在 `tools/gh_push_api.js`）。
+- Server酱推送通知**已于 2026-09-12 按用户要求整体下线**（`tools/notify.js` / `tools/notify_digest.js` 顶部加强制开关，调用即空转退出 0）。因此 Server酱 SendKey **不再需要提供、也不再需要轮换**；GitHub Secrets 里若还有旧 `SCT_KEY`，可一并删除。
 
 ## 云端发布链路（2026-09-10 落地，改动前必读）
 
@@ -39,16 +73,20 @@ bash tools/publish.sh "说明"
   │                     （产出 dashboard/data.json + dashboard/version.json）
   ├─ git commit
   ├─ .git/hooks/post-commit → tools/gh_push_api.js 自动推送（无需人工 push）
-  └─ GitHub Actions publish.yml → 发布到 https://asx.79zl.cn/
-        ↓
-node tools/notify_digest.js <morning|evening|screener> "标题"
-  └─ 从 data.js 自动汇总摘要 + 从 config/site.json 取链接 → tools/notify.js 发微信
+  │    └─ 无 .gh-token 时：静默跳过、退出码 0（**不阻塞本地提交**）
+  └─ 有 .gh-token 时 → GitHub Actions publish.yml → 发布到 https://asx.79zl.cn/
 ```
+
+> ⚠️ **2026-09-12 修正**：原先第 3 步在无 `.gh-token` 时 `exit 1`，导致本地模式下每次定时任务
+> 都在最后一步硬失败。已加"本地模式守卫"：无令牌则跳过推送并 `exit 0`。验收命令
+> `bash tools/publish.sh "测试"` 在无令牌下退出码必须为 **0**。
+>
+> 微信通知环节已于同日从链路中移除。
 
 - **入口 URL 只存在于 `config/site.json`**：`siteUrl`（主）、`fallbackUrl`（备用）、`domainExpiry`。
 - `tools/notify.js` 内置硬拦截：正文/标题出现 `e2b.*`、`sandbox.cloudstudio.club`、`3000-<hex>` 直接 fail。
 - `tools/health_site.js`：三入口探活 + 数据新鲜度（>26h 且交易日告警）+ 域名到期提醒 + 全仓硬编码链接扫描。本地与 `.github/workflows/health.yml` 各跑一次。
-- `tools/publish_and_notify.sh` 是上面两步的封装（含等云端生效轮询），嫌两步麻烦可用它一个命令。
+- `tools/publish_and_notify.sh` **已废弃**（2026-09-12 通知下线后无调用方）。保留仅作参考，勿在新任务里使用。
 - `tools/gh_push_api.js` 的三重防护：`SKIP_DIR` / `DENY_FILE`（`.gh-token`、`.env`、`*.key`）+ `DENY_CONTENT`（内容里扫 token 特征）+ 删除保护（文件数骤减时拒绝删远端）。
 - `dashboard/CNAME` = `asx.79zl.cn`（GitHub Pages 自定义域名，必须与 `config/site.json` 的 host 一致）。
 
@@ -73,6 +111,17 @@ node tools/notify_digest.js <morning|evening|screener> "标题"
 ## 踩坑与结论
 
 - **动态沙箱 ≠ 生产托管**：平台机制是每次部署分配新沙箱、停旧沙箱，空闲会停机。要稳定链接必须换静态托管。
+- **⚠️ 湖南人帖子不是"纯图片"**（2026-09-10 实测修正）：正文文字就在帖子 HTML 的 `subject` 属性里（`div#gtgioMsg102827446`），含复盘/龙虎榜、热点题材（带消息面）、盘前公告与新闻、外围市场，约 4000 字符；图片只是其中的连板梯队表等表格。因此**纯正则切段即可拿到晚报 70–80% 内容，不必然需要大模型读图**。评论区也常有用户贴的完整文字版。
+- **本机 `schtasks.exe` 被安全策略拦截**（Program Blacklist，不可绕过），无法从命令行创建 Windows 计划任务；只能用图形界面手动建或去安全中心放开。
+- **公共 `rsshub.app` 本机不通**（直连超时 / 代理 502，与 github.com 同因）。RSSHub 有 `/taoguba/blog/:id`、`/jiuyangongshe/user/:uid` 路由，覆盖本项目全部源，但要用得自建实例。
+
+- **韭研公社文章正文与配图不用 API、不用登录，直接从页面内联 payload 取**（2026-09-13 实测）：文章页 HTML 里有
+  `__NUXT__=(function(...){...}(...))` 的 IIFE，`eval` 后取 `data[0].data` 即得全部字段——
+  `content`（正文 HTML，`<img src>` 就是原图地址，去掉 `?x-oss-process=...` 水印参数即原图）、
+  `title` / `create_time` / `cover` / `stock_list`（本文关联个股，带 name + code，可直接喂给 `check_codes.js`）。
+  用户主页同理，`/a/{id}` 链接按出现顺序即「最新在前」，比解析 DOM 稳。提取时注意 `seg.slice(0, seg.indexOf('</script>'))` 截断。
+- **超长日历图（2008×17040 这类）必须切片后再读**：整图交给读图会把表格缩到不可辨认。按高度切 6-8 段、
+  各留 60px 重叠防切断行，逐段识别才能拿到完整日期/事件表。
 - **WebFetch 有 15 分钟缓存**：判断"最新帖是否为今天"时若命中昨日缓存会误判未发布，应复抓一次再下结论。
 - **PC 休眠/关机导致整天数据缺失**：本地 automation 无法执行（9/8 全天缺失），看门狗只补当天、历史缺口需人工补。
 - **同一文件多处 Edit 必须串行**：并行 Edit 有竞态，先发的会被覆盖且工具仍返回成功。
@@ -81,6 +130,8 @@ node tools/notify_digest.js <morning|evening|screener> "标题"
 - **Windows node.exe 不认 Git Bash 的 `/c/...` 路径**：脚本调 node 前先 `pwd -W` 转成 `C:/...`，否则 `MODULE_NOT_FOUND`。
 - **`data.js` 的 reports 顺序是「最旧在前、最新在后」**，truncate 必须按 date 排序后 slice，先 push 再 `slice(0,7)` 会丢最新一条。
 - **`git add -A` 会把 `.gh-token` 带进提交**：已在 `.gitignore` 加规则，但 API 推送不受 `.gitignore` 约束，必须靠 `gh_push_api.js` 的 `DENY_FILE` 兜底（曾真的差点推上公网，被 GitHub 以 422 Secret detected 拦下）。
+- **任何临时产物必须放项目根并加 `tmp_` 前缀**（2026-09-12 加 `.gitignore` 规则 `tmp_*` 根治）。此前 `tmp_*` 被提交进 HEAD，只靠 `gh_push_api.js` 的 `SKIP_PATH` 在推送层兜底；现在本地 `git add` 层面即屏蔽。**特别警告**：Edge headless 做前端截图时 `--user-data-dir` **绝不能指向仓库根**——profile 里的 `Cookies` 被浏览器占用，会让 `git add -A` 直接 `fatal: adding files failed`，整条发布链路中断（2026-09-12 晚报任务实际踩到）。
+- **结束 Edge 无头进程要用 PowerShell `Stop-Process -Name msedge -Force`**：`taskkill //F //IM msedge.exe` 返回后进程仍在（残留导致临时目录删不掉）。
 
 ## 用户偏好与纠正
 
@@ -95,27 +146,37 @@ node tools/notify_digest.js <morning|evening|screener> "标题"
 | 数据源清单 | `config/sources.json` | 4 个源，含发布规律 |
 | 站点 URL 单一事实源 | `config/site.json` | `siteUrl` = https://asx.79zl.cn/ ；`fallbackUrl` = https://zoushiyun1999.github.io/astock-dashboard/ |
 | GitHub 仓库 | `zoushiyun1999/astock-dashboard`（Public） | 推送用 PAT，存项目根 `.gh-token`（已 gitignore，勿删勿外传） |
-| Server酱 key | 项目根 `.sct-key`（本地）/ GitHub Secrets `SCT_KEY` | 不应入仓库；**建议轮换**（曾明文出现在 prompt 与对话中） |
+| Server酱 key | ~~项目根 `.sct-key` / GitHub Secrets `SCT_KEY`~~ **2026-09-12 起不再使用**（推送通知已下线） | 注意：`tools/notify.js` 实际**只读环境变量 `SCT_KEY`**，项目里并**不存在** `.sct-key` 文件（文档与实现不一致）。日后恢复推送需提供新 key 并轮换 |
 | 自建定时任务的 prompt 全文 | `automation_update` 的 view 模式 | 5 个任务 ID 见下 |
 
-### 5 个定时任务（2026-09-10 全部切换到新发布链路）
+### 6 个定时任务（2026-09-12 重建，全部 ACTIVE）
 
 | ID | 名称 | 时间 |
 | --- | --- | --- |
-| `automation-1788184424861` | A股早报-开盘必读资讯 | 每日 08:30 |
-| `automation-1788187841979` | A股量价选股（技术面筛选） | 工作日 14:30 |
-| `automation-1788184401617` | A股晚报-AI读图复盘+投资日历专版 | 每日 21:00 |
-| `automation-1788328556486` | A股次日验证 | 工作日 21:30 |
-| `86ab063f-b627-4af8-a829-9b5e4aa5a40f` | A股早报补跑看门狗 | 每日 10:00 |
-| `d97007fc-912c-46dc-b4cf-d2613da7052e` | A股晚报补跑看门狗 | 每日 22:30（**PAUSED**） |
+| `0edec1bb-7218-4991-a906-b99d789a9843` | A股早报-开盘必读资讯 | 每日 08:30 |
+| `5cff8748-1e37-48d9-ad29-282b141bfa4f` | A股量价选股 | 工作日 15:10 |
+| `a7e3083b-c6da-4fe3-b6c4-1a69de6b7fb7` | A股晚报-AI读图复盘+投资日历专版 | 每日 21:00 |
+| `7de2afd7-883b-40ac-af53-413f5b4ecf2d` | A股次日验证 | 工作日 21:30 |
+| `3e2314c2-3644-43ed-a84c-e3e9a21ba177` | A股早报补跑看门狗 | 每日 10:00 |
+| `f72377e1-4d16-4db4-b6af-a31fd144df28` | A股晚报补跑看门狗 | 每日 22:30 |
+
+> 旧 ID（`automation-17881844*` / `86ab063f-*` / `d97007fc-*`）已随 2026-09-10 清空失效，`.workbuddy/automations/` 里仅剩历史 memory 作参考。
+> 变更点：量价选股 **14:30 → 15:10**（修「盘中跑入选数被压低」缺陷）；晚报看门狗 **PAUSED → ACTIVE**；6 个 prompt 均删掉了通知步骤。
 
 ## 待办 / 悬置问题
 
-- [ ] **轮换 Server酱 key**（历史明文已泄露）
-- [ ] **撤销/重建 GitHub PAT**（曾明文发在对话里）
+- [x] ~~轮换 Server酱 key~~ — 2026-09-12 推送通知功能已整体下线，不再需要（若日后恢复推送则仍需用新 key）
+- [ ] **撤销/重建 GitHub PAT**（曾明文发在对话里）→ 只有在启用 GitHub 推送时才需要；写入项目根 `.gh-token`（**40 位 hex 纯单行、无空格换行**），仓库名硬编码在 `tools/gh_push_api.js` 的 `DEFAULT_REPO`
+- [ ] ⚠️ **晚报任务（每日 21:00）提示词缺「非交易日 / 今天未发布」的显式跳过兜底**：原文只说"不是今天则带 `?t=` 复抓再判定"，**没写判定后怎么办**（早报那版有明确的跳过分支）。周末与节假日存在写入脏数据的风险，待用户决定是否补一句
 - [ ] 在 `config/site.json` 填 `domainExpiry`（79zl.cn 到期日）以启用到期提醒
 - [ ] `verify.gain` 口径改造：增加 `buyRet` / `openPct` / `locked` 字段，前端改显示实盘口径（当前显示的是市场涨跌幅，会让用户误以为跟着买能赚）
 - [ ] 行情范围补创业板/科创板/北交所（当前只有沪深主板，11 只创业/科创永远验不到）
 - [ ] 早报/晚报生成逻辑云化（LLM adapter），彻底摆脱"PC 不在线就断更"
 - [ ] 晚报补跑看门狗是否启用（当前 PAUSED，需用户决策）
+- [x] ~~09-11（周五）整天空洞是否回补~~ → 2026-09-12 晚报任务已补跑（写入 `2026-09-11 evening`，git `2b58a6e`）。湖南人 `2v0p2GUgbtk`；行鱼 9/11 未发布；日历无新帖
+- [ ] ⚠️ **湖南人帖子在未登录状态下只暴露 1-2 张图**（2026-09-12 实测）：正文文字仍完整（subject 属性约 2000-4000 字符，覆盖 70-100% 内容），但连板梯队表等图片拿不到 → 盘面数据需用财经媒体复盘交叉核对
+- [ ] ⚠️ **2026-09-11 只有 evening、缺 morning**（09-11 处于 9/10 清空、9/12 恢复之间；9/12 21:05 只补跑了晚报）。
+      09-13 早报任务与本日晚报任务都判定「不在本任务范围内」而未擅自写入 → 待用户决定是否回补
+- [ ] 清理项目根残留：`一键推送GitHub.bat`（已被 SKIP_PATH 保护不会上传，但占地方、易误读）
 - [ ] 新浪日K源稳定性观察：连续多日大面积失败则把腾讯源提为主源
+
