@@ -318,11 +318,62 @@ body.scrolled header { padding-bottom: var(--sp-3); border-radius: 0 0 16px 16px
 .sector .cat { font-size: var(--fs-sm); color: var(--ink-2); margin-top: 5px; line-height: var(--lh-tight); }
 .sector .cat b { color: var(--brand); font-weight: var(--fw-semibold); margin-right: 6px; }
 
-/* ── 博主观点 ── */
-.blogger-view { padding: 10px var(--sp-3); border-left: 3px solid var(--violet); background: var(--violet-soft); border-radius: 6px; margin-bottom: 10px; }
+/* ── 博主观点 ──
+   博主会持续增加，正文动辄 400~700 字，全部铺开会把晚报顶到几千像素。
+   方案：每位博主一张折叠卡，默认只显示首行 + 字数；点击展开全文。
+   用 max-height 做过渡（不用 grid-template-rows: 0fr，避免整体给卡片加层）。 */
+.blogger-view {
+  border-left: 3px solid var(--violet); background: var(--violet-soft);
+  border-radius: 6px; margin-bottom: 10px; overflow: hidden;
+}
 .blogger-view:last-child { margin-bottom: 0; }
-.blogger-name { font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--violet); margin-bottom: 5px; }
-.blogger-text { font-size: var(--fs-md); color: var(--ink); line-height: var(--lh-loose); white-space: pre-wrap; }
+/* 头部即按钮：整条可点，触控高度 ≥44px */
+.blogger-head {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  min-height: var(--tap-min); padding: 0 var(--sp-3);
+  border: none; background: transparent; font-family: inherit;
+  text-align: left; cursor: pointer; color: var(--violet);
+}
+.blogger-name { font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--violet); flex: 1; min-width: 0; }
+.blogger-meta { flex: none; font-size: var(--fs-xs); color: var(--rank-3); font-weight: var(--fw-normal); }
+.blogger-arrow {
+  flex: none; font-size: 10px; color: var(--violet); line-height: 1;
+  transition: transform var(--t-base);
+}
+/* 摘要：只在折叠时出现，单行省略号 */
+.blogger-peek {
+  padding: 0 var(--sp-3) 10px;
+  font-size: var(--fs-md); color: var(--ink-2); line-height: var(--lh-base);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 全文 */
+.blogger-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height var(--t-base);
+}
+.blogger-text { padding: 0 var(--sp-3) 11px; font-size: var(--fs-md); color: var(--ink); line-height: var(--lh-loose); white-space: pre-wrap; }
+
+/* 展开态 */
+.blogger-view.open { background: var(--violet-soft); }
+.blogger-view.open .blogger-arrow { transform: rotate(90deg); }
+.blogger-view.open .blogger-peek { display: none; }
+/* 展开时不需要过渡高度限制，用足够大的值；收起时靠 .open 移除触发过渡 */
+.blogger-view.open .blogger-body { max-height: 4000px; }
+
+/* 「展开全部 / 收起全部」总开关 */
+.bv-tools {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-2); margin-bottom: 10px;
+}
+.bv-count { font-size: var(--fs-xs); color: var(--ink-3); }
+.bv-toggle {
+  min-height: 32px; padding: 0 var(--sp-3);
+  border: 1px solid var(--line-2); background: var(--card);
+  border-radius: var(--radius-pill); color: var(--ink-2);
+  font-family: inherit; font-size: var(--fs-sm); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+@media (prefers-reduced-motion: reduce) { .blogger-body { transition: none; } }
 
 /* ── 市场情绪 ── */
 .mood { font-size: var(--fs-md); color: var(--ink); }
