@@ -44,16 +44,34 @@ function extractFn(src, name) {
   throw new Error('函数 ' + name + '() 的大括号不闭合');
 }
 
+/* ⚠️ 这里是唯一的函数清单：抽出来的片段会被拼进同一个 vm 上下文，
+   所以**依赖链上的每个函数都要列进来**（漏一个 → 运行时 ReferenceError，
+   而不是静默跳过）。2026-09-15 起 srcMeta 改为以 curDate 为基准，
+   依赖链变成 isTradingDay → parseYmd，以及 screenerOn / verifyOn。 */
+const FN_NAMES = ['parseYmd', 'ymdOf', 'isTradingDay', 'isTradingToday', 'todayYmd',
+  'screenerList', 'screenerOn', 'verifyOn', 'scRanToday', 'verifyRanToday',
+  'srcMeta', 'metaTime', 'renderHealth', 'updateEveningDot',
+  // 空态文案（休市 / 历史缺口 / 今日待更新 三者的区分）—— 是用户直接看到的字，必须测
+  'esc', 'fmtDate', 'emptyCard', 'todayDue', 'emptyFor'];
 const PARTS = {};
-['isTradingToday', 'todayYmd', 'screenerList', 'scRanToday', 'verifyRanToday',
-  'srcMeta', 'metaTime', 'renderHealth', 'updateEveningDot']
-  .forEach(n => { PARTS[n] = extractFn(SRC, n); });
+FN_NAMES.forEach(n => { PARTS[n] = extractFn(SRC, n); });
 
 const dueMatch = SRC.match(/var DUE = \{[^}]*\};/);
 if (!dueMatch) throw new Error('在 app.js 里找不到 DUE 常量定义，测试无法运行');
 PARTS.DUE = dueMatch[0];
 
+const weekMatch = SRC.match(/var WEEK = \[[^\]]*\];/);
+if (!weekMatch) throw new Error('在 app.js 里找不到 WEEK 常量定义，测试无法运行');
+PARTS.WEEK = weekMatch[0];
+
 const HOLIDAYS = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years;
+
+/** 时间戳 → 本地日期串（给"没有 list 数据"的 harness 兜底一个合理的 curDate） */
+function ymdOf(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
 
 /* ── 组装一个"假环境"来跑这些函数 ── */
 function makeHarness(nowTs, opts) {
@@ -101,13 +119,14 @@ function makeHarness(nowTs, opts) {
       TRADE_HOLIDAYS: opts.tradeHolidays || HOLIDAYS
     },
     list: opts.list || [],
-    idx: opts.idx === undefined ? 0 : opts.idx,
+    // curDate = 当前选中的日期（app.js 的主状态）。默认取最后一期，
+    // 想看"停在历史日期"的行为就显式传 curDate（场景 5）。
+    curDate: opts.curDate !== undefined ? opts.curDate
+      : (opts.list && opts.list.length ? opts.list[opts.list.length - 1].date : ymdOf(nowTs)),
     curTab: opts.curTab || 'morning'
   };
   vm.createContext(ctx);
-  vm.runInContext([PARTS.DUE, PARTS.isTradingToday, PARTS.todayYmd, PARTS.screenerList,
-    PARTS.scRanToday, PARTS.verifyRanToday, PARTS.srcMeta, PARTS.metaTime,
-    PARTS.renderHealth, PARTS.updateEveningDot].join('\n\n'), ctx);
+  vm.runInContext([PARTS.DUE, PARTS.WEEK].concat(FN_NAMES.map(n => PARTS[n])).join('\n\n'), ctx);
   return { ctx: ctx, els: els, store: store };
 }
 
@@ -193,15 +212,15 @@ console.log('\n场景 5 · 晚报未读红点的记账时机');
                 REC('2026-09-11', { evening: { generatedAt: '2026-09-11 21:05' } })];
   const NOW = T(2026, 9, 12, 22, 0);
 
-  let h = makeHarness(NOW, { list: list, idx: 0, curTab: 'evening' });
+  let h = makeHarness(NOW, { list: list, curDate: '2026-09-04', curTab: 'evening' });
   h.ctx.updateEveningDot();
   eq(h.store['lastSeenEvening'], undefined, '停在历史日期看晚报 → 不该写 lastSeenEvening（修复前会写）');
 
-  h = makeHarness(NOW, { list: list, idx: 1, curTab: 'evening' });
+  h = makeHarness(NOW, { list: list, curDate: '2026-09-11', curTab: 'evening' });
   h.ctx.updateEveningDot();
   eq(h.store['lastSeenEvening'], '2026-09-11', '停在最新一期看晚报 → 应记为已读');
 
-  h = makeHarness(NOW, { list: list, idx: 1, curTab: 'morning' });
+  h = makeHarness(NOW, { list: list, curDate: '2026-09-11', curTab: 'morning' });
   h.ctx.updateEveningDot();
   eq(h.store['lastSeenEvening'], undefined, '停在最新一期但没打开晚报 → 不该记为已读');
 }
@@ -338,6 +357,76 @@ console.log('\n场景 13 · 次日验证：无 verify.at=今天 → 报未跑');
   ok(!/验证未跑/.test(h.els['healthBar'].innerHTML), '有 verify.at=今天 → 不报「验证未跑」');
   const vrRow = h.ctx.srcMeta(null || { morning: {}, evening: {} }).filter(s => s.name === '次日验证')[0];
   eq(vrRow.state, 'ok', 'srcMeta 次日验证行判为 ok');
+}
+
+/* ════════════════ 场景 14 · srcMeta 以「选中的日期」为基准 ════════════════ */
+console.log('\n场景 14 · 顶部状态区必须跟着选中的日期走（休市 / 历史缺口 / 今日未到点）');
+{
+  const list = [REC('2026-09-14', { morning: { generatedAt: '2026-09-14 08:33' },
+                                    evening: { generatedAt: '2026-09-14 21:05' } })];
+  const scr = [{ date: '2026-09-14', list: [1], runAt: '2026-09-14 15:12' }];
+  const row = (m, nm) => m.filter(s => s.name === nm)[0];
+
+  // ① 休市日（2026-09-13 周日、2026-09-25 中秋）
+  let h = makeHarness(T(2026, 9, 14, 22, 0), { list: list, screener: scr, curDate: '2026-09-13' });
+  let m = h.ctx.srcMeta(null);
+  eq(row(m, '早报').state, 'close', '休市日 → 早报 close（旧版会显示"待更新"）');
+  eq(row(m, '量价选股').state, 'close', '休市日 → 量价 close');
+  eq(row(m, '次日验证').state, 'close', '休市日 → 次日验证 close');
+  eq(h.ctx.metaTime(row(m, '早报')), '', '休市日不显示计划时间');
+
+  // ② 历史交易日但没数据（2026-09-08 周二）→ miss，且不留"计划时间"
+  h = makeHarness(T(2026, 9, 14, 22, 0), { list: list, screener: scr, curDate: '2026-09-08' });
+  m = h.ctx.srcMeta(null);
+  eq(row(m, '早报').state, 'miss', '历史交易日无数据 → miss');
+  eq(row(m, '早报').planned, false, '历史日期不标 planned');
+  eq(h.ctx.metaTime(row(m, '早报')), '', '历史日期不显示计划时间');
+
+  // ③ 今天（2026-09-14 周一）21:00：晚报未到点 → wait 并给出计划时间
+  h = makeHarness(T(2026, 9, 14, 21, 0), { list: [], screener: [], curDate: '2026-09-14' });
+  m = h.ctx.srcMeta(null);
+  eq(row(m, '晚报').state, 'wait', '今天未到点 → wait');
+  eq(row(m, '晚报').time, '21:00', '今天未到点 → 显示计划时间');
+  eq(row(m, '早报').state, 'miss', '今天已过 8:40 仍无早报 → miss');
+}
+
+/* ════════════════ 场景 15 · 空态文案：休市日不能说"待更新" ════════════════ */
+console.log('\n场景 15 · 没有数据时的文案必须区分 休市 / 历史缺口 / 今日待更新');
+{
+  const mk = (nowTs, ds) => makeHarness(nowTs, { list: [], curDate: ds });
+
+  // 休市（周日）→ 必须写"无数据"，且不能说"待更新"
+  let h = mk(T(2026, 9, 14, 22, 0), '2026-09-13');
+  let s = h.ctx.emptyFor('2026-09-13', '早报');
+  ok(/休市/.test(s) && /无数据/.test(s), '周日 → 文案含「休市 · 无数据」');
+  ok(!/待更新/.test(s), '周日 → 不得出现「待更新」');
+
+  // 节假日（中秋）—— now 必须落在当天或之后，否则会先命中"未来日期"分支
+  h = mk(T(2026, 9, 25, 10, 0), '2026-09-25');
+  s = h.ctx.emptyFor('2026-09-25', '晚报');
+  ok(/休市/.test(s) && !/待更新/.test(s), '节假日 → 同样按「休市」处理');
+
+  // 历史交易日没数据 → "当日无数据"，也不是"待更新"
+  h = mk(T(2026, 9, 14, 22, 0), '2026-09-08');
+  s = h.ctx.emptyFor('2026-09-08', '早报');
+  ok(/当日无数据/.test(s), '历史交易日无数据 → 文案含「当日无数据」');
+  ok(!/待更新/.test(s), '历史交易日无数据 → 不得出现「待更新」');
+
+  // 今天、还没到计划点 → 这里才允许叫"待更新"
+  h = mk(T(2026, 9, 15, 7, 0), '2026-09-15');
+  s = h.ctx.emptyFor('2026-09-15', '早报');
+  ok(/待更新/.test(s), '今天 07:00 早报未到点 → 允许「待更新」');
+
+  // 今天、已过计划点仍没有 → 是"未生成"，不能再说"待更新"
+  h = mk(T(2026, 9, 15, 10, 0), '2026-09-15');
+  s = h.ctx.emptyFor('2026-09-15', '早报');
+  ok(!/待更新/.test(s), '今天已过 8:40 仍无早报 → 不得写「待更新」');
+  ok(/未生成/.test(s), '今天已过 8:40 仍无早报 → 提示「未生成」');
+
+  // 未来日期（理论上选不到，防御性）
+  h = mk(T(2026, 9, 15, 10, 0), '2026-09-20');
+  s = h.ctx.emptyFor('2026-09-20', '早报');
+  ok(/还没到/.test(s), '未来日期 → 明确说明"还没到"');
 }
 
 console.log('\n' + '─'.repeat(58));

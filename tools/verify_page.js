@@ -8,12 +8,15 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const URL_ = process.argv[2] || 'http://127.0.0.1:8899/';
 const OUT = process.argv[3] || '.';
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const PORT = 9223;
-const PROFILE = path.join(OUT, 'edge_profile');
+// ⚠️ profile 绝不能落在仓库根：里面的 Cookies 被浏览器占用会让 `git add -A` 直接
+//    fatal 掉整条发布链路（2026-09-12 晚报任务真实踩到）。放到系统临时目录。
+const PROFILE = path.join(os.tmpdir(), 'edge_dbg_verify_' + Date.now());
 
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -37,7 +40,7 @@ class CDP {
     return new Promise((res, rej) => {
       this.pending.set(id, { res, rej });
       this.ws.send(JSON.stringify({ id, method, params }));
-      setTimeout(() => { if (this.pending.has(id)) { this.pending.delete(id); rej(new Error('timeout ' + method)); } }, 30000);
+      setTimeout(() => { if (this.pending.has(id)) { this.pending.delete(id); rej(new Error('timeout ' + method)); } }, 90000);
     });
   }
   close() { try { this.ws.close(); } catch (e) {} }
@@ -46,7 +49,6 @@ class CDP {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  fs.rmSync(PROFILE, { recursive: true, force: true });
   const child = spawn(EDGE, [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
     '--disable-extensions', '--hide-scrollbars', '--mute-audio',
@@ -72,9 +74,10 @@ async function main() {
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
 
-  // 手机视口（用户主用手机看）
+  // 手机视口（用户主用手机看）。⚠️ deviceScaleFactor 用 1 而不是 2：
+  // dsf=2 + 全页高截图会让 Page.captureScreenshot 超时（无头 Edge 实测，2026-09-15）
   await cdp.send('Emulation.setDeviceMetricsOverride', {
-    width: 430, height: 900, deviceScaleFactor: 2, mobile: true
+    width: 430, height: 900, deviceScaleFactor: 1, mobile: true
   });
 
   await cdp.send('Page.navigate', { url: URL_ });
@@ -94,6 +97,13 @@ async function main() {
 
   const shots = [];
   const shot = async (name) => {
+    // captureBeyondViewport 要配合视口高度才生效，而且要**先还原成手机高度**再量 scrollHeight：
+    // 上一次截图把 height 设成了全页高，页面最小高度就被那个值撑住，直接再量只会越截越长。
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 430, height: 900, deviceScaleFactor: 1, mobile: true });
+    await sleep(200);
+    const h = await ev('document.documentElement.scrollHeight');
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 430, height: Math.max(900, Math.min(h, 6000)), deviceScaleFactor: 1, mobile: true });
+    await sleep(400);
     const r = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
     const f = path.join(OUT, name + '.png');
     fs.writeFileSync(f, Buffer.from(r.data, 'base64'));
@@ -110,15 +120,17 @@ async function main() {
   report.calendarCount = await ev('(window.REPORTS.calendar||[]).length');
   report.screenerCount = await ev('(window.SCREENER||[]).length');
   report.screenerDates = await ev('(window.SCREENER||[]).map(function(s){return s.date})');
-  report.defaultDateLabel = await ev("document.getElementById('navLbl').textContent");
+  report.defaultDateInput = await ev("(document.getElementById('datePick')||{}).value");
   report.headerDate = await ev("document.getElementById('hdDate').textContent");
+  report.headerWeek = await ev("document.getElementById('hdWeek').textContent");
   report.healthBar = await ev("(document.getElementById('healthBar')||{}).textContent");
   report.footer = await ev("(document.getElementById('ftUpd')||{}).textContent");
 
-  // 逐 Tab 截图（截图前记录该 Tab 可见区块的非空判定）
+  // 逐 Tab 截图（截图前记录该 Tab 可见区块的非空判定）+ 每个 Tab 都必须有时间选择模块
   const tabs = ['morning', 'evening', 'watchlist', 'screener', 'calendar'];
   const secIds = { morning: 'sec-morning', evening: 'sec-evening', watchlist: 'sec-watchlist', screener: 'sec-screener', calendar: 'sec-calendar' };
   report.tabRender = {};
+  report.tabTimeBar = {};
   for (const t of tabs) {
     await ev("switchTab('" + t + "')");
     await sleep(500);
@@ -126,24 +138,46 @@ async function main() {
     report.tabRender[t] = await ev(
       "(function(){var e=document.getElementById('" + id + "');return {visible: !e.classList.contains('hide'), htmlLen: e.innerHTML.length, textLen: (e.innerText||'').length};})()"
     );
+    report.tabTimeBar[t] = await ev(
+      "(function(){var s=document.getElementById('" + id + "');" +
+      "var b=s.querySelector('.date-bar'), c=s.querySelector('.cal-bar');" +
+      "return {dateBar:!!b, calBar:!!c, hasDateInput:!!s.querySelector('input[type=date]')};})()"
+    );
     await shot('tab_' + t);
   }
 
-  // 日期回看：从"最新一期"往回翻 2 天
+  // 日期回看：前后一天（自然日）+ 直接跳到指定日期（含休市日 / 历史缺口日）
   await ev("switchTab('morning')");
   await sleep(300);
+  const snapNav = async (tag) => ({
+    step: tag,
+    date: await ev("document.getElementById('hdDate').textContent"),
+    week: await ev("document.getElementById('hdWeek').textContent"),
+    input: await ev("(document.getElementById('datePick')||{}).value"),
+    sub: await ev("(document.querySelector('.db-sub')||{}).innerText"),
+    // 选中日期没有内容时，正文必须是"休市 / 无数据 / 未生成"之一（绝不能再是含糊的"待更新"）
+    emptyNotice: await ev("/休市|无数据|未生成/.test(document.getElementById('sec-morning').innerText)"),
+    pendingWord: await ev("/待更新/.test(document.getElementById('sec-morning').innerText)")
+  });
+
   const nav = [];
-  nav.push({ step: 0, label: await ev("document.getElementById('navLbl').textContent"), date: await ev("document.getElementById('hdDate').textContent") });
-  await ev('step(-1)'); await sleep(400);
-  nav.push({ step: -1, label: await ev("document.getElementById('navLbl').textContent"), date: await ev("document.getElementById('hdDate').textContent"),
-             morningText: await ev("document.getElementById('sec-morning').innerText.slice(0,60)") });
+  nav.push(await snapNav('最新一期'));
+  await ev('stepDay(-1)'); await sleep(400);
+  nav.push(await snapNav('-1 天'));
   await shot('history_prev1');
-  await ev('step(-1)'); await sleep(400);
-  nav.push({ step: -2, label: await ev("document.getElementById('navLbl').textContent"), date: await ev("document.getElementById('hdDate').textContent") });
+  await ev('stepDay(-1)'); await sleep(400);
+  nav.push(await snapNav('-2 天'));
   await shot('history_prev2');
-  await ev('step(1)'); await sleep(300);
-  await ev('step(1)'); await sleep(400);
-  nav.push({ step: 'back-to-newest', label: await ev("document.getElementById('navLbl').textContent"), date: await ev("document.getElementById('hdDate').textContent") });
+
+  // 跳到数据覆盖区间的第一天（大概率是"有数据的历史日"，用来验证日期选择器确实生效）
+  const minD = await ev("(document.getElementById('datePick')||{}).min");
+  if (minD) {
+    await ev("pickDay('" + minD + "')"); await sleep(400);
+    nav.push(await snapNav('pick ' + minD));
+    await shot('history_pick_first');
+  }
+  await ev('gotoLatest()'); await sleep(400);
+  nav.push(await snapNav('回到最新'));
   report.nav = nav;
 
   report.shots = shots;

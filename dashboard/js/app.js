@@ -4,7 +4,12 @@
    编辑指南：
    · 数据来源：同目录下 data.js（由定时任务自动写入，勿手改）
    · 想调整某个板块的展示方式 → 找到 renderMorning / renderEvening
-   · 想改 tab / 日期切换行为 → switchTab / step / render
+   · 想改 tab 切换 → switchTab / render
+   · 想改日期切换 → curDate / stepDay / pickDay / gotoLatest / setDate
+     （每个 Tab 顶部的时间选择条由 dateBar() 生成，投资日历按期用 calBar()）
+   · 想改"没有数据时怎么说" → emptyFor()，它区分 休市 / 历史缺口 / 今日未到点
+   · 改 srcMeta() / renderHealth() / updateEveningDot() 后**必须**跑
+     `node tools/test_health_logic.js`（时间相关判定，读代码极容易看走眼）
    ============================================================ */
 (function () {
   'use strict';
@@ -12,7 +17,11 @@
   var list = ((window.REPORTS && window.REPORTS.reports) || []).slice().sort(function (a, b) {
     return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; // 按日期升序，最新在末尾
   });
-  var idx = list.length - 1;           // 当前展示哪一天（默认最新）
+  /* 当前选中的日期（YYYY-MM-DD），默认 = 最新一期。
+     ⚠️ 用「日期字符串」而不是数组下标：可选范围不止「有数据的那几期」——
+        休市日、历史缺口日也要能被选中，并明确告诉用户「当天没有数据」。
+        （旧版是 idx 下标 + 前后一天，用户无法直接跳到指定日期。） */
+  var curDate = list.length ? list[list.length - 1].date : todayYmd();
   var curTab = 'morning';
 
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -35,16 +44,37 @@
     });
   }
 
-  /** 判断今天是否交易日（周末 + 节假日休市） */
-  function isTradingToday() {
-    var now = new Date();
-    var w = now.getDay();
-    if (w === 0 || w === 6) return false;
+  /* ── 日期工具：一律按「本地日」处理，不做 UTC 换算 ── */
+  function parseYmd(ds) {
+    var p = String(ds).split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function ymdOf(d) {
     var pad = function (n) { return String(n).padStart(2, '0'); };
-    var today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-    var years = window.TRADE_HOLIDAYS || {};
-    var list = years[String(now.getFullYear())] || [];
-    return list.indexOf(today) < 0;
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function shiftYmd(ds, n) {
+    var d = parseYmd(ds);
+    d.setDate(d.getDate() + n);
+    return ymdOf(d);
+  }
+
+  /** 任意日期是否交易日（周末 + 节假日休市）。
+   *  ⚠️ window.TRADE_HOLIDAYS 是**扁平**结构 {"2026":[…]}；
+   *     config/trade_holidays.json 才是 {years:{…}} —— 两者别混（test_health_logic 场景 8 守着这点）。
+   *     内部变量别叫 list：会遮蔽外层的 list（历史隐患）。 */
+  function isTradingDay(ds) {
+    var d = parseYmd(ds);
+    var w = d.getDay();
+    if (w === 0 || w === 6) return false;
+    var hd = window.TRADE_HOLIDAYS || {};
+    var offs = hd[String(d.getFullYear())] || [];
+    return offs.indexOf(ds) < 0;
+  }
+
+  /** 判断今天是否交易日 */
+  function isTradingToday() {
+    return isTradingDay(todayYmd());
   }
 
   /** 量价选股历史（screener 现为数组，最新在前；兼容旧的单对象结构） */
@@ -61,20 +91,39 @@
     return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   }
 
-  /** 量价选股今天跑过没？判据**只看日期**（不看 list.length）：
-   *  写 {date:today,count:0,list:[]} = 任务跑了、只是选出 0 只，应判"已更新"。
-   *  「有没有票」是 renderScreener() 的事，不该影响"任务跑没跑"的判定（P2-3）。
-   *  srcMeta() 与 renderHealth() 共用此函数，杜绝两处判据不一致。
-   *  ⚠️ 必须保持顶层 `function name(){}` 形态 —— test_health_logic.js 按大括号配对抽源码。 */
-  function scRanToday() {
-    var sc = screenerList()[0];
-    return !!(sc && sc.date === todayYmd());
+  /* ── 数据覆盖范围（决定日期选择器的可选区间） ──
+     取 reports（早报/晚报/短线）与 screener（量价）两个数据集的日期并集。
+     区间内**任意日期都可选**（含休市日与历史缺口日），没有数据时由空态卡说明原因。 */
+  function dataDates() {
+    var set = {};
+    list.forEach(function (r) { if (r && r.date) set[r.date] = 1; });
+    screenerList().forEach(function (x) { if (x && x.date) set[x.date] = 1; });
+    return Object.keys(set).sort();
+  }
+  function earliestDate() {
+    var ds = dataDates();
+    return ds.length ? ds[0] : todayYmd();
+  }
+  function latestDate() {
+    return list.length ? list[list.length - 1].date : earliestDate();
   }
 
-  /** 次日验证今天跑过没？扫描所有推荐，是否存在 verify.at === 今天（P1-3）。
-   *  verify.js 每天 21:30 给推荐股写 verify.at = 当天。 */
-  function verifyRanToday() {
-    var t = todayYmd();
+  /** 按日期取 reports 记录（可能为空：休市日 / 历史缺口日） */
+  function findReport(ds) {
+    for (var i = 0; i < list.length; i++) { if (list[i] && list[i].date === ds) return list[i]; }
+    return null;
+  }
+
+  /** 指定日期的量价选股记录（screener 是独立数据集，日期不一定与 reports 重合） */
+  function screenerOn(ds) {
+    var arr = screenerList();
+    for (var i = 0; i < arr.length; i++) { if (arr[i] && arr[i].date === ds) return arr[i]; }
+    return null;
+  }
+
+  /** 指定日期是否跑过次日验证：扫所有推荐，看有没有 verify.at === ds（P1-3）。
+   *  verify.js 每个交易日 21:30 给推荐股写 verify.at = 当天。 */
+  function verifyOn(ds) {
     for (var i = 0; i < list.length; i++) {
       var rec = list[i];
       if (!rec) continue;
@@ -86,53 +135,72 @@
       for (var j = 0; j < groups.length; j++) {
         for (var k = 0; k < groups[j].length; k++) {
           var p = groups[j][k];
-          if (p && p.verify && p.verify.at === t) return true;
+          if (p && p.verify && p.verify.at === ds) return true;
         }
       }
     }
     return false;
   }
 
-  /** 汇总各数据源的时间与状态（供顶部状态区与 footer 使用） */
-  function srcMeta(r) {
-    var sc = screenerList()[0];
+  /** 量价选股今天跑过没？判据**只看日期**（不看 list.length）：
+   *  写 {date:today,count:0,list:[]} = 任务跑了、只是选出 0 只，应判"已更新"。
+   *  「有没有票」是 renderScreener() 的事，不该影响"任务跑没跑"的判定（P2-3）。
+   *  srcMeta() 与 renderHealth() 共用此函数，杜绝两处判据不一致。
+   *  ⚠️ 必须保持顶层 `function name(){}` 形态 —— test_health_logic.js 按大括号配对抽源码。 */
+  function scRanToday() {
+    return !!screenerOn(todayYmd());
+  }
+
+  /** 次日验证今天跑过没？（P1-3） */
+  function verifyRanToday() {
+    return verifyOn(todayYmd());
+  }
+
+  /** 汇总各数据源的时间与状态（供顶部状态区与 footer 使用）
+   *  ⚠️ 基准是 **curDate（当前选中的日期）**，不是"今天"：
+   *     翻到 09-08 时顶部必须显示 09-08 的状态，否则与页面上的日期自相矛盾。
+   *  状态：ok=已生成 / wait=待更新(今天还没到点) / miss=未更新 / close=休市 */
+  function srcMeta(r, forDate) {
+    var ds = forDate || curDate;
+    var isToday = ds === todayYmd();
+    var trading = isTradingDay(ds);
+    var sc = screenerOn(ds);
+    var ver = verifyOn(ds);
     var cal = (window.REPORTS && window.REPORTS.calendar) || [];
     var mo = r && r.morning, ev = r && r.evening;
-    var pad = function (n) { return String(n).padStart(2, '0'); };
     var now = new Date();
-    var todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
     var hm = now.getHours() * 60 + now.getMinutes();
-    var trading = isTradingToday();
-    var scToday = scRanToday();   // 只看日期（P2-3），与 renderHealth 同判据
 
-    // 状态：ok=已生成 / wait=待更新(未到点) / miss=未更新(已过点仍无) / close=休市
     function st(done, dueMin) {
-      if (!trading) return 'close';
       if (done) return 'ok';
+      if (!trading) return 'close';
+      // 历史交易日没有数据 = 就是没生成，不存在"还没到点"
+      if (!isToday) return 'miss';
       return hm < dueMin ? 'wait' : 'miss';
     }
 
     // planned=true 表示 time 是「计划时间」（任务还没跑，拿计划点兜底），不是真实生成时间。
     // 不加这个标记的话，「量价选股 15:10」和「早报 08:33」外观一样，会被读成"15:10 更新过"。
+    // 历史日期不显示计划时间 —— 那天没跑就是没跑，给个计划点只会让人以为"马上会来"。
     function row(name, at, done, due, plannedAt) {
       return {
         name: name,
-        time: at ? String(at).slice(11, 16) : (plannedAt || ''),
-        planned: !at && !!plannedAt,
+        time: at ? String(at).slice(11, 16) : (isToday ? (plannedAt || '') : ''),
+        planned: !at && isToday && !!plannedAt,
         state: st(done, due)
       };
     }
 
     return [
-      row('早报', mo && mo.generatedAt, !!mo, DUE.morning, '8:30'),
-      row('晚报', ev && ev.generatedAt, !!ev, DUE.evening, '21:00'),
-      row('量价选股', scToday && sc.runAt, scToday, DUE.screener, '15:10'),
-      row('次日验证', '', verifyRanToday(), DUE.verify, '21:30'),
+      row('早报', mo && mo.generatedAt, !!(mo && mo.generatedAt), DUE.morning, '8:30'),
+      row('晚报', ev && ev.generatedAt, !!(ev && ev.generatedAt), DUE.evening, '21:00'),
+      row('量价选股', sc && sc.runAt, !!sc, DUE.screener, '15:10'),
+      row('次日验证', '', ver, DUE.verify, '21:30'),
       {
         name: '投资日历',
         time: (cal.length && cal[0].publishedAt) ? cal[0].publishedAt.slice(5, 10) : '',
         planned: false,
-        state: cal.length ? 'ok' : 'wait'
+        state: cal.length ? 'ok' : (trading ? 'wait' : 'close')
       }
     ];
   }
@@ -151,11 +219,83 @@
       '<span class="dot"></span>' + esc(title) + '</h3>' + inner + '</div>';
   }
 
+  /* ── 日期选择条（每个 Tab 内各一条，是"选时间"的入口） ──
+     为什么不再只用「前一天 / 后一天」：数据按天发布，但用户想找的是"某一天"，
+     连点按钮既到不了指定日期，周末/节假日那两天也永远点不到 —— 也就看不到
+     "当天没有数据"的说明，只能看到一句含糊的"待更新"。
+     现在：‹ 前后一天（按自然日，含休市日） + 日期选择器（跳任意日期） + 最新一期。
+     latest 由调用方给出（各 Tab 的"最新有数据的那天"可能不同）。 */
+  function dateBar(ds, latest) {
+    var min = earliestDate();
+    var max = todayYmd();
+    var d = fmtDate(ds);
+    var isLatest = ds === latest;
+    var trading = isTradingDay(ds);
+    var tags = [];
+    if (isLatest) tags.push('最新一期');
+    if (!trading) tags.push('休市');
+    return '<div class="date-bar">' +
+      '<button class="db-arrow" type="button" onclick="stepDay(-1)" aria-label="前一天"' +
+      (ds <= min ? ' disabled' : '') + '>&#8249;</button>' +
+      '<input class="db-input" type="date" id="datePick" value="' + esc(ds) + '"' +
+      ' min="' + esc(min) + '" max="' + esc(max) + '" onchange="pickDay(this.value)" aria-label="选择日期">' +
+      '<button class="db-arrow" type="button" onclick="stepDay(1)" aria-label="后一天"' +
+      (ds >= max ? ' disabled' : '') + '>&#8250;</button>' +
+      '<button class="db-latest" type="button" onclick="gotoLatest()"' +
+      (isLatest ? ' disabled' : '') + '>最新</button>' +
+      '</div>' +
+      '<div class="db-sub"><span>' + esc(d.ymd) + ' ' + esc(d.week) + '</span>' +
+      (tags.length ? '<span class="db-tag' + (trading ? '' : ' off') + '">' + esc(tags.join(' · ')) + '</span>' : '') +
+      '</div>';
+  }
+
+  /** 某个数据源的到期点（供空态卡说明"几点该有"） */
+  function todayDue(what) {
+    var map = {
+      '早报': { m: DUE.morning, label: '8:40' },
+      '晚报': { m: DUE.evening, label: '21:10' },
+      '短线关注': { m: DUE.evening, label: '21:10' },
+      '量价选股': { m: DUE.screener, label: '15:20' },
+      '投资日历': null
+    };
+    return Object.prototype.hasOwnProperty.call(map, what) ? map[what] : null;
+  }
+
+  /** 该日期在本数据源下没有内容时的空态卡 —— 必须区分四种情况。
+   *  ⚠️ 绝不能一律写「待更新」：休市日说"待更新"是错的（那天根本不会有数据），
+   *     历史交易日说"待更新"也是错的（早就该有，是没生成）。 */
+  function emptyFor(ds, what) {
+    var d = fmtDate(ds);
+    var head = d.ymd + ' ' + d.week;
+    var today = todayYmd();
+    if (ds > today) {
+      return emptyCard(head + ' · 还没到', '未来日期不会有数据，最多只能选到今天（' + today + '）', '⏭');
+    }
+    if (!isTradingDay(ds)) {
+      return emptyCard(head + ' · 休市 · 无数据',
+        '非交易日没有任何行情与简报，也就不会有' + what + '。点「最新」回到最近一期，或用日期选择器换一天。', '🔵');
+    }
+    if (ds === today) {
+      var due = todayDue(what);
+      var now = new Date();
+      var hm = now.getHours() * 60 + now.getMinutes();
+      // 只有「还没到计划时间」才叫待更新；过了点仍没有就是真没生成
+      if (due && hm < due.m) {
+        return emptyCard(head + ' · ' + what + '待更新',
+          '今天的数据还没生成，计划 ' + due.label + ' 左右。也可以先回看「最新一期」。', '⏳');
+      }
+      return emptyCard(head + ' · 今日' + what + '未生成',
+        '已过计划时间（' + (due ? due.label : '—') + '）仍没有数据，可能任务没跑 —— 见页首健康提示。', '⚠️');
+    }
+    return emptyCard(head + ' · 当日无数据',
+      '该交易日没有收录' + what + '（历史缺口或当时未运行）。可翻到相邻日期，或点「最新」。', '📭');
+  }
+
   /* ── 早报渲染 ── */
-  function renderMorning(r) {
-    if (!r) return emptyCard('早报待更新', '每天 8:30 自动生成，先看看晚报吧');
+  function renderMorning(r, ds) {
+    if (!r) return dateBar(ds, latestDate()) + emptyFor(ds, '早报');
     var s = r.sections || {};
-    var html = '';
+    var html = dateBar(ds, latestDate());
 
     // 要闻简讯
     if (s['要闻简讯'] && s['要闻简讯'].length) {
@@ -196,9 +336,9 @@
   }
 
   /* ── 晚报渲染 ── */
-  function renderEvening(r) {
-    if (!r) return emptyCard('晚报待更新', '每天 21:00 自动生成，先看看早报吧');
-    var html = '';
+  function renderEvening(r, ds) {
+    if (!r) return dateBar(ds, latestDate()) + emptyFor(ds, '晚报');
+    var html = dateBar(ds, latestDate());
 
     // 博主观点（每位博主一张折叠卡，默认收起 —— 博主会增加，全展开会占满整屏）
     if (r['博主观点'] && r['博主观点'].length) {
@@ -293,8 +433,8 @@
     return html;
   }
 
-  function emptyCard(t, s) {
-    return '<div class="card empty"><div class="ico">📭</div><div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div></div>';
+  function emptyCard(t, s, ico) {
+    return '<div class="card empty"><div class="ico">' + (ico || '📭') + '</div><div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div></div>';
   }
 
   /* ── 短线关注渲染：博主看好的股（今日 / 明日 两段） ── */
@@ -366,14 +506,15 @@
       '</div>';
   }
 
-  function renderWatchlist(r) {
+  function renderWatchlist(r, ds) {
+    var bar = dateBar(ds, latestDate());
     var ev = r && r.evening, mo = r && r.morning;
     var today = (mo && mo['今日关注']) || [];
     var tmr = (ev && ev['明日关注']) || [];
     if (!today.length && !tmr.length) {
-      return emptyCard('短线关注待更新', '早报 8:30 出「今日可关注」，晚报 21:00 出「明日可关注」');
+      return bar + emptyFor(ds, '短线关注');
     }
-    var html = '';
+    var html = bar;
 
     if (today.length) {
       html += sectionCard('今日可关注 · 来自早报', 'info',
@@ -424,6 +565,24 @@
   /* ── 投资日历专版渲染（仅独立 Tab，不进晚报正文） ── */
   var calIdx = 0; // 当前展示第几篇日历（0 = 最新）
 
+  /** 日历的"时间"维度是**发布期**（博主发布的是月度长图），不是交易日 ——
+   *  所以这个 Tab 里按期导航，而不是按自然日。共 N 期时全部列出，点一下即可切换。 */
+  function calBar() {
+    var cal = (window.REPORTS && window.REPORTS.calendar) || [];
+    if (!cal.length) return '';
+    var c = cal[calIdx] || {};
+    var chips = cal.map(function (p, i) {
+      var ps = p.publishedAt || '';
+      return '<button class="cal-m' + (i === calIdx ? ' on' : '') + '" onclick="showCal(' + i + ')">' +
+        esc(ps ? ps.slice(5, 10) : ('#' + (i + 1))) + '</button>';
+    }).join('');
+    return '<div class="cal-bar">' +
+      '<div class="cal-bar-head"><span class="cb-t">发布时间</span>' +
+      '<span class="cb-meta">共 ' + cal.length + ' 期 · 当前第 ' + (calIdx + 1) + ' 期' +
+      (c.publishedAt ? '（' + esc(String(c.publishedAt).slice(0, 10)) + '）' : '') + '</span></div>' +
+      '<div class="cal-months">' + chips + '</div></div>';
+  }
+
   function renderCalendar() {
     var cal = (window.REPORTS && window.REPORTS.calendar) || [];
     if (!cal.length) {
@@ -432,18 +591,7 @@
     if (calIdx >= cal.length) calIdx = 0;
     var c = cal[calIdx];
 
-    var html = '';
-    // 日期切换（紧凑芯片，每篇一个，多篇时显示）
-    if (cal.length > 1) {
-      var chips = cal.map(function (p, i) {
-        var ps = p.publishedAt || '';
-        var m = parseInt(ps.slice(5, 7), 10);
-        var d = parseInt(ps.slice(8, 10), 10);
-        var label = (m && d) ? (m + '/' + d) : (ps.slice(0, 10) || ('#' + (i + 1)));
-        return '<button class="cal-m' + (i === calIdx ? ' on' : '') + '" onclick="showCal(' + i + ')">' + esc(label) + '</button>';
-      }).join('');
-      html += '<div class="cal-months">' + chips + '</div>';
-    }
+    var html = calBar();
 
     // 文章头
     html += '<div class="card cal-head"><div class="cal-author">📅 韭研公社 · <b>A股投资日历</b>（绝不追高的老韭菜）</div>' +
@@ -591,30 +739,18 @@
     }).join('');
   }
 
-  var scIdx = 0;
-  window.showSc = function (i) {
-    scIdx = i;
-    document.getElementById('sec-screener').innerHTML = renderScreener();
-  };
+  /** 量价选股的最晚一期日期（"最新"按钮用；screener 日期不一定与 reports 重合） */
+  function latestScDate() {
+    var arr = screenerList().filter(function (x) { return x && x.date; })
+      .map(function (x) { return x.date; }).sort();
+    return arr.length ? arr[arr.length - 1] : latestDate();
+  }
 
-  function renderScreener() {
-    var hist = screenerList().filter(function (x) { return x && x.list; });
-    if (!hist.length) {
-      return emptyCard('量价选股待更新', '每个交易日收盘后自动筛选，先看看其他板块吧');
-    }
-    if (scIdx >= hist.length) scIdx = 0;
-    var sc = hist[scIdx];
-    if (!sc.list || !sc.list.length) {
-      return emptyCard('量价选股待更新', '每个交易日收盘后自动筛选，先看看其他板块吧');
-    }
-
-    // 历史期数切换（保留最近 10 期，便于回看与策略验证）
-    var picker = hist.length > 1
-      ? '<div class="cal-months">' + hist.map(function (x, i) {
-          return '<button class="cal-m' + (i === scIdx ? ' on' : '') + '" onclick="showSc(' + i + ')">' +
-            esc(x.date.slice(5)) + ' · ' + (x.count || 0) + '只</button>';
-        }).join('') + '</div>'
-      : '';
+  function renderScreener(ds) {
+    var bar = dateBar(ds, latestScDate());
+    var sc = screenerOn(ds);
+    // 没有这一期的记录 → 按日期性质分别给出"休市 / 无数据 / 待更新"，不再一律写"待更新"
+    if (!sc) return bar + emptyFor(ds, '量价选股');
 
     var c = sc.criteria || {};
     var cond = [
@@ -623,21 +759,28 @@
     ].filter(function (x) { return x[1]; })
       .map(function (x) { return '<span class="sc-cond"><b>' + esc(x[0]) + '</b>' + esc(x[1]) + '</span>'; })
       .join('');
+    // 有记录但 0 只 = 任务跑了、只是没选出票（≠ 没数据）
+    var head = '<div class="wl-desc">' + ((sc.list && sc.list.length)
+      ? '全市场 ' + esc(sc.count) + ' 只符合条件 · 更新于 ' + esc(sc.runAt)
+      : '任务已运行（' + esc(sc.runAt || '—') + '），当日 0 只符合条件') + '</div>' +
+      '<div class="sc-conds">' + cond + '</div>';
+    var tip = '<div class="card tip"><span class="ico">📌</span><span>纯技术面条件筛选，不含题材与基本面判断，仅供盯盘参考，不构成投资建议。带板块标签的为当日主线/博主看好个股。</span></div>';
+
+    if (!sc.list || !sc.list.length) {
+      return bar + sectionCard('量价选股 · ' + esc(sc.date), 'info', head) + tip;
+    }
 
     var rows = sc.list.slice().sort(function (a, b) { return (b.gain || 0) - (a.gain || 0); });
 
-    return sectionCard('量价选股 · ' + esc(sc.date), 'info',
-      picker +
-      '<div class="wl-desc">全市场 ' + esc(sc.count) + ' 只符合条件 · 更新于 ' + esc(sc.runAt) + '</div>' +
-      '<div class="sc-conds">' + cond + '</div>' +
+    return bar + sectionCard('量价选股 · ' + esc(sc.date), 'info',
+      head +
       // 9 列在手机上会溢出屏外，加提示 + 右侧渐隐遮罩，告诉用户"右边还有"
       '<div class="sc-hint" id="scHint">← 左右滑动查看全部 9 项指标</div>' +
       '<div class="sc-scroller">' +
       '<div class="sc-wrap" id="scWrap"><table class="sc-table">' +
       '<thead><tr><th>#</th><th>名称</th><th>板块</th><th>涨幅</th><th>换手</th><th>市值</th><th>量比</th><th>连阳</th><th>均线上</th></tr></thead>' +
       '<tbody>' + scRowsHtml(rows) + '</tbody></table></div>' +
-      '<span class="sc-fade" id="scFade"></span></div>') +
-      '<div class="card tip"><span class="ico">📌</span><span>纯技术面条件筛选，不含题材与基本面判断，仅供盯盘参考，不构成投资建议。带板块标签的为当日主线/博主看好个股。</span></div>';
+      '<span class="sc-fade" id="scFade"></span></div>') + tip;
   }
 
   /** 量价表横向滚动：滚到底/不需要滚动时收起渐隐遮罩与提示 */
@@ -665,10 +808,20 @@
 
   var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
 
-  function updateDateNav() {
-    var nav = document.querySelector('.date-nav');
-    if (nav) nav.style.display = (curTab === 'screener' || curTab === 'calendar') ? 'none' : '';
+  /* ── 日期导航：每个 Tab 内的日期条按钮都走这三个入口 ── */
+  function clampDate(ds) {
+    var min = earliestDate(), max = todayYmd();
+    if (ds < min) return min;
+    if (ds > max) return max;
+    return ds;
   }
+  function setDate(ds) {
+    curDate = clampDate(String(ds));
+    render();
+  }
+  window.stepDay = function (n) { setDate(shiftYmd(curDate, n)); };
+  window.pickDay = function (v) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) setDate(v); };
+  window.gotoLatest = function () { setDate(latestDate()); };
 
   function positionGlider() {
     var tabs = document.getElementById('tabs');
@@ -689,7 +842,7 @@
     // ⚠️ 只有真正停在最新一期看晚报才算已读。
     //    以前是在 switchTab 里无脑记 list[length-1].date，导致"翻回历史日期看晚报"
     //    也会把最新一期的未读红点清掉。
-    var isOnNewest = idx === list.length - 1;
+    var isOnNewest = !!newest && curDate === newest.date;
     var seen = null;
     try { seen = localStorage.getItem('lastSeenEvening'); } catch (e) {}
     if (hasEvening && isOnNewest && curTab === 'evening') {
@@ -710,53 +863,43 @@
     document.getElementById('sec-watchlist').classList.toggle('hide', tab !== 'watchlist');
     document.getElementById('sec-calendar').classList.toggle('hide', tab !== 'calendar');
     document.getElementById('sec-screener').classList.toggle('hide', tab !== 'screener');
-    updateDateNav();
     positionGlider();
     updateEveningDot();
   }
 
   function render() {
-    var r = list[idx];
-    var isNewest = idx === list.length - 1;
+    var r = findReport(curDate);
+    var isLatest = curDate === latestDate();
 
-    // header
-    var d = fmtDate(r ? r.date : '----');
-    document.getElementById('hdDate').textContent = r ? d.ymd : '—';
-    document.getElementById('hdWeek').textContent = r ? d.week : '';
-    document.getElementById('navLbl').textContent = isNewest ? '最新一期' : '历史 · ' + (r ? r.date : '');
-    document.getElementById('btnPrev').disabled = idx <= 0;
-    document.getElementById('btnNext').disabled = isNewest;
+    // header：显示「当前选中的日期」（可能是休市日 / 无数据的交易日，不再只显示有数据的那天）
+    var d = fmtDate(curDate);
+    document.getElementById('hdDate').textContent = d.ymd;
+    document.getElementById('hdWeek').textContent = d.week + (isLatest ? ' · 最新一期' : '');
 
-    // 状态（按数据源分别展示时间与状态，圆点表示状态）
-    var st = document.getElementById('hdStatus');
-    if (r) {
-      st.innerHTML = srcMeta(r).map(function (s) {
-        var label = s.state === 'ok' ? (s.name === '投资日历' ? '已收录' : '已生成')
-          : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
-        var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
-        // 每项一个 div（网格子项），不再用 <br> 分隔 —— 网格才能稳定 2 列
-        return '<div><i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml +
-          ' <span class="st-state">' + label + '</span></div>';
-      }).join('');
-    } else {
-      st.textContent = '';
-    }
+    // 状态（按数据源分别展示时间与状态，圆点表示状态）—— 基准是选中日期，与页头日期自洽
+    document.getElementById('hdStatus').innerHTML = srcMeta(r).map(function (s) {
+      var label = s.state === 'ok' ? (s.name === '投资日历' ? '已收录' : '已生成')
+        : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
+      var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
+      // 每项一个 div（网格子项），不再用 <br> 分隔 —— 网格才能稳定 2 列
+      return '<div><i class="st-dot ' + s.state + '"></i>' + s.name + timeHtml +
+        ' <span class="st-state">' + label + '</span></div>';
+    }).join('');
 
-    // 内容
-    document.getElementById('sec-morning').innerHTML = renderMorning(r ? r.morning : null);
-    document.getElementById('sec-evening').innerHTML = renderEvening(r ? r.evening : null);
-    document.getElementById('sec-watchlist').innerHTML = renderWatchlist(r);
+    // 内容（每个 Tab 自己渲染顶部的日期条：日期语义各 Tab 不同，见 dateBar / calBar）
+    document.getElementById('sec-morning').innerHTML = renderMorning(r ? r.morning : null, curDate);
+    document.getElementById('sec-evening').innerHTML = renderEvening(r ? r.evening : null, curDate);
+    document.getElementById('sec-watchlist').innerHTML = renderWatchlist(r, curDate);
     document.getElementById('sec-calendar').innerHTML = renderCalendar();
-    document.getElementById('sec-screener').innerHTML = renderScreener();
+    document.getElementById('sec-screener').innerHTML = renderScreener(curDate);
 
-    // footer（按数据源展示最新更新时间）
+    // footer（各数据源**最新一期**的更新时间，与当前选中的日期无关）
     var upd = document.getElementById('ftUpd');
     var newest = list[list.length - 1];
-    upd.textContent = newest ? srcMeta(newest).map(function (s) {
+    upd.textContent = newest ? srcMeta(newest, newest.date).map(function (s) {
       return s.name + (metaTime(s) ? ' ' + metaTime(s) : '');
     }).join(' · ') : '—';
     renderHealth();
-    updateDateNav();
     positionGlider();
     updateEveningDot();
     bindScHint();
@@ -803,12 +946,6 @@
     bar.innerHTML = level === 'ok' ? '🟢 各源运行正常' : (level === 'warn' ? '🟡 注意：' : '🔴 异常：') + issues.join('、');
   }
 
-  window.step = function (d) {
-    var n = idx + d;
-    if (n < 0 || n >= list.length) return;
-    idx = n;
-    render();
-  };
   window.switchTab = switchTab;
 
   render();
@@ -871,20 +1008,15 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         if (!j || !j.REPORTS) return;
-        var wasNewest = idx >= list.length - 1;             // 原本停在最新一期就继续跟到最新
-        var prevDate = list[idx] ? list[idx].date : null;
+        var wasLatest = list.length ? curDate === list[list.length - 1].date : true;
+        var prevDate = curDate;
         window.REPORTS = j.REPORTS;
         if (j.SCREENER) window.SCREENER = j.SCREENER;
         list = ((window.REPORTS && window.REPORTS.reports) || []).slice().sort(function (a, b) {
           return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
         });
-        if (wasNewest) {
-          idx = list.length - 1;
-        } else {
-          var n = -1;
-          for (var i = 0; i < list.length; i++) { if (list[i].date === prevDate) { n = i; break; } }
-          idx = n >= 0 ? n : list.length - 1;
-        }
+        // 原本停在最新一期就继续跟到最新；否则留在原来那一天（哪怕那天仍然没有数据）
+        curDate = clampDate(wasLatest && list.length ? list[list.length - 1].date : prevDate);
         render();
       })
       .catch(function () {})

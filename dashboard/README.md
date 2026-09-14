@@ -24,7 +24,7 @@ dashboard/
 | 卡片圆角、阴影、间距 | `css/style.css` 的 `--radius`、`--shadow`、`.card` |
 | 某板块的字号/颜色 | `css/style.css` 对应注释分区（如 `.news`、`.sector`） |
 | 早报/晚报的板块顺序或内容 | `js/app.js` 的 `renderMorning()` / `renderEvening()` |
-| Tab、日期切换、空状态文案 | `js/app.js` 的 `switchTab()` / `render()` / `emptyCard()` |
+| Tab、日期切换、空状态文案 | `js/app.js` 的 `switchTab()` / `render()` / `dateBar()` / `emptyFor()` |
 | 顶栏品牌名、Tab 文案 | `index.html` |
 
 ## 🚀 本地预览
