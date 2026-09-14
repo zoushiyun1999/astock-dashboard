@@ -129,11 +129,24 @@ docs/              方案与说明文档
     `node -e 'const fs=require("fs");const hit=…;console.log(hit);hit.forEach(f=>fs.unlinkSync(f))'`；
     ② 或用 shell 通配符/目录名（尽量不出现中文路径参数）；③ **一次只删一个路径**，删完立刻
     `ls <目录>` + `git status --short` 核对数量。**任何批量删除后必须核对「删除条数 == 预期条数」**。
+24. **`publish.sh` 内置陈旧锁守卫，不要绕过它手工删锁**：脚本开头会检测 `.git/index.lock`，
+    仅当「锁存在且无活跃 git 进程」时自动清除并打印告警；有活跃 git 进程时**不干预**。
+    背景：`.git/index.lock` 若因上一轮任务被中断（超时、调度重启）而残留，`publish.sh` 的
+    第 1/4 步（刷版本号 + 导出 JSON）会**正常跑完**，第 2/4 步 git commit 才报
+    `Unable to create index.lock: File exists` → **发布静默中断、数据只落一半**，
+    而报错信息完全指向不了真因。2026-09-14 量价选股任务疑似因此长期无产出。
+    维护提醒（改这段守卫时必看）：① `tasklist` 在 Git Bash 下要用**单破折号** `-FI`，
+    `//FI` 会报「无效参数」；② `grep -c` 无匹配时输出 `0` 但**退出码为 1**，
+    写成 `... || echo 0` 会拼出 `"0\n0"` 让 `[ -eq ]` 崩掉 —— 必须先取原始输出、
+    再 `tr -d '[:space:]'` 清空白、最后兜底赋 0。
+    手工救急时（守卫生效前）：确认无 git 进程 → `rm -f .git/index.lock` →
+    **单独执行 `git add -A && git commit`，不要重跑 `publish.sh`**（会多刷一次版本号）。
 
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 
 ```
 写数据 → bash tools/publish.sh "说明"
+           ├─ 陈旧 git 锁守卫（锁存在且无 git 进程 → 自动清除，见硬性规则 24）
            ├─ bump_version.sh（版本号 + sort_reports + 日历图压缩/回收 + sync_holidays + export_json）
            ├─ git commit
            ├─ .git/hooks/post-commit → tools/gh_push_api.js（GitHub Trees API）
