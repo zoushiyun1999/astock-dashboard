@@ -154,6 +154,24 @@ bash tools/publish.sh "说明"
 - **`.gh-token` 权限不足的报错很长但很有指向性**：`POST /repos/.../git/blobs → HTTP 403
   Resource not accessible by personal access token` = Contents 只读。而读操作（`/git/ref`、`/git/commits`、`/git/trees`）
   会**照常成功**，所以别被"能读"骗过去——能读不等于能写。
+- **⚠️ `.gitignore` 对 API 推送通道完全无效**（2026-09-14 实测踩到）：本项目的上传有**两条独立通道**——
+  ① `git commit`（受 `.gitignore` 约束）② `.git/hooks/post-commit` → `tools/gh_push_api.js`（**自己走目录树，
+  一行都不读 `.gitignore`**，只在代码里用 `SKIP_DIR` / `SKIP_PATH` / `DENY_FILE` 硬拦）。
+  后果实录：归档 `docs/归档/` 时只加了 `.gitignore`，`post-commit` 照样把 **51 个归档文件**推上了
+  **public** 仓库（含旧项目 `AGENTS.md/MEMORY.md`、`开机自动关机诊断报告.md`——写着主机名
+  `DESKTOP-NQT2JG0\zoush`、QClaw 会话 ID、注册表路径）。
+  **规则：任何"只留本地"的目录，`.gitignore` 与 `gh_push_api.js` 的 `SKIP_DIR` 必须同时加。**
+  撤回方式：`git rm -r --cached <dir>` → commit → 钩子自动把远端多余文件删掉（脚本第 159–169 行，
+  全量模式下「本地没有的远端文件」会打 `sha: null` 删除标记）。
+- **删除前必须核对完整清单再动手，且优先用回收站**（2026-09-14）：`send2trash` 移入回收站的删除是
+  好做法，但要**注意「删完立刻 `os.path.exists` 复检」会误报失败**——Windows 的 8.3 短名解析
+  （`WORKBU~2\2015D7~1`）在目录已删后报 `WinError 2`，实际删除是成功的。
+  判断真实结果要看**残留目录内容是否为空**，不要只看异常。
+  另：**当前会话的工作目录被进程锁住，删不掉**（`WinError 32`），属正常现象，等会话关闭再删。
+- **`send2trash` 可通过主 venv 安装**：`C:/Users/zoush/.workbuddy/binaries/python/envs/default/Scripts/pip.exe
+  install send2trash`。补充：PowerShell 的 `New-Object -ComObject Shell.Application` 走回收站
+  **被安全策略拦截**（"COM object instantiation can run arbitrary code"），`winshell`/`send2trash`
+  默认也未安装 —— 三条路只剩 pip 装 `send2trash` 可用。
 
 ## 用户偏好与纠正
 
@@ -203,6 +221,9 @@ bash tools/publish.sh "说明"
 - [ ] `verify.gain` 口径改造：增加 `buyRet` / `openPct` / `locked` 字段，前端改显示实盘口径（当前显示的是市场涨跌幅，会让用户误以为跟着买能赚）
 - [ ] 行情范围补创业板/科创板/北交所（当前只有沪深主板，11 只创业/科创永远验不到）
 - [ ] 早报/晚报生成逻辑云化（LLM adapter），彻底摆脱"PC 不在线就断更"
+- [ ] 云端自动化 `cloud:6776601`「生成昨日 AI 重点资讯总结」**无法通过工具删除**
+      （接口只读，返回 `delete is not supported for cloud automations`），已 PAUSED 无副作用。
+      需用户在手机 App / Web 端「自动化」入口手动删。从 2026-09-10 挂到现在。
 - [ ] 晚报补跑看门狗是否启用（当前 PAUSED，需用户决策）
 - [x] ~~09-11（周五）整天空洞是否回补~~ → 2026-09-12 晚报任务已补跑（写入 `2026-09-11 evening`，git `2b58a6e`）。湖南人 `2v0p2GUgbtk`；行鱼 9/11 未发布；日历无新帖
 - [ ] ⚠️ **湖南人帖子在未登录状态下只暴露 1-2 张图**（2026-09-12 实测）：正文文字仍完整（subject 属性约 2000-4000 字符，覆盖 70-100% 内容），但连板梯队表等图片拿不到 → 盘面数据需用财经媒体复盘交叉核对

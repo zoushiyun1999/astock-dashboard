@@ -159,6 +159,18 @@ docs/              方案与说明文档
     手工救急时（守卫生效前）：确认无 git 进程 → `rm -f .git/index.lock` →
     **单独执行 `git add -A && git commit`，不要重跑 `publish.sh`**（会多刷一次版本号）。
 
+25. **`docs/归档/` 是本地专用目录，绝不能进版本库或公开仓库**。两道闸门缺一不可：
+    - `.gitignore` 的 `docs/归档/`（只管 `git commit`）
+    - `tools/gh_push_api.js` 的 `SKIP_DIR` 里的 `归档`（**API 推送脚本不读 `.gitignore`**）
+    背景：2026-09-14 归档旧工作区时，`post-commit` 钩子把 51 个归档文件（含旧项目
+    `AGENTS.md/MEMORY.md`、`开机自动关机诊断报告.md`——里面写着主机名 `DESKTOP-NQT2JG0\zoush`、
+    QClaw 会话 ID、注册表路径）直接推到了 **public** 仓库。已通过一次提交删除 49 个远端文件撤回。
+    ⚠️ 只加 `.gitignore` 不够：**该脚本的 `collect()` 自己走目录树，完全不看 `.gitignore`**。
+    新增任何"只留本地"的目录，**必须同时改 `SKIP_DIR`**。
+
+> **通用教训**：本项目有两条独立的上传通道（`git commit` 与 `gh_push_api.js`），
+> 任何"排除文件"的规则都要在**两处**各写一遍。只改一处 = 漏一半。
+
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 
 ```
