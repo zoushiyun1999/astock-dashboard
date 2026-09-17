@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-09-18 00:18",
+  "updatedAt": "2026-09-18 00:37",
   "calendar": [
     {
       "id": "2z8wv1jyq8n",
@@ -325,17 +325,18 @@ window.REPORTS = {
             "status": "3板·海峡经济三平台共振",
             "reason": "同花顺+东财+淘股吧三平台人气前五，海峡经济主题（海峡两岸+平潭封关运作预期）龙头。3连板已打开空间，今日重点关注能否继续突破",
             "verify": {
-              "gain": 4.52,
+              "gain": 5.07,
               "hit": true,
-              "price": 8.1,
+              "price": 7.87,
               "code": "000592",
               "at": "2026-09-07",
-              "open": 7.71,
-              "openPct": -0.52,
-              "buyRet": 5.06,
-              "netRet": 4.85,
+              "open": 8.11,
+              "openPct": 8.28,
+              "buyRet": -2.96,
+              "netRet": -3.15,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -345,17 +346,19 @@ window.REPORTS = {
             "status": "3板·农业主线三平台共振",
             "reason": "同花顺+东财+淘股吧三平台同列人气前列，联合国粮农组织8月食品价格指数同比+2.5%（2022年以来最高）催化粮食安全主线。3连板加速，板块整体强度高",
             "verify": {
-              "gain": -9.94,
-              "hit": false,
-              "price": 4.26,
+              "gain": 10.09,
+              "hit": true,
+              "price": 4.8,
               "code": "600108",
               "at": "2026-09-07",
-              "open": 4.49,
-              "openPct": -5.07,
-              "buyRet": -5.12,
-              "netRet": -5.31,
-              "locked": false,
-              "basis": "open-to-close"
+              "open": 4.8,
+              "openPct": 10.09,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
             }
           },
           {
@@ -365,18 +368,18 @@ window.REPORTS = {
             "status": "5板·AI视频龙头（高位注意断板）",
             "reason": "同花顺+东财+淘股吧三平台人气前列，AI视频主线龙头。但公司公告AI视频业务6月营收仅约80元（基本无业务支撑），5连板后位置极高，今日重点观察能否扛过分歧——追高风险大，作为板块情绪风向标观察",
             "verify": {
-              "gain": -10.02,
-              "hit": false,
-              "price": 16.8,
+              "gain": 10.03,
+              "hit": true,
+              "price": 17.11,
               "code": "605577",
               "at": "2026-09-07",
-              "open": 16.8,
-              "openPct": -10.02,
-              "buyRet": 0,
-              "netRet": null,
-              "locked": true,
+              "open": 16.56,
+              "openPct": 6.5,
+              "buyRet": 3.32,
+              "netRet": 3.11,
+              "locked": false,
               "basis": "open-to-close",
-              "note": "一字板·无法买入（剔除）"
+              "by": "hist"
             }
           },
           {
@@ -386,17 +389,18 @@ window.REPORTS = {
             "status": "2板·双平台人气共振",
             "reason": "韭研公社+同花顺双平台人气前列。隔夜美股加密货币概念股大涨叠加数字人民币推广预期，2连板打开空间。属于AI算力+数字货币双主线低位补涨",
             "verify": {
-              "gain": -4.7,
-              "hit": false,
-              "price": 16.64,
+              "gain": 8.66,
+              "hit": true,
+              "price": 22.95,
               "code": "003040",
               "at": "2026-09-07",
-              "open": 17,
-              "openPct": -2.63,
-              "buyRet": -2.12,
-              "netRet": -2.31,
+              "open": 21.01,
+              "openPct": -0.52,
+              "buyRet": 9.23,
+              "netRet": 9.02,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -406,17 +410,18 @@ window.REPORTS = {
             "status": "2板·粮食安全主题",
             "reason": "韭研公社+东财双平台人气前列，叠加8月全球食品价格指数同比+2.5%催化。农业主线中军股，位置相对安全，作为板块容量标的可低吸",
             "verify": {
-              "gain": 4.58,
+              "gain": 10,
               "hit": true,
-              "price": 14.17,
+              "price": 13.53,
               "code": "600127",
               "at": "2026-09-07",
-              "open": 13.12,
-              "openPct": -3.17,
-              "buyRet": 8,
-              "netRet": 7.79,
+              "open": 13.23,
+              "openPct": 7.56,
+              "buyRet": 2.27,
+              "netRet": 2.06,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -426,17 +431,18 @@ window.REPORTS = {
             "status": "未启动·猪周期反转低位",
             "reason": "韭研公社+东财双平台人气前列。机构调研（国盛证券）：公司2025年出栏生猪1755万头居行业前列，完全成本持续下行+产能主动收缩+现金流充裕——猪周期最低点或已过，作为低位大市值标的适合打底仓",
             "verify": {
-              "gain": -1.86,
-              "hit": false,
-              "price": 7.38,
+              "gain": 1.56,
+              "hit": true,
+              "price": 7.82,
               "code": "000876",
               "at": "2026-09-07",
-              "open": 7.45,
-              "openPct": -0.93,
-              "buyRet": -0.94,
-              "netRet": -1.14,
+              "open": 7.89,
+              "openPct": 2.47,
+              "buyRet": -0.89,
+              "netRet": -1.09,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -446,17 +452,18 @@ window.REPORTS = {
             "status": "首板待确认·AI应用低位",
             "reason": "同花顺人气前列。机构调研（中邮证券）：AI业务已从模型底座进入规模化应用阶段，CineART长视频创编平台+营销智能体落地；GPT-6 Astra+世界模型催化AI应用，位置相对低，可作AI应用主线补涨",
             "verify": {
-              "gain": 1.6,
-              "hit": true,
-              "price": 7.6,
+              "gain": -0.24,
+              "hit": false,
+              "price": 8.43,
               "code": "002354",
               "at": "2026-09-07",
-              "open": 7.46,
-              "openPct": -0.27,
-              "buyRet": 1.88,
-              "netRet": 1.67,
+              "open": 8.37,
+              "openPct": -0.95,
+              "buyRet": 0.72,
+              "netRet": 0.52,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -466,17 +473,18 @@ window.REPORTS = {
             "status": "未启动·低人气补涨",
             "reason": "韭研公社人气首位。商用车智能化龙头叠加AI视觉/具身智能概念，与机器人+AI应用主线共振。位置相对低，作为低位补涨标的观察",
             "verify": {
-              "gain": -0.84,
-              "hit": false,
-              "price": 43.73,
+              "gain": 6.08,
+              "hit": true,
+              "price": 51.45,
               "code": "002970",
               "at": "2026-09-07",
-              "open": 43.84,
-              "openPct": -0.59,
-              "buyRet": -0.25,
-              "netRet": -0.45,
+              "open": 49.34,
+              "openPct": 1.73,
+              "buyRet": 4.28,
+              "netRet": 4.07,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           }
         ]
@@ -558,7 +566,14 @@ window.REPORTS = {
                   "hit": false,
                   "price": 179.92,
                   "code": "002281",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 189.29,
+                  "openPct": 2.61,
+                  "buyRet": -4.95,
+                  "netRet": -5.14,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -572,7 +587,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 17.06,
                   "code": "002579",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 16.9,
+                  "openPct": 8.96,
+                  "buyRet": 0.95,
+                  "netRet": 0.74,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -586,7 +608,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 18.04,
                   "code": "603118",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 18.61,
+                  "openPct": 4.02,
+                  "buyRet": -3.06,
+                  "netRet": -3.26,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -608,7 +637,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 124.9,
                   "code": "002463",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 126,
+                  "openPct": 2.73,
+                  "buyRet": -0.87,
+                  "netRet": -1.07,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -622,7 +658,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 382.5,
                   "code": "002916",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 375.37,
+                  "openPct": 2.85,
+                  "buyRet": 1.9,
+                  "netRet": 1.7,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -636,7 +679,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 17.08,
                   "code": "002815",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 17.11,
+                  "openPct": 6.87,
+                  "buyRet": -0.18,
+                  "netRet": -0.37,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -658,7 +708,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 13.65,
                   "code": "002403",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 13.65,
+                  "openPct": 9.99,
+                  "buyRet": 0,
+                  "netRet": -0.2,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -672,7 +729,14 @@ window.REPORTS = {
                   "hit": false,
                   "price": 16.25,
                   "code": "002708",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 17,
+                  "openPct": 1.19,
+                  "buyRet": -4.41,
+                  "netRet": -4.6,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -686,7 +750,14 @@ window.REPORTS = {
                   "hit": false,
                   "price": 46.01,
                   "code": "603286",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 47.61,
+                  "openPct": 0.53,
+                  "buyRet": -3.36,
+                  "netRet": -3.55,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -708,7 +779,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 14.95,
                   "code": "601086",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 14.02,
+                  "openPct": 0.72,
+                  "buyRet": 6.63,
+                  "netRet": 6.42,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -722,7 +800,15 @@ window.REPORTS = {
                   "hit": true,
                   "price": 13.74,
                   "code": "600865",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 13.74,
+                  "openPct": 10.01,
+                  "buyRet": 0,
+                  "netRet": null,
+                  "locked": true,
+                  "basis": "open-to-close",
+                  "by": "hist",
+                  "note": "一字板·无法买入（剔除）"
                 }
               },
               {
@@ -736,7 +822,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 6.79,
                   "code": "002702",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 6.79,
+                  "openPct": 10.05,
+                  "buyRet": 0,
+                  "netRet": -0.2,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -758,7 +851,15 @@ window.REPORTS = {
                   "hit": true,
                   "price": 5.28,
                   "code": "600108",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 5.28,
+                  "openPct": 10,
+                  "buyRet": 0,
+                  "netRet": null,
+                  "locked": true,
+                  "basis": "open-to-close",
+                  "by": "hist",
+                  "note": "一字板·无法买入（剔除）"
                 }
               },
               {
@@ -772,7 +873,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 14.79,
                   "code": "600127",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 14.07,
+                  "openPct": 3.99,
+                  "buyRet": 5.12,
+                  "netRet": 4.91,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -786,7 +894,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 15.83,
                   "code": "600371",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 15.37,
+                  "openPct": 1.99,
+                  "buyRet": 2.99,
+                  "netRet": 2.79,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -808,7 +923,14 @@ window.REPORTS = {
                   "hit": true,
                   "price": 8.72,
                   "code": "002909",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 7.8,
+                  "openPct": -1.64,
+                  "buyRet": 11.79,
+                  "netRet": 11.57,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -822,7 +944,14 @@ window.REPORTS = {
                   "hit": false,
                   "price": 27.32,
                   "code": "603311",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 29.36,
+                  "openPct": -0.03,
+                  "buyRet": -6.95,
+                  "netRet": -7.13,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -836,7 +965,14 @@ window.REPORTS = {
                   "hit": false,
                   "price": 100.91,
                   "code": "002975",
-                  "at": "2026-09-08"
+                  "at": "2026-09-08",
+                  "open": 106.01,
+                  "openPct": 1.42,
+                  "buyRet": -4.81,
+                  "netRet": -5,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -933,17 +1069,18 @@ window.REPORTS = {
             "status": "人气榜首·四平台共振",
             "reason": "韭研/同花顺/东财/淘股吧四家人气榜同时进入前五，为今日唯一全平台共振标的，叠加厄尔尼诺农产品减产预期与消费板块回暖。风险：无连板支撑，属纯人气驱动，冲高容易回落。",
             "verify": {
-              "gain": 4.58,
-              "hit": true,
-              "price": 14.17,
+              "gain": -3.11,
+              "hit": false,
+              "price": 14.33,
               "code": "600127",
               "at": "2026-09-09",
-              "open": 13.12,
-              "openPct": -3.17,
-              "buyRet": 8,
-              "netRet": 7.79,
+              "open": 14.5,
+              "openPct": -1.96,
+              "buyRet": -1.17,
+              "netRet": -1.37,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -953,17 +1090,18 @@ window.REPORTS = {
             "status": "4连板·四平台共振（加速期）",
             "reason": "已走出4连板且四平台人气前五全部在榜，农业种植主线最受资金认可。风险：4板位置已进入加速期，一旦断板回撤幅度大，追高需严格控制仓位。",
             "verify": {
-              "gain": -9.94,
-              "hit": false,
-              "price": 4.26,
+              "gain": 8.14,
+              "hit": true,
+              "price": 5.71,
               "code": "600108",
               "at": "2026-09-09",
-              "open": 4.49,
-              "openPct": -5.07,
-              "buyRet": -5.12,
-              "netRet": -5.31,
+              "open": 5.78,
+              "openPct": 9.47,
+              "buyRet": -1.21,
+              "netRet": -1.41,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -973,17 +1111,18 @@ window.REPORTS = {
             "status": "未启动·三平台共振+涨价传导",
             "reason": "东财人气第一、韭研第三、同花顺第四，中泰农业明确推荐“糖+番茄”共振，厄尔尼诺压制全球三大产区供给、价格修复弹性累积。风险：涨价逻辑传导到业绩有时间差，短期跟随板块情绪波动。",
             "verify": {
-              "gain": -8.82,
-              "hit": false,
-              "price": 14.78,
+              "gain": 9.03,
+              "hit": true,
+              "price": 19.8,
               "code": "600737",
               "at": "2026-09-09",
-              "open": 15.75,
-              "openPct": -2.84,
-              "buyRet": -6.16,
-              "netRet": -6.35,
+              "open": 18.55,
+              "openPct": 2.15,
+              "buyRet": 6.74,
+              "netRet": 6.53,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -993,17 +1132,18 @@ window.REPORTS = {
             "status": "未启动·20亿AI算力PCB扩产公告",
             "reason": "公告拟20亿元投建年产150万平方米AI算力高多层、高阶HDI电路板项目，另加10亿元华南智造基地，卡位AI服务器高端PCB缺口，属实质产能扩张利好。风险：项目投建周期长，短期仅有题材属性，未见订单落地。",
             "verify": {
-              "gain": 4.12,
+              "gain": 3.95,
               "hit": true,
-              "price": 71.53,
+              "price": 65.2,
               "code": "300964",
               "at": "2026-09-09",
-              "open": 65.25,
-              "openPct": -5.02,
-              "buyRet": 9.62,
-              "netRet": 9.41,
+              "open": 73,
+              "openPct": 16.39,
+              "buyRet": -10.68,
+              "netRet": -10.86,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1013,17 +1153,18 @@ window.REPORTS = {
             "status": "首板待确认·控制权拟变更",
             "reason": "控股股东拟公开征集转让不低于15%股份，控制权可能发生变更，是今日公告中稀缺的“壳/控制权”级别催化。风险：公开征集受让方存在不确定性，落地前纯属预期博弈。",
             "verify": {
-              "gain": 1.54,
-              "hit": true,
-              "price": 25.66,
+              "gain": -8.36,
+              "hit": false,
+              "price": 27.19,
               "code": "300864",
               "at": "2026-09-09",
-              "open": 25.02,
-              "openPct": -0.99,
-              "buyRet": 2.56,
-              "netRet": 2.35,
+              "open": 28.93,
+              "openPct": -2.49,
+              "buyRet": -6.01,
+              "netRet": -6.2,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1033,17 +1174,18 @@ window.REPORTS = {
             "status": "未启动·算力数据中心双公告",
             "reason": "同日公告2.85亿元增资取得芜湖云港算力产业园33%股权，并1.4亿元参设数据中心合伙企业持股60%，双公告指向算力资产。风险：跨界算力尚处投入期，且参设基金短期不贡献利润。",
             "verify": {
-              "gain": 10.01,
-              "hit": true,
-              "price": 50.11,
+              "gain": -9.99,
+              "hit": false,
+              "price": 49.64,
               "code": "605168",
               "at": "2026-09-09",
-              "open": 45,
-              "openPct": -1.21,
-              "buyRet": 11.36,
-              "netRet": 11.13,
+              "open": 55.01,
+              "openPct": -0.25,
+              "buyRet": -9.76,
+              "netRet": -9.94,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1053,17 +1195,18 @@ window.REPORTS = {
             "status": "未启动·9.36亿国网中标",
             "reason": "中标9.36亿元国家电网输变电设备采购，为今日金额最大的订单类公告，业绩确定性较强。风险：订单类利好弹性有限，需放量确认资金认可。",
             "verify": {
-              "gain": 0.1,
+              "gain": 0.56,
               "hit": true,
-              "price": 19.18,
+              "price": 19.73,
               "code": "600312",
               "at": "2026-09-09",
-              "open": 19.06,
-              "openPct": -0.52,
-              "buyRet": 0.63,
-              "netRet": 0.43,
+              "open": 19.7,
+              "openPct": 0.41,
+              "buyRet": 0.15,
+              "netRet": -0.05,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           }
         ]
@@ -1144,17 +1287,18 @@ window.REPORTS = {
                 "status": "中位·分歧日核心",
                 "reason": "化肥涨价+农业政策，3板身位最优，分歧日能否继续晋级是板块风向标，回踩可跟",
                 "verify": {
-                  "gain": -3.91,
+                  "gain": -9.71,
                   "hit": false,
-                  "price": 2.21,
+                  "price": 2.51,
                   "code": "002470",
                   "at": "2026-09-10",
-                  "open": 2.31,
-                  "openPct": 0.43,
-                  "buyRet": -4.33,
-                  "netRet": -4.52,
+                  "open": 2.78,
+                  "openPct": 0,
+                  "buyRet": -9.71,
+                  "netRet": -9.89,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1164,17 +1308,18 @@ window.REPORTS = {
                 "status": "中位·代糖链跟风",
                 "reason": "糖价上涨驱动，2板位置尚可，分歧后若板块回流有补涨空间",
                 "verify": {
-                  "gain": -9.98,
-                  "hit": false,
-                  "price": 3.61,
+                  "gain": 2.29,
+                  "hit": true,
+                  "price": 4.46,
                   "code": "000523",
                   "at": "2026-09-10",
-                  "open": 3.79,
-                  "openPct": -5.49,
-                  "buyRet": -4.75,
-                  "netRet": -4.94,
+                  "open": 4.8,
+                  "openPct": 10.09,
+                  "buyRet": -7.08,
+                  "netRet": -7.27,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1184,17 +1329,18 @@ window.REPORTS = {
                 "status": "中位·代糖链跟风",
                 "reason": "中粮系代糖标的，2板跟风，关注分歧后能否转一致",
                 "verify": {
-                  "gain": -10.03,
-                  "hit": false,
-                  "price": 5.29,
+                  "gain": 1.4,
+                  "hit": true,
+                  "price": 6.5,
                   "code": "000930",
                   "at": "2026-09-10",
-                  "open": 5.5,
-                  "openPct": -6.46,
-                  "buyRet": -3.82,
-                  "netRet": -4.01,
+                  "open": 6.84,
+                  "openPct": 6.71,
+                  "buyRet": -4.97,
+                  "netRet": -5.16,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1212,17 +1358,18 @@ window.REPORTS = {
                 "status": "极高位置·断板即崩",
                 "reason": "市场最高标，情绪风向标，只可远观不参与，断板会带动消费板块退潮",
                 "verify": {
-                  "gain": -5.38,
+                  "gain": -3.04,
                   "hit": false,
-                  "price": 12.48,
+                  "price": 14.65,
                   "code": "600865",
                   "at": "2026-09-10",
-                  "open": 11.87,
-                  "openPct": -10.01,
-                  "buyRet": 5.14,
-                  "netRet": 4.93,
+                  "open": 16.44,
+                  "openPct": 8.8,
+                  "buyRet": -10.89,
+                  "netRet": -11.07,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1232,17 +1379,18 @@ window.REPORTS = {
                 "status": "中位·旅游线核心",
                 "reason": "旅游消费3板身位，消费政策催化，分歧后若板块持续有补涨空间",
                 "verify": {
-                  "gain": 10.03,
+                  "gain": 9.99,
                   "hit": true,
-                  "price": 10.86,
+                  "price": 9.69,
                   "code": "000978",
                   "at": "2026-09-10",
-                  "open": 10.33,
-                  "openPct": 4.66,
-                  "buyRet": 5.13,
-                  "netRet": 4.92,
+                  "open": 9.69,
+                  "openPct": 9.99,
+                  "buyRet": 0,
+                  "netRet": -0.2,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1252,17 +1400,18 @@ window.REPORTS = {
                 "status": "中位·零售跟风",
                 "reason": "商业零售3板，消费链跟风标的，关注能否继续晋级",
                 "verify": {
-                  "gain": -7.75,
-                  "hit": false,
-                  "price": 7.5,
+                  "gain": 2.6,
+                  "hit": true,
+                  "price": 8.69,
                   "code": "000759",
                   "at": "2026-09-10",
-                  "open": 8.13,
-                  "openPct": 0,
-                  "buyRet": -7.75,
-                  "netRet": -7.93,
+                  "open": 8.95,
+                  "openPct": 5.67,
+                  "buyRet": -2.91,
+                  "netRet": -3.1,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1280,17 +1429,18 @@ window.REPORTS = {
                 "status": "中位·光通信核心",
                 "reason": "光通信3板身位最优，分歧回封是板块回流信号，回踩可跟",
                 "verify": {
-                  "gain": -2.41,
+                  "gain": -10.02,
                   "hit": false,
-                  "price": 16.17,
+                  "price": 16.8,
                   "code": "603042",
                   "at": "2026-09-10",
-                  "open": 15.91,
-                  "openPct": -3.98,
-                  "buyRet": 1.63,
-                  "netRet": 1.43,
+                  "open": 18.49,
+                  "openPct": -0.96,
+                  "buyRet": -9.14,
+                  "netRet": -9.32,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1300,17 +1450,18 @@ window.REPORTS = {
                 "status": "低位待确认·存储芯片",
                 "reason": "存储芯片首板，AI算力链低位标的，需确认能否连板",
                 "verify": {
-                  "gain": 0.51,
+                  "gain": 2.26,
                   "hit": true,
-                  "price": 13.85,
+                  "price": 14.05,
                   "code": "002077",
                   "at": "2026-09-10",
-                  "open": 13.78,
-                  "openPct": 0,
-                  "buyRet": 0.51,
-                  "netRet": 0.31,
+                  "open": 13.77,
+                  "openPct": 0.22,
+                  "buyRet": 2.03,
+                  "netRet": 1.83,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1328,17 +1479,18 @@ window.REPORTS = {
                 "status": "中位·轮动跟风",
                 "reason": "煤炭2板身位，但纯轮动板块持续性存疑，只可远观不追高",
                 "verify": {
-                  "gain": -4.08,
-                  "hit": false,
-                  "price": 4.94,
+                  "gain": 9.96,
+                  "hit": true,
+                  "price": 5.41,
                   "code": "600792",
                   "at": "2026-09-10",
-                  "open": 4.78,
-                  "openPct": -7.18,
-                  "buyRet": 3.35,
-                  "netRet": 3.14,
+                  "open": 5.39,
+                  "openPct": 9.55,
+                  "buyRet": 0.37,
+                  "netRet": 0.17,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1363,17 +1515,18 @@ window.REPORTS = {
                 "status": "中位·事件驱动",
                 "reason": "航运+干散货，地缘冲突催化，事件驱动型快进快出，持续性存疑",
                 "verify": {
-                  "gain": -1.84,
-                  "hit": false,
-                  "price": 13.9,
+                  "gain": 0.58,
+                  "hit": true,
+                  "price": 15.52,
                   "code": "603162",
                   "at": "2026-09-10",
-                  "open": 14.3,
-                  "openPct": 0.99,
-                  "buyRet": -2.8,
-                  "netRet": -2.99,
+                  "open": 16.33,
+                  "openPct": 5.83,
+                  "buyRet": -4.96,
+                  "netRet": -5.15,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1474,17 +1627,18 @@ window.REPORTS = {
             "status": "5板·高位（注意断板风险）",
             "reason": "5连板位列盘前人气股淘股吧第四；公司已发布异动公告提示股价存在市场情绪过热及非理性炒作。风险：5板属高位纯情绪博弈，今日若不能继续走强易形成炸板，带动消费板块退潮，仅作情绪风向标、不追高。",
             "verify": {
-              "gain": -5.38,
+              "gain": -3.04,
               "hit": false,
-              "price": 12.48,
+              "price": 14.65,
               "code": "600865",
               "at": "2026-09-10",
-              "open": 11.87,
-              "openPct": -10.01,
-              "buyRet": 5.14,
-              "netRet": 4.93,
+              "open": 16.44,
+              "openPct": 8.8,
+              "buyRet": -10.89,
+              "netRet": -11.07,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1494,17 +1648,18 @@ window.REPORTS = {
             "status": "4板·三平台共振（高位加速期）",
             "reason": "同花顺/淘股吧人气第二，淘股吧第一，三平台人气前五全部在榜，农业种植主线最受资金认可。风险：4板位置已进入加速期，一旦断板回撤幅度大，追高需严格控制仓位。",
             "verify": {
-              "gain": -9.94,
+              "gain": -8.06,
               "hit": false,
-              "price": 4.26,
+              "price": 5.25,
               "code": "600108",
               "at": "2026-09-10",
-              "open": 4.49,
-              "openPct": -5.07,
-              "buyRet": -5.12,
-              "netRet": -5.31,
+              "open": 5.8,
+              "openPct": 1.58,
+              "buyRet": -9.48,
+              "netRet": -9.66,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1514,17 +1669,18 @@ window.REPORTS = {
             "status": "未启动·三平台共振",
             "reason": "同花顺/东财/淘股吧三平台同时出现于盘前人气前列，今日少见的跨平台低位共振标的；板块属性上属算力基础设施配套（铜/线缆）。风险：题材纯人气驱动，缺乏直接公告催化，需高开确认强度。",
             "verify": {
-              "gain": -3.91,
+              "gain": -3.33,
               "hit": false,
-              "price": 24.36,
+              "price": 24.1,
               "code": "600869",
               "at": "2026-09-10",
-              "open": 24.1,
-              "openPct": -4.93,
-              "buyRet": 1.08,
-              "netRet": 0.88,
+              "open": 24.2,
+              "openPct": -2.93,
+              "buyRet": -0.41,
+              "netRet": -0.61,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1534,17 +1690,18 @@ window.REPORTS = {
             "status": "未启动·三平台共振+染料/糖价涨价传导",
             "reason": "同花顺/东财人气前列，叠加近期染料价格加速上涨、糖价中枢上移预期（津巴布韦即日起禁止锑与钨出口进一步推升大宗）。风险：涨价传到业绩有时间差，跟随板块情绪。",
             "verify": {
-              "gain": -8.82,
+              "gain": -10,
               "hit": false,
-              "price": 14.78,
+              "price": 17.82,
               "code": "600737",
               "at": "2026-09-10",
-              "open": 15.75,
-              "openPct": -2.84,
-              "buyRet": -6.16,
-              "netRet": -6.35,
+              "open": 19.48,
+              "openPct": -1.62,
+              "buyRet": -8.52,
+              "netRet": -8.7,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1554,17 +1711,18 @@ window.REPORTS = {
             "status": "未启动·重大资产重组获国资委批复",
             "reason": "东财人气第二，今日公告\"重大资产重组获湖南省国资委批复\"实质性催化，金锑钨协同布局下盈利中枢获机构中邮证券力推。风险：重组具体方案和落地节奏尚未明朗，短期跟随板块情绪波动。",
             "verify": {
-              "gain": -2,
-              "hit": false,
-              "price": 26.95,
+              "gain": 0.32,
+              "hit": true,
+              "price": 28.54,
               "code": "002155",
               "at": "2026-09-10",
-              "open": 27,
-              "openPct": -1.82,
-              "buyRet": -0.19,
-              "netRet": -0.38,
+              "open": 28.45,
+              "openPct": 0,
+              "buyRet": 0.32,
+              "netRet": 0.12,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1574,17 +1732,18 @@ window.REPORTS = {
             "status": "未启动·18.5亿元扩产公告",
             "reason": "今日公告拟18.5亿元投资扩大高端存储芯片封测产能，AI算力链国产替代受益方向，存储芯片景气周期+国产化双逻辑。风险：扩产周期长、短期仅有题材属性，需跟踪订单/价格配合。",
             "verify": {
-              "gain": -3.6,
-              "hit": false,
-              "price": 33.77,
+              "gain": 4.32,
+              "hit": true,
+              "price": 36.5,
               "code": "000021",
               "at": "2026-09-10",
-              "open": 34.18,
-              "openPct": -2.43,
-              "buyRet": -1.2,
-              "netRet": -1.4,
+              "open": 35.63,
+              "openPct": 1.83,
+              "buyRet": 2.44,
+              "netRet": 2.24,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1594,17 +1753,18 @@ window.REPORTS = {
             "status": "未启动·26.39亿元投建公告",
             "reason": "拟26.39亿元投建港机搬迁智能化改造项目，今日公告金额最大；业绩端有实质性订单/资本开支支撑。风险：订单类利好弹性有限，需放量确认资金认可。",
             "verify": {
-              "gain": -2.11,
-              "hit": false,
-              "price": 5.56,
+              "gain": 10.09,
+              "hit": true,
+              "price": 5.89,
               "code": "002204",
               "at": "2026-09-10",
-              "open": 5.6,
-              "openPct": -1.41,
-              "buyRet": -0.71,
-              "netRet": -0.91,
+              "open": 5.34,
+              "openPct": -0.19,
+              "buyRet": 10.3,
+              "netRet": 10.08,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -1614,17 +1774,18 @@ window.REPORTS = {
             "status": "未启动·韭研公社人气首位",
             "reason": "菲研公社盘前人气第一，单平台高位聚集；公司海外家用医疗业务线整体受益于美关税延长。风险：单平台人气驱动，需其他三平台共振确认。",
             "verify": {
-              "gain": -3.58,
+              "gain": -4.46,
               "hit": false,
-              "price": 59.2,
+              "price": 62.39,
               "code": "002432",
               "at": "2026-09-10",
-              "open": 59.8,
-              "openPct": -2.61,
-              "buyRet": -1,
-              "netRet": -1.2,
+              "open": 64.1,
+              "openPct": -1.84,
+              "buyRet": -2.67,
+              "netRet": -2.86,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           }
         ]
@@ -1720,7 +1881,8 @@ window.REPORTS = {
                   "buyRet": 8.8,
                   "netRet": 8.58,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1740,7 +1902,8 @@ window.REPORTS = {
                   "buyRet": 7.48,
                   "netRet": 7.27,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1760,7 +1923,8 @@ window.REPORTS = {
                   "buyRet": 7.89,
                   "netRet": 7.67,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1788,7 +1952,8 @@ window.REPORTS = {
                   "buyRet": 5.2,
                   "netRet": 4.99,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1808,7 +1973,8 @@ window.REPORTS = {
                   "buyRet": 2.24,
                   "netRet": 2.03,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1836,7 +2002,8 @@ window.REPORTS = {
                   "buyRet": 6.76,
                   "netRet": 6.54,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1856,7 +2023,8 @@ window.REPORTS = {
                   "buyRet": 3.57,
                   "netRet": 3.36,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1884,7 +2052,8 @@ window.REPORTS = {
                   "buyRet": -14.52,
                   "netRet": -14.69,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               },
               {
@@ -1904,7 +2073,8 @@ window.REPORTS = {
                   "buyRet": 0.03,
                   "netRet": -0.17,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -1932,7 +2102,8 @@ window.REPORTS = {
                   "buyRet": -4.41,
                   "netRet": -4.6,
                   "locked": false,
-                  "basis": "open-to-close"
+                  "basis": "open-to-close",
+                  "by": "hist"
                 }
               }
             ]
@@ -2049,7 +2220,8 @@ window.REPORTS = {
               "buyRet": 8.8,
               "netRet": 8.58,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2069,7 +2241,8 @@ window.REPORTS = {
               "buyRet": 5.2,
               "netRet": 4.99,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2089,7 +2262,8 @@ window.REPORTS = {
               "buyRet": -0.38,
               "netRet": -0.58,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2109,7 +2283,8 @@ window.REPORTS = {
               "buyRet": -1.93,
               "netRet": -2.13,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2129,7 +2304,8 @@ window.REPORTS = {
               "buyRet": 2.15,
               "netRet": 1.94,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2149,7 +2325,8 @@ window.REPORTS = {
               "buyRet": 5.13,
               "netRet": 4.92,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2169,7 +2346,8 @@ window.REPORTS = {
               "buyRet": 8,
               "netRet": 7.79,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           },
           {
@@ -2189,7 +2367,8 @@ window.REPORTS = {
               "buyRet": 6.76,
               "netRet": 6.54,
               "locked": false,
-              "basis": "open-to-close"
+              "basis": "open-to-close",
+              "by": "hist"
             }
           }
         ]
@@ -2275,28 +2454,84 @@ window.REPORTS = {
                 "code": "000823",
                 "role": "3板·板块最高身位",
                 "status": "3板·中位·板块情绪核心（09:40 封板，6天4板）",
-                "reason": "PCB+高阶HDI+覆铜板，今日率先封板带动全链，消闲派买入1.1亿。身位领先且成交额24.9亿元居板块前列，是决定板块能否继续的唯一标的，回踩可跟"
+                "reason": "PCB+高阶HDI+覆铜板，今日率先封板带动全链，消闲派买入1.1亿。身位领先且成交额24.9亿元居板块前列，是决定板块能否继续的唯一标的，回踩可跟",
+                "verify": {
+                  "gain": 5.61,
+                  "hit": true,
+                  "price": 23.9,
+                  "code": "000823",
+                  "at": "2026-09-15",
+                  "open": 23,
+                  "openPct": 1.63,
+                  "buyRet": 3.91,
+                  "netRet": 3.71,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "科翔股份",
                 "code": "300903",
                 "role": "首板·20cm",
                 "status": "首板·低位·机构与顶级游资共振",
-                "reason": "陶瓷PCB+AI算力+高端PCB，创业板20%涨停。葛卫东单日买入7.1亿元为全场最大手笔，机构净买亦在其链条上，是PCB链当前辨识度最高的低位标的"
+                "reason": "陶瓷PCB+AI算力+高端PCB，创业板20%涨停。葛卫东单日买入7.1亿元为全场最大手笔，机构净买亦在其链条上，是PCB链当前辨识度最高的低位标的",
+                "verify": {
+                  "gain": 1.03,
+                  "hit": true,
+                  "price": 109.42,
+                  "code": "300903",
+                  "at": "2026-09-15",
+                  "open": 111.02,
+                  "openPct": 2.51,
+                  "buyRet": -1.44,
+                  "netRet": -1.64,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "澳弘电子",
                 "code": "605058",
                 "role": "2板",
                 "status": "2板·中位·跟随身位",
-                "reason": "HDI板+AI服务器电源+股权激励，13:38 封板，是超声电子之外唯一连板的PCB标的，可作板块强度的辅助确认指标"
+                "reason": "HDI板+AI服务器电源+股权激励，13:38 封板，是超声电子之外唯一连板的PCB标的，可作板块强度的辅助确认指标",
+                "verify": {
+                  "gain": 9.99,
+                  "hit": true,
+                  "price": 40.3,
+                  "code": "605058",
+                  "at": "2026-09-15",
+                  "open": 36.3,
+                  "openPct": -0.93,
+                  "buyRet": 11.02,
+                  "netRet": 10.8,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中京电子",
                 "code": "002579",
                 "role": "首板·6天3板",
                 "status": "首板·中位·多日反复活跃",
-                "reason": "高阶HDI+高端PCB+存储算力，10:26 封板，消闲派买入1.3亿。6天3板的节奏说明资金反复承接，非一日游资金"
+                "reason": "高阶HDI+高端PCB+存储算力，10:26 封板，消闲派买入1.3亿。6天3板的节奏说明资金反复承接，非一日游资金",
+                "verify": {
+                  "gain": -1.01,
+                  "hit": false,
+                  "price": 18.6,
+                  "code": "002579",
+                  "at": "2026-09-15",
+                  "open": 18.78,
+                  "openPct": -0.05,
+                  "buyRet": -0.96,
+                  "netRet": -1.16,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2311,21 +2546,63 @@ window.REPORTS = {
                 "code": "002912",
                 "role": "3板·一字",
                 "status": "3板·中位·题材核心龙头（一字板）",
-                "reason": "AI安全+数据安全+网络安全，09:25 一字封板。在龙版传媒复牌一字地板、高位股大面积补跌的背景下仍能一字，是今日最强抗跌信号，题材成色的唯一试金石"
+                "reason": "AI安全+数据安全+网络安全，09:25 一字封板。在龙版传媒复牌一字地板、高位股大面积补跌的背景下仍能一字，是今日最强抗跌信号，题材成色的唯一试金石",
+                "verify": {
+                  "gain": 10.02,
+                  "hit": true,
+                  "price": 28.45,
+                  "code": "002912",
+                  "at": "2026-09-15",
+                  "open": 28.45,
+                  "openPct": 10.02,
+                  "buyRet": 0,
+                  "netRet": -0.2,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "正和生态",
                 "code": "605069",
                 "role": "2板·一字",
                 "status": "2板·中位·跟风一字",
-                "reason": "智谱AI+垂直大模型+生态水利+水务机器人，09:25 一字封板。与中新赛克同步一字，构成题材的双一字结构，是确认题材热度的次核心"
+                "reason": "智谱AI+垂直大模型+生态水利+水务机器人，09:25 一字封板。与中新赛克同步一字，构成题材的双一字结构，是确认题材热度的次核心",
+                "verify": {
+                  "gain": -2.29,
+                  "hit": false,
+                  "price": 12.36,
+                  "code": "605069",
+                  "at": "2026-09-15",
+                  "open": 12.13,
+                  "openPct": -4.11,
+                  "buyRet": 1.9,
+                  "netRet": 1.69,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "天融信",
                 "code": "002212",
                 "role": "首板",
                 "status": "首板·低位·网安传统龙头",
-                "reason": "AI安全+智算云+网络安全，09:25 封板。网安板块传统龙头补涨，成交走强，适合作为题材扩散的观察标的"
+                "reason": "AI安全+智算云+网络安全，09:25 封板。网安板块传统龙头补涨，成交走强，适合作为题材扩散的观察标的",
+                "verify": {
+                  "gain": 5,
+                  "hit": true,
+                  "price": 7.77,
+                  "code": "002212",
+                  "at": "2026-09-15",
+                  "open": 7.99,
+                  "openPct": 7.97,
+                  "buyRet": -2.75,
+                  "netRet": -2.95,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2347,14 +2624,42 @@ window.REPORTS = {
                 "code": "000980",
                 "role": "2板·5天4板",
                 "status": "2板·中位·板块身位股（低价股）",
-                "reason": "A0车型+复工复产+海外布局，09:58 封板。5天4板为汽车链最高身位，但股价仅2.33元属低价投机品种，作手新一今日出局，需防高位分歧"
+                "reason": "A0车型+复工复产+海外布局，09:58 封板。5天4板为汽车链最高身位，但股价仅2.33元属低价投机品种，作手新一今日出局，需防高位分歧",
+                "verify": {
+                  "gain": -3,
+                  "hit": false,
+                  "price": 2.26,
+                  "code": "000980",
+                  "at": "2026-09-15",
+                  "open": 2.41,
+                  "openPct": 3.43,
+                  "buyRet": -6.22,
+                  "netRet": -6.41,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "山子高科",
                 "code": "000981",
                 "role": "首板·一字",
                 "status": "首板·低位·一字板",
-                "reason": "哪吒重整+整车业务+汽车零部件，09:25 一字封板。与太乙圣莲入主哪吒30亿的消息直接对应，消息面最正的标的，一字板显示承接意愿强"
+                "reason": "哪吒重整+整车业务+汽车零部件，09:25 一字封板。与太乙圣莲入主哪吒30亿的消息直接对应，消息面最正的标的，一字板显示承接意愿强",
+                "verify": {
+                  "gain": 5.96,
+                  "hit": true,
+                  "price": 3.02,
+                  "code": "000981",
+                  "at": "2026-09-15",
+                  "open": 3.1,
+                  "openPct": 8.77,
+                  "buyRet": -2.58,
+                  "netRet": -2.78,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2369,14 +2674,42 @@ window.REPORTS = {
                 "code": "002585",
                 "role": "2板",
                 "status": "2板·中位·MLCC方向身位",
-                "reason": "MLCC离型膜+复合铜箔+聚酯薄膜，09:32 封板。是算力/半导体大方向内唯一连板标的，承载 MLCC 概念强度；消闲派今日出局需警惕"
+                "reason": "MLCC离型膜+复合铜箔+聚酯薄膜，09:32 封板。是算力/半导体大方向内唯一连板标的，承载 MLCC 概念强度；消闲派今日出局需警惕",
+                "verify": {
+                  "gain": 10.04,
+                  "hit": true,
+                  "price": 12.06,
+                  "code": "002585",
+                  "at": "2026-09-15",
+                  "open": 11.32,
+                  "openPct": 3.28,
+                  "buyRet": 6.54,
+                  "netRet": 6.32,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "高凯技术",
                 "code": "688835",
                 "role": "首板·20cm",
                 "status": "首板·低位·科创次新",
-                "reason": "半导体设备+MFC+点胶机器人+科创次新，20% 涨停、成交11.3亿元。半导体设备方向辨识度最高的20cm品种，次新属性弹性大"
+                "reason": "半导体设备+MFC+点胶机器人+科创次新，20% 涨停、成交11.3亿元。半导体设备方向辨识度最高的20cm品种，次新属性弹性大",
+                "verify": {
+                  "gain": -5.1,
+                  "hit": false,
+                  "price": 307.88,
+                  "code": "688835",
+                  "at": "2026-09-15",
+                  "open": 325,
+                  "openPct": 0.18,
+                  "buyRet": -5.27,
+                  "netRet": -5.46,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2391,14 +2724,42 @@ window.REPORTS = {
                 "code": "000993",
                 "role": "4板·全场最高标",
                 "status": "4板·高位（全场最高标，接力需谨慎，不参与追高）",
-                "reason": "清洁能源+海上风电+福建国资，10:01 封板，连板自 9/9 起算已4板。在投机退潮、空间板天地板的环境下仍能维持最高身位，是全场情绪风向标；但4板已是退潮期的高度上限，明日接力性价比低，仅作情绪观察"
+                "reason": "清洁能源+海上风电+福建国资，10:01 封板，连板自 9/9 起算已4板。在投机退潮、空间板天地板的环境下仍能维持最高身位，是全场情绪风向标；但4板已是退潮期的高度上限，明日接力性价比低，仅作情绪观察",
+                "verify": {
+                  "gain": 10.02,
+                  "hit": true,
+                  "price": 16.8,
+                  "code": "000993",
+                  "at": "2026-09-15",
+                  "open": 16.03,
+                  "openPct": 4.98,
+                  "buyRet": 4.8,
+                  "netRet": 4.59,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "通达股份",
                 "code": "002560",
                 "role": "2板",
                 "status": "2板·中位·特高压+机器人交叉",
-                "reason": "特高压+航空零部件+机器人线束，09:34 封板。同时具备电力与机器人两个题材属性，是板块内次身位标的"
+                "reason": "特高压+航空零部件+机器人线束，09:34 封板。同时具备电力与机器人两个题材属性，是板块内次身位标的",
+                "verify": {
+                  "gain": 1.98,
+                  "hit": true,
+                  "price": 7.72,
+                  "code": "002560",
+                  "at": "2026-09-15",
+                  "open": 7.29,
+                  "openPct": -3.7,
+                  "buyRet": 5.9,
+                  "netRet": 5.69,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2413,14 +2774,42 @@ window.REPORTS = {
                 "code": "301520",
                 "role": "首板·20cm",
                 "status": "首板·低位·机构净买+CRO核心",
-                "reason": "创新药CRO+赛德盛并购+订单增长，13:26 封板，20%涨停。机构净买入标的（湖南人龙虎榜口径），是医药反抽里资金认可度最高的一只"
+                "reason": "创新药CRO+赛德盛并购+订单增长，13:26 封板，20%涨停。机构净买入标的（湖南人龙虎榜口径），是医药反抽里资金认可度最高的一只",
+                "verify": {
+                  "gain": 6.64,
+                  "hit": true,
+                  "price": 67.82,
+                  "code": "301520",
+                  "at": "2026-09-15",
+                  "open": 66.44,
+                  "openPct": 4.47,
+                  "buyRet": 2.08,
+                  "netRet": 1.87,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "三力制药",
                 "code": "603439",
                 "role": "2板",
                 "status": "2板·中位·医药最高身位",
-                "reason": "中药创新药+定增，09:51 封板。医药板块内唯一连板，身位领先；中山东路买入2000万"
+                "reason": "中药创新药+定增，09:51 封板。医药板块内唯一连板，身位领先；中山东路买入2000万",
+                "verify": {
+                  "gain": 2.54,
+                  "hit": true,
+                  "price": 14.14,
+                  "code": "603439",
+                  "at": "2026-09-15",
+                  "open": 15.17,
+                  "openPct": 10.01,
+                  "buyRet": -6.79,
+                  "netRet": -6.98,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2435,7 +2824,21 @@ window.REPORTS = {
                 "code": "000978",
                 "role": "首板·原5板炸板股",
                 "status": "5板炸板后修复反抽·高位（不参与，仅作退潮期情绪观察）",
-                "reason": "AI文旅+核心景区+游船票务，14:26 封板。9/11 曾冲5板后放量炸板收巨量阴线，今日属修复性反抽；行鱼口径将其与国芳集团、金健米业并列为「高位活口」，本质是退潮期的余温而非新机会，方向性上不参与"
+                "reason": "AI文旅+核心景区+游船票务，14:26 封板。9/11 曾冲5板后放量炸板收巨量阴线，今日属修复性反抽；行鱼口径将其与国芳集团、金健米业并列为「高位活口」，本质是退潮期的余温而非新机会，方向性上不参与",
+                "verify": {
+                  "gain": -10.04,
+                  "hit": false,
+                  "price": 9.77,
+                  "code": "000978",
+                  "at": "2026-09-15",
+                  "open": 11.56,
+                  "openPct": 6.45,
+                  "buyRet": -15.48,
+                  "netRet": -15.65,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2450,7 +2853,16 @@ window.REPORTS = {
                 "code": "603400",
                 "role": "首板",
                 "status": "首板·低位·多题材交叉",
-                "reason": "机器人+液冷+电子水泵+新能源汽车，14:35 封板。同时具备机器人、液冷、汽车三个今日活跃题材属性，是散点行情中辨识度相对较高的一只"
+                "reason": "机器人+液冷+电子水泵+新能源汽车，14:35 封板。同时具备机器人、液冷、汽车三个今日活跃题材属性，是散点行情中辨识度相对较高的一只",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "603400",
+                  "at": "2026-09-15",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           }
@@ -2560,56 +2972,168 @@ window.REPORTS = {
             "code": "000823",
             "sector": "覆铜板/PCB",
             "status": "3连板（6天4板身位）·中位偏高·四平台人气居首",
-            "reason": "韭研公社、同花顺、东方财富、淘股吧四个平台盘前人气同时位列前五，是今日关注度最高的标的。逻辑：建滔积层板年内第七张涨价函落地（FR-4统一涨10%、薄布最高涨20%），PCB/覆铜板仍是昨日最强主线（7只涨停、119.1亿成交），公司为板块情绪核心。风险：公司已澄清“高频板通过英伟达认证”不属实、目前无产品供货英伟达；板块昨日已加速，追高需等分歧。"
+            "reason": "韭研公社、同花顺、东方财富、淘股吧四个平台盘前人气同时位列前五，是今日关注度最高的标的。逻辑：建滔积层板年内第七张涨价函落地（FR-4统一涨10%、薄布最高涨20%），PCB/覆铜板仍是昨日最强主线（7只涨停、119.1亿成交），公司为板块情绪核心。风险：公司已澄清“高频板通过英伟达认证”不属实、目前无产品供货英伟达；板块昨日已加速，追高需等分歧。",
+            "verify": {
+              "gain": 5.61,
+              "hit": true,
+              "price": 23.9,
+              "code": "000823",
+              "at": "2026-09-15",
+              "open": 23,
+              "openPct": 1.63,
+              "buyRet": 3.91,
+              "netRet": 3.71,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中新赛克",
             "code": "002912",
             "sector": "AI安全/网络安全",
             "status": "3连板（一字）·中位·AI安全题材核心龙头",
-            "reason": "韭研公社盘前人气第一。催化：隔夜美股网络安全板块全线暴涨（Global X网络安全ETF涨10.66%创历史最大单日涨幅、纳斯达克网络安全ETF涨5.99%），与半导体/光通信大跌形成鲜明对比；中信证券判断大模型能力跃迁叠加头部CEO密集示警，AI安全已进入刚性需求期。09-14为AI安全题材发酵首日（5只涨停），公司3板一字为板块核心。风险：一字板需竞价承接，题材第二日易分化，且公司自身已提示AI应用营收占比不超2%。"
+            "reason": "韭研公社盘前人气第一。催化：隔夜美股网络安全板块全线暴涨（Global X网络安全ETF涨10.66%创历史最大单日涨幅、纳斯达克网络安全ETF涨5.99%），与半导体/光通信大跌形成鲜明对比；中信证券判断大模型能力跃迁叠加头部CEO密集示警，AI安全已进入刚性需求期。09-14为AI安全题材发酵首日（5只涨停），公司3板一字为板块核心。风险：一字板需竞价承接，题材第二日易分化，且公司自身已提示AI应用营收占比不超2%。",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 28.45,
+              "code": "002912",
+              "at": "2026-09-15",
+              "open": 28.45,
+              "openPct": 10.02,
+              "buyRet": 0,
+              "netRet": -0.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "风华高科",
             "code": "000636",
             "sector": "MLCC/被动元件",
             "status": "中位·趋势型非连板（连涨超20%已异动澄清）·三平台人气在榜",
-            "reason": "同花顺、东方财富、淘股吧三平台人气前五。逻辑：村田停产部分消费级与车规级MLCC料号、产能转向服务器级超高容，高容产能出现空窗期；机构预估2026年下半年NOR Flash高容量产品涨幅达90-110%，被动元件景气度回升。风险：昨日已发异动公告（连涨超20%但不存在应披露未披露重大事项），属涨价预期与情绪驱动，非连板形态，需高开确认强度。"
+            "reason": "同花顺、东方财富、淘股吧三平台人气前五。逻辑：村田停产部分消费级与车规级MLCC料号、产能转向服务器级超高容，高容产能出现空窗期；机构预估2026年下半年NOR Flash高容量产品涨幅达90-110%，被动元件景气度回升。风险：昨日已发异动公告（连涨超20%但不存在应披露未披露重大事项），属涨价预期与情绪驱动，非连板形态，需高开确认强度。",
+            "verify": {
+              "gain": -2.36,
+              "hit": false,
+              "price": 57.51,
+              "code": "000636",
+              "at": "2026-09-15",
+              "open": 58.92,
+              "openPct": 0.03,
+              "buyRet": -2.39,
+              "netRet": -2.59,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "黄河旋风",
             "code": "600172",
             "sector": "超硬材料/培育钻石",
             "status": "未启动·双平台人气在榜（韭研+东财，昨日未涨停）",
-            "reason": "韭研公社、东方财富两平台人气前五，但昨日未进入任何板块涨停名单。逻辑：超硬材料与AI散热（金刚石高导热材料）存在交叉预期，昨日算力/半导体方向首板扩散（7只涨停）。风险：无当日公告或明确产业催化，属纯人气驱动，需观察开盘强度确认。"
+            "reason": "韭研公社、东方财富两平台人气前五，但昨日未进入任何板块涨停名单。逻辑：超硬材料与AI散热（金刚石高导热材料）存在交叉预期，昨日算力/半导体方向首板扩散（7只涨停）。风险：无当日公告或明确产业催化，属纯人气驱动，需观察开盘强度确认。",
+            "verify": {
+              "gain": -1.03,
+              "hit": false,
+              "price": 16.36,
+              "code": "600172",
+              "at": "2026-09-15",
+              "open": 16.58,
+              "openPct": 0.3,
+              "buyRet": -1.33,
+              "netRet": -1.52,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "国芳集团",
             "code": "601086",
             "sector": "大消费/零售连锁",
             "status": "首板·低位反抽·双平台人气在榜",
-            "reason": "同花顺、淘股吧两平台人气前五。逻辑：消费端政策催化密集（商务部等8部门《促进智能家居消费行动方案》、双节将至消费话题升温），公司昨日14:44涨停。风险：该方向昨日是退潮主跌板块（同方向敦煌种业、新农开发、南宁百货、红棉股份跌停），国芳集团属退潮中的个别反抽，持续性需谨慎，不宜按主线对待。"
+            "reason": "同花顺、淘股吧两平台人气前五。逻辑：消费端政策催化密集（商务部等8部门《促进智能家居消费行动方案》、双节将至消费话题升温），公司昨日14:44涨停。风险：该方向昨日是退潮主跌板块（同方向敦煌种业、新农开发、南宁百货、红棉股份跌停），国芳集团属退潮中的个别反抽，持续性需谨慎，不宜按主线对待。",
+            "verify": {
+              "gain": -10.01,
+              "hit": false,
+              "price": 16.19,
+              "code": "601086",
+              "at": "2026-09-15",
+              "open": 17.85,
+              "openPct": -0.78,
+              "buyRet": -9.3,
+              "netRet": -9.48,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "闽东电力",
             "code": "000993",
             "sector": "电力/海上风电",
             "status": "4连板·高位（全场最高标，退潮期接力风险大，不参与追高）",
-            "reason": "淘股吧人气前五，是昨日全场最高标（4板，10:01封板），代表电力/智能电网政策驱动方向（福建“风光储氢核”、广东海上风电规划）。风险：公司已发异动公告，参股的海上风电项目均处于未开工或未投产状态；连板高度已至退潮期临界，昨日高位股已大面积补跌，接力风险极大，仅作情绪指标观察。"
+            "reason": "淘股吧人气前五，是昨日全场最高标（4板，10:01封板），代表电力/智能电网政策驱动方向（福建“风光储氢核”、广东海上风电规划）。风险：公司已发异动公告，参股的海上风电项目均处于未开工或未投产状态；连板高度已至退潮期临界，昨日高位股已大面积补跌，接力风险极大，仅作情绪指标观察。",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 16.8,
+              "code": "000993",
+              "at": "2026-09-15",
+              "open": 16.03,
+              "openPct": 4.98,
+              "buyRet": 4.8,
+              "netRet": 4.59,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "桂林旅游",
             "code": "000978",
             "sector": "旅游/大消费",
             "status": "原5板炸板后反抽·高位断板（不参与，仅作退潮期情绪观察）",
-            "reason": "淘股吧人气前五。该股9/11冲5板后放量炸板收巨量阴线，09-14于14:26反抽涨停，属高位断板后的情绪修复，并非新启动。风险：高位退潮期品种，同方向昨日多股跌停，反抽持续性差，仅作退潮期情绪观察，不参与。"
+            "reason": "淘股吧人气前五。该股9/11冲5板后放量炸板收巨量阴线，09-14于14:26反抽涨停，属高位断板后的情绪修复，并非新启动。风险：高位退潮期品种，同方向昨日多股跌停，反抽持续性差，仅作退潮期情绪观察，不参与。",
+            "verify": {
+              "gain": -10.04,
+              "hit": false,
+              "price": 9.77,
+              "code": "000978",
+              "at": "2026-09-15",
+              "open": 11.56,
+              "openPct": 6.45,
+              "buyRet": -15.48,
+              "netRet": -15.65,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "山子高科",
             "code": "000981",
             "sector": "汽车产业链",
             "status": "首板（一字）·低位·东方财富人气第一",
-            "reason": "东方财富盘前人气第一。逻辑：汽车产业链事件驱动、重组预期发酵（09-14该方向9只涨停、49亿成交），叠加《智能网联新能源汽车产业发展“十五五”规划》落地（2030年具备自动驾驶功能的汽车实现规模应用）。风险：一字板需竞价承接，板块靠重组预期驱动、事件不确定性高。"
+            "reason": "东方财富盘前人气第一。逻辑：汽车产业链事件驱动、重组预期发酵（09-14该方向9只涨停、49亿成交），叠加《智能网联新能源汽车产业发展“十五五”规划》落地（2030年具备自动驾驶功能的汽车实现规模应用）。风险：一字板需竞价承接，板块靠重组预期驱动、事件不确定性高。",
+            "verify": {
+              "gain": 5.96,
+              "hit": true,
+              "price": 3.02,
+              "code": "000981",
+              "at": "2026-09-15",
+              "open": 3.1,
+              "openPct": 8.77,
+              "buyRet": -2.58,
+              "netRet": -2.78,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       }
@@ -2664,63 +3188,189 @@ window.REPORTS = {
             "code": "000993",
             "sector": "电力/海上风电/福建国资",
             "status": "6连板·高位·不参与追高",
-            "reason": "四平台人气榜全部登顶（公社、同花顺、淘股吧第一），但已连续 6 个涨停板、较 09-15 的 4 板再上两级，属加速末端高位股。公司当日异动澄清“目前未与算力中心、数据中心存在合作”，利好缺乏基本面承接。高位加速段一旦断板容易连续跌停，仅作为情绪温度计观察，不参与追高。"
+            "reason": "四平台人气榜全部登顶（公社、同花顺、淘股吧第一），但已连续 6 个涨停板、较 09-15 的 4 板再上两级，属加速末端高位股。公司当日异动澄清“目前未与算力中心、数据中心存在合作”，利好缺乏基本面承接。高位加速段一旦断板容易连续跌停，仅作为情绪温度计观察，不参与追高。",
+            "verify": {
+              "gain": -2.76,
+              "hit": false,
+              "price": 17.97,
+              "code": "000993",
+              "at": "2026-09-17",
+              "open": 16.64,
+              "openPct": -9.96,
+              "buyRet": 7.99,
+              "netRet": 7.78,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中际旭创",
             "code": "300308",
             "sector": "光模块/CPO/AI算力",
             "status": "未连板·启动位·光模块龙头",
-            "reason": "公社人气榜第二，光模块全球龙头，1.6T 产品处放量周期。昨日盘面领涨板块切换至光通信、AI 硬件、半导体等硬核科技，海外 Lumentum 涨超 9%、Coherent 涨超 6%，产业链共振。属大市值趋势票，走法偏机构节奏，不适合追涨，以回调低吸思路对待。"
+            "reason": "公社人气榜第二，光模块全球龙头，1.6T 产品处放量周期。昨日盘面领涨板块切换至光通信、AI 硬件、半导体等硬核科技，海外 Lumentum 涨超 9%、Coherent 涨超 6%，产业链共振。属大市值趋势票，走法偏机构节奏，不适合追涨，以回调低吸思路对待。",
+            "verify": {
+              "gain": -1.3,
+              "hit": false,
+              "price": 896,
+              "code": "300308",
+              "at": "2026-09-17",
+              "open": 900.3,
+              "openPct": -0.83,
+              "buyRet": -0.48,
+              "netRet": -0.68,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "永鼎股份",
             "code": "600105",
             "sector": "光通信/超导材料",
             "status": "未连板·低位启动·人气榜前三",
-            "reason": "同花顺、东财、淘股吧三家同时挤进前五，是今日跨平台共识度最高的标的之一。受益光通信主线升温与海外光模块股大涨的情绪外溢。未连板说明仍处资金试探阶段，需看开盘后能否放量确认。"
+            "reason": "同花顺、东财、淘股吧三家同时挤进前五，是今日跨平台共识度最高的标的之一。受益光通信主线升温与海外光模块股大涨的情绪外溢。未连板说明仍处资金试探阶段，需看开盘后能否放量确认。",
+            "verify": {
+              "gain": -0.18,
+              "hit": false,
+              "price": 45.14,
+              "code": "600105",
+              "at": "2026-09-17",
+              "open": 46.01,
+              "openPct": 1.75,
+              "buyRet": -1.89,
+              "netRet": -2.09,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "通鼎互联",
             "code": "002491",
             "sector": "光通信/通信线缆",
             "status": "2连板·低位·人气榜双平台第一",
-            "reason": "同花顺人气榜第一、东财第二，昨日 2 连板。但公司同步澄清“当前业务不涉及光模块、光芯片产品”，属题材外溢而非主业驱动，逻辑偏虚。2 板位置不高但缺业绩支撑，只适合超短打板资金，不建议中线参与。"
+            "reason": "同花顺人气榜第一、东财第二，昨日 2 连板。但公司同步澄清“当前业务不涉及光模块、光芯片产品”，属题材外溢而非主业驱动，逻辑偏虚。2 板位置不高但缺业绩支撑，只适合超短打板资金，不建议中线参与。",
+            "verify": {
+              "gain": -3.19,
+              "hit": false,
+              "price": 23.67,
+              "code": "002491",
+              "at": "2026-09-17",
+              "open": 24.48,
+              "openPct": 0.12,
+              "buyRet": -3.31,
+              "netRet": -3.5,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "瑞丰高材",
             "code": "300243",
             "sector": "电子级环氧树脂/CCL涨价链",
             "status": "首板·低位启动·研报密集覆盖",
-            "reason": "公告拟 4.99 亿元收购觅拓新材 68.07% 股权，切入电子级环氧树脂与低介电树脂（双马/PPO/碳氢），天风、华源等多家券商当日出简评。公司同时是高端 CSR 助剂的稀缺布局者（该市场日本钟渊化学市占率超 90%）。昨日首板涨停，属 CCL/覆铜板涨价链向上游树脂传导的核心标的，题材有真实产业逻辑支撑。"
+            "reason": "公告拟 4.99 亿元收购觅拓新材 68.07% 股权，切入电子级环氧树脂与低介电树脂（双马/PPO/碳氢），天风、华源等多家券商当日出简评。公司同时是高端 CSR 助剂的稀缺布局者（该市场日本钟渊化学市占率超 90%）。昨日首板涨停，属 CCL/覆铜板涨价链向上游树脂传导的核心标的，题材有真实产业逻辑支撑。",
+            "verify": {
+              "gain": 6.9,
+              "hit": true,
+              "price": 21.22,
+              "code": "300243",
+              "at": "2026-09-17",
+              "open": 19.5,
+              "openPct": -1.76,
+              "buyRet": 8.82,
+              "netRet": 8.6,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "双星新材",
             "code": "002585",
             "sector": "MLCC离型膜/复合铜箔",
             "status": "2板后中位·题材跟风位",
-            "reason": "公社人气榜第三。09-15 曾 2 连板（MLCC 离型膜逻辑，受村田停产消费级/车用 MLCC 催化），属风华高科领涨元器件方向的弹性跟风位。主线在风华高科身上，双星是卫星仓位，主线退潮时它先掉队，需盯风华高科的强度做同步判断。"
+            "reason": "公社人气榜第三。09-15 曾 2 连板（MLCC 离型膜逻辑，受村田停产消费级/车用 MLCC 催化），属风华高科领涨元器件方向的弹性跟风位。主线在风华高科身上，双星是卫星仓位，主线退潮时它先掉队，需盯风华高科的强度做同步判断。",
+            "verify": {
+              "gain": -3.94,
+              "hit": false,
+              "price": 11.69,
+              "code": "002585",
+              "at": "2026-09-17",
+              "open": 11.74,
+              "openPct": -3.53,
+              "buyRet": -0.43,
+              "netRet": -0.62,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "景旺电子",
             "code": "603228",
             "sector": "AI服务器PCB/HDI",
             "status": "未连板·中位·板块中军",
-            "reason": "公社人气榜第五。PCB/覆铜板是本周机构与游资罕见同向加仓的方向（09-15 机构净买前三嘉立创、意华股份、风华高科全在该链），景旺作为国内 PCB 一线厂直接承接 AI 服务器与高阶 HDI 需求。板块身位已由超声电子打出，景旺属中军品种，跟随板块节奏而非独立行情。"
+            "reason": "公社人气榜第五。PCB/覆铜板是本周机构与游资罕见同向加仓的方向（09-15 机构净买前三嘉立创、意华股份、风华高科全在该链），景旺作为国内 PCB 一线厂直接承接 AI 服务器与高阶 HDI 需求。板块身位已由超声电子打出，景旺属中军品种，跟随板块节奏而非独立行情。",
+            "verify": {
+              "gain": -2.02,
+              "hit": false,
+              "price": 104.26,
+              "code": "603228",
+              "at": "2026-09-17",
+              "open": 105.12,
+              "openPct": -1.21,
+              "buyRet": -0.82,
+              "netRet": -1.02,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "华丰科技",
             "code": "688629",
             "sector": "华为高速连接器/光铜互联",
             "status": "未连板·启动位·事件催化",
-            "reason": "华为 2026 全联接大会 9 月 17-19 日召开，将集中展示昇腾超节点、新一代 ICT 硬件与行业 AI 方案。公司是华为连接器核心供应商，铜连接产品正从 112G 切换到 224G（价值量大幅提升），并加速导入阿里、字节等头部 CSP；CPU socket 已量产、NPO socket 预计 Q4 量产。事件窗口明确，属题材催化剂型机会，需防“见光死”。"
+            "reason": "华为 2026 全联接大会 9 月 17-19 日召开，将集中展示昇腾超节点、新一代 ICT 硬件与行业 AI 方案。公司是华为连接器核心供应商，铜连接产品正从 112G 切换到 224G（价值量大幅提升），并加速导入阿里、字节等头部 CSP；CPU socket 已量产、NPO socket 预计 Q4 量产。事件窗口明确，属题材催化剂型机会，需防“见光死”。",
+            "verify": {
+              "gain": -0.45,
+              "hit": false,
+              "price": 131.79,
+              "code": "688629",
+              "at": "2026-09-17",
+              "open": 132,
+              "openPct": -0.29,
+              "buyRet": -0.16,
+              "netRet": -0.36,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东材科技",
             "code": "601208",
             "sector": "高频高速树脂/碳氢树脂",
             "status": "首板·主升·树脂涨价链核心",
-            "reason": "受中化国际 21.1 亿收购南通星辰切入 PPE 树脂消息带动，昨日涨停收 54.31 元，圣泉集团涨 4.75%，CCL 涨价加速向树脂环节传导。公司眉山万吨产能已点火（含 5000 吨聚苯醚、3500 吨碳氢），BCB 为台光/生益 M9 一供，谷歌 TPU 升级 M9 有望带来 3-5 亿/10 亿级营收增量。树脂是 CCL 中唯一直接定义配方的环节，壁垒真实。"
+            "reason": "受中化国际 21.1 亿收购南通星辰切入 PPE 树脂消息带动，昨日涨停收 54.31 元，圣泉集团涨 4.75%，CCL 涨价加速向树脂环节传导。公司眉山万吨产能已点火（含 5000 吨聚苯醚、3500 吨碳氢），BCB 为台光/生益 M9 一供，谷歌 TPU 升级 M9 有望带来 3-5 亿/10 亿级营收增量。树脂是 CCL 中唯一直接定义配方的环节，壁垒真实。",
+            "verify": {
+              "gain": -3.7,
+              "hit": false,
+              "price": 52.3,
+              "code": "601208",
+              "at": "2026-09-17",
+              "open": 54.31,
+              "openPct": 0,
+              "buyRet": -3.7,
+              "netRet": -3.89,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },

@@ -121,6 +121,8 @@ reports.forEach(function (r) {
       if (!p || !p.verify) return;
       vTotal++;
       const v = p.verify;
+      // hit=null 表示「停牌/无数据」（verify.js 约定），此时 gain 本就为 null，不算异常。
+      if (v.hit === null || v.hit === undefined) return;
       if (typeof v.gain !== 'number' || !isFinite(v.gain)) { vBad++; warn(r.date + ' ' + tag + ' ' + p.name + ' 的 verify.gain 非数字：' + JSON.stringify(v.gain)); }
       else {
         if (v.gain > 0) vHit++;

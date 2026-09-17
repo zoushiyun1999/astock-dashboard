@@ -34,16 +34,38 @@
  *   9. 行情池再补**北交所** `m:0+t:81+s:2048`（全池 5913 只，原沪深主板仅 3487）。
  *   10. `at` 必须是实际取行情那一天；晚报的「明日」若尚无行情则不标，留待下一交易日。
  *
+ * v6 修正（2026-09-18 00:30，历史缺口回补）：
+ *   11. **新增历史回补**（`--rebuild`）：用**历史日线**给「已收盘但未标记」的推荐补 verify，
+ *       并按 `rec.date` 重算每条推荐的**应验日**（早报=当日，晚报=次一交易日），
+ *       与 `verify.at` 对不上的显式重标。
+ *       动机（2026-09-18 审计发现）：09-14 那次回补把**运行日（09-14）的快照**写进了
+ *       `at=09-07/09-09/09-10` 的记录里 —— 33 条 verify 的 `at` 与数据不符（同一条记录
+ *       在不同 `at` 下出现**完全相同的 open/buyRet**，真实行情不可能）。旧口径的
+ *       「+0.80% / 净 +0.60%」结论即建立在这批错标样本上，不可再引用。
+ *   12. **默认路径（21:40 定时跑）行为不变**：仍用 push2delay 全市场快照标记「今日」的推荐；
+ *       但在写回前会**自动追加一次回补遍历，且只处理 `at < 今天` 的目标日** ——
+ *       这样「PC 关机导致任务没跑」的缺口会在下一次成功运行时自愈，且绝不触碰当天快照的判定。
+ *   13. 历史日线走**腾讯**（`web.ifzq.gtimg.cn`，与 tools/screener.js 同源），不是东财：
+ *       本机 `push2his.eastmoney.com` / `1.` / `2.` 三个域名全部 `UND_ERR_SOCKET`（实测 0/5），
+ *       而 `push2delay` 正常但**不提供历史**（`dktotal: 0`）。
+ *       用**前复权**序列：同日内复权因子为常数，故 `close/open`（buyRet）与不复权完全一致。
+ *       腾讯码前缀：北交所 `bj`、沪市（含 688/900）`sh`、深市（含 300/301）`sz`。
+ *
  * 休市日维护：每年初用 westock data_trade_calendar(year=下一年) 刷新 config/trade_holidays.json。
  *
- * 用法：node tools/verify.js            # 跑验证并写回 data.js
- *       node tools/verify.js --dry      # 只打印，不写文件
+ * 用法：node tools/verify.js              # 快照标记今日 + 自动回补"今天之前"的缺口
+ *       node tools/verify.js --dry        # 只打印，不写文件
+ *       node tools/verify.js --rebuild    # 只用历史日线全量重算（含今日，若已收盘）
+ *       node tools/verify.js --rebuild --dry
  *
- * 数据源：东方财富行情（push2delay，收盘后无延迟问题）
+ * 数据源：当日 = 东方财富 push2delay 全市场快照；历史 = 腾讯前复权日线。
  */
 'use strict';
 const fs = require('fs');
 const path = require('path');
+// v6：历史日线/部分东财域名在本机走 IPv6 会被重置（UND_ERR_SOCKET），强制 IPv4 优先。
+// 已实测：push2delay 在两种解析顺序下均正常，故该设置不会影响原有快照路径。
+require('dns').setDefaultResultOrder('ipv4first');
 const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
 const ops = require('./lib/ops');
 
@@ -117,6 +139,72 @@ function fmtDate(d) {
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * v6：历史日线（回补用）
+ *
+ * 数据源选择（2026-09-18 实测）：
+ *   · 东财 `push2his.eastmoney.com` / `1.` / `2.` → 本机 0/5 成功，全部 UND_ERR_SOCKET；
+ *     `push2delay` 可达但不提供历史（`dktotal: 0`、`klines: []`）。
+ *   · 腾讯 `web.ifzq.gtimg.cn/appstock/app/fqkline/get` → 5/5 稳定，
+ *     且本仓库 tools/screener.js 已在用同源同参数，口径已知。
+ *
+ * 用**前复权**（qfq）：同一天内复权因子是常数，`close/open` 不受影响，
+ *   故 buyRet / netRet 与不复权完全一致；`openPct` 也因分子分母同尺度而一致。
+ *   已用 09-11 晚报 + 09-14 早报共 18 条**已正确落库**的记录反查：
+ *   openPct / buyRet 逐条吻合（阈值 0.02pp），证明该源与 push2delay 快照同口径。
+ * ───────────────────────────────────────────────────────────────────────────── */
+const TX_KLINE = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get';
+
+/** 腾讯行情代码：北交所 bj / 沪市（含科创板 688、B 股 900）sh / 深市（含创业板 300、301）sz */
+function txSymbol(code) {
+  const c = String(code || '').replace(/\D/g, '');
+  if (!c) return null;
+  if (/^(43|83|87|88|92)/.test(c)) return 'bj' + c;   // 北交所
+  if (/^(6|9)/.test(c)) return 'sh' + c;              // 沪市
+  return 'sz' + c;                                    // 深市
+}
+
+/** 拉一段日线（前复权）。返回 [{date,open,close,high,low}]；失败返回 null。 */
+async function fetchDayBars(code, fromYmd, toYmd) {
+  const s = txSymbol(code);
+  if (!s) return null;
+  const url = TX_KLINE + '?param=' + s + ',day,' + fromYmd + ',' + toYmd + ',320,qfq';
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': UA } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const txt = await r.text();
+      if (/^<!DOCTYPE|<html/i.test(txt)) throw new Error('被风控拦截');
+      const j = JSON.parse(txt);
+      const blk = j && j.data && j.data[s];
+      const arr = blk && (blk.qfqday || blk.day);
+      if (!Array.isArray(arr)) throw new Error('无 day 数组');
+      return arr.map(function (a) {
+        return { date: a[0], open: +a[1], close: +a[2], high: +a[3], low: +a[4] };
+      });
+    } catch (e) {
+      if (i === 2) { console.warn('   ⚠ 历史日线拉取失败 ' + code + '：' + e.message); return null; }
+      await sleep(600 * (i + 1));
+    }
+  }
+}
+
+/** 从日线序列里取某日 bar + 昨收，组装成 markVerify 认识的 quote 结构。
+ *  必须能取到**前一交易日**才能算涨跌幅/openPct，故调用方的 from 要往前留几天。 */
+function barAsQuote(bars, code, date, name) {
+  if (!bars) return null;
+  const i = bars.findIndex(function (b) { return b.date === date; });
+  if (i <= 0) return null;
+  const b = bars[i], prev = bars[i - 1].close;
+  if (!prev) return null;
+  return {
+    code: code, name: name,
+    gain: +((b.close / prev - 1) * 100).toFixed(2),
+    price: b.close, close: b.close, open: b.open, high: b.high, low: b.low, prevClose: prev
+  };
+}
+
+
 /** 读取休市日配置（config/trade_holidays.json） */
 let HOLIDAY_YEARS = {};
 try { HOLIDAY_YEARS = (JSON.parse(fs.readFileSync(HOLIDAYS_FILE, 'utf8')).years) || {}; } catch (e) { HOLIDAY_YEARS = {}; }
@@ -127,6 +215,27 @@ function isTradingDay(d) {
   if (w === 0 || w === 6) return false;
   const list = HOLIDAY_YEARS[String(d.getFullYear())] || [];
   return list.indexOf(fmtDate(d)) < 0;
+}
+
+/** 由 YYYY-MM-DD 取下一个交易日（晚报「明日关注」的应验日口径） */
+function nextTradingDay(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  for (let i = 0; i < 25; i++) {
+    d.setDate(d.getDate() + 1);
+    if (isTradingDay(d)) return fmtDate(d);
+  }
+  return null;
+}
+
+/** 由 YYYY-MM-DD 往回取第 n 个交易日（给历史日线窗口留出「昨收」） */
+function shiftTradingDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  let left = Math.abs(n), step = n < 0 ? 1 : -1;
+  while (left > 0) {
+    d.setDate(d.getDate() + step);
+    if (isTradingDay(d)) left--;
+  }
+  return fmtDate(d);
 }
 
 /** 按 name 优先、code 兜底匹配行情，返回 {code,name,gain,price,close,open,high,low,prevClose} 或 null */
@@ -165,16 +274,20 @@ function num(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
  *  实盘口径：开盘买入 → 收盘卖出（早报=当日开盘买；晚报=次一交易日开盘买）。
  *  · 停牌/无数据 → hit=null，只留价格
  *  · 一字板（开=高=低=收）→ locked=true，netRet=null，统计时必须剔除
- *  · gain/hit 为旧口径（验证日收盘涨跌幅，相对昨收），保留仅为向后兼容 */
-function markVerify(q, at) {
+ *  · gain/hit 为旧口径（验证日收盘涨跌幅，相对昨收），保留仅为向后兼容
+ *  `by` = 数据来源（'snapshot' 当日 push2delay 快照 / 'hist' 历史日线）。
+ *    v6 起它是**幂等判据**：历史回补只跳过 `by==='hist'` 的记录，
+ *    因为 09-14 那批错标记录的 `at` 恰好等于应验日 —— 只看 `at` 会漏掉它们。 */
+function markVerify(q, at, by) {
   const closeGain = num(q.gain);
   const open = num(q.open), close = num(q.close), high = num(q.high), low = num(q.low);
   const prevClose = num(q.prevClose);
+  const src = by || 'snapshot';
 
   if (open === null || close === null || !open) {
     return {
       gain: closeGain, hit: null, price: (typeof q.price === 'number' ? q.price : null),
-      code: q.code, note: '停牌/无数据', at: at
+      code: q.code, note: '停牌/无数据', at: at, by: src
     };
   }
 
@@ -194,69 +307,232 @@ function markVerify(q, at) {
     buyRet: buyRet,
     netRet: locked ? null : netRet,
     locked: locked,
-    basis: 'open-to-close'
+    basis: 'open-to-close',
+    by: src
   };
   if (locked) v.note = '一字板·无法买入（剔除）';
   return v;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * v6：历史回补（applyRebuild）
+ *
+ * 判据（与 21:40 快照路径完全一致，只换数据源）：
+ *   · 早报「今日关注」→ 应验日 = 报告当日          （当日开盘买入）
+ *   · 晚报「明日关注」→ 应验日 = 报告次一交易日    （次日开盘买入）
+ *   · 应验日行情已定稿 才标；未定稿的留给下一轮（`at` 永远等于真实行情日）
+ *
+ * 幂等：`at` 与应验日一致 且 已有 basis='open-to-close' 的记录直接跳过，不重算不覆盖。
+ *   不一致（= 旧错标）或不完整（= v5 之前的老格式）才重算 —— 这正是本次的修复目标。
+ * ───────────────────────────────────────────────────────────────────────────── */
+async function applyRebuild(data, opts) {
+  opts = opts || {};
+  const now = new Date();
+  const todayStr = fmtDate(now);
+  const sessionClosed = now.getHours() > 15 || (now.getHours() === 15 && now.getMinutes() >= 5);
+  const allowToday = opts.allowToday !== undefined ? !!opts.allowToday : sessionClosed;
+
+  /** 应验日行情是否已定稿 */
+  function barReady(target) {
+    if (!target) return false;
+    if (!isTradingDay(new Date(target + 'T00:00:00'))) return false;
+    if (target < todayStr) return true;
+    return target === todayStr && allowToday;
+  }
+
+  // 1) 汇总所有推荐，算好各自的应验日
+  const items = [];
+  (data.reports || []).forEach(function (rec) {
+    if (!rec || !rec.date || rec.date > todayStr) return;
+    (rec.morning && rec.morning['今日关注'] || []).forEach(function (p) {
+      if (p) items.push({ p: p, target: rec.date, kind: 'm', rdate: rec.date });
+    });
+    (rec.evening && rec.evening['明日关注'] || []).forEach(function (g) {
+      (g.picks || []).forEach(function (p) {
+        if (p) items.push({ p: p, target: nextTradingDay(rec.date), kind: 'e', rdate: rec.date });
+      });
+    });
+  });
+
+  const pending = items.filter(function (x) { return !barReady(x.target); });
+  const todo = items.filter(function (x) { return barReady(x.target); });
+
+  // 幂等过滤：**只有「已由历史日线重算过」的记录才跳过**。
+  //   ⚠️ 判据必须是 `by==='hist'`，不能只看 `at===target`：
+  //   2026-09-18 审计发现 09-14 那次回补把运行日快照写进了 `at=09-07/09-09/09-10`，
+  //   那些记录的 `at` **恰好等于**应验日，只看 at 会全部漏过、永远修不掉。
+  const stale = todo.filter(function (x) {
+    const v = x.p.verify;
+    return !(v && v.at === x.target && v.by === 'hist');
+  });
+
+  console.log('   回补扫描：推荐 ' + items.length + ' 条｜应验日未到/未收盘 ' + pending.length +
+    ' 条（留待下轮）｜已由历史重算 ' + (todo.length - stale.length) + ' 条｜待重算 ' + stale.length + ' 条');
+  if (!stale.length) return { total: items.length, pending: pending.length, changed: 0, reattached: 0, added: 0, corrected: 0, upgraded: 0, suspended: 0, failed: 0 };
+
+  // 2) 代码解析：优先 pick.code，其次已有 verify.code，最后拿全市场快照做名称匹配
+  const nameMap = {};
+  let need = false;
+  stale.forEach(function (x) { if (!(x.p.code || (x.p.verify && x.p.verify.code))) need = true; });
+  if (need) {
+    console.log('   部分推荐缺 code，拉全市场快照做名称匹配…');
+    const q = await fetchQuotes();
+    for (const k in q) if (q[k].name) nameMap[q[k].name] = k;
+  }
+  stale.forEach(function (x) {
+    const c = x.p.code || (x.p.verify && x.p.verify.code) || nameMap[String(x.p.name || '').trim()] || null;
+    x.code = c;
+  });
+
+  const noCode = stale.filter(function (x) { return !x.code; });
+  const workable = stale.filter(function (x) { return x.code; });
+  if (noCode.length) {
+    console.warn('   ⚠ 无法解析代码、本次跳过 ' + noCode.length + ' 条：' +
+      noCode.map(function (x) { return x.rdate + '/' + x.kind + ' ' + x.p.name; }).join('、'));
+  }
+
+  // 3) 按代码分组，每只只拉一次日线（窗口覆盖该股全部待算应验日 + 前置交易日）
+  const byCode = {};
+  workable.forEach(function (x) { (byCode[x.code] = byCode[x.code] || []).push(x); });
+
+  let changed = 0, reattached = 0, added = 0, corrected = 0, upgraded = 0, suspended = 0, failed = 0;
+  const log = [];
+  const codes = Object.keys(byCode);
+  for (let ci = 0; ci < codes.length; ci++) {
+    const code = codes[ci];
+    const group = byCode[code];
+    const dates = group.map(function (x) { return x.target; }).sort();
+    const from = shiftTradingDays(dates[0], 6);      // 往前多留几个交易日，保证能取到「昨收」
+    const bars = await fetchDayBars(code, from, dates[dates.length - 1]);
+    await sleep(150);
+    if (!bars) {
+      failed += group.length;
+      log.push('   ✗ ' + code + ' 日线拉取失败（' + group.length + ' 条未标，下轮重试）');
+      continue;
+    }
+    group.forEach(function (x) {
+      const p = x.p, old = p.verify;
+      const q = barAsQuote(bars, code, x.target, p.name);
+      if (!q) {
+        // 该应验日没有 K 线 → 停牌/未上市。写一条"停牌"标记（前端显示 ⏸），
+        // 并带 by='hist' 以避免每轮重复重试。
+        p.verify = {
+          gain: null, hit: null, price: null, code: code, at: x.target,
+          by: 'hist', note: '停牌/无数据（该交易日无K线）'
+        };
+        suspended++;
+        log.push('   ⏸ ' + code + ' ' + p.name + ' @' + x.target + ' 无K线 → 标停牌');
+        return;
+      }
+      p.code = code;
+      p.verify = markVerify(q, x.target, 'hist');
+      const nv = p.verify;
+      if (!old) {
+        added++;
+        log.push('   ＋ 补标 @' + x.target + '：' + code + ' ' + p.name +
+          ' 开盘' + nv.openPct + '% → 收益' + nv.buyRet + '%' + (nv.locked ? '（一字板）' : ''));
+      } else if (old.at !== x.target) {
+        reattached++;
+        log.push('   ↻ 改标 at ' + old.at + ' → ' + x.target + '：' + code + ' ' + p.name +
+          '（buyRet ' + old.buyRet + ' → ' + nv.buyRet + '）');
+      } else if (old.basis !== 'open-to-close') {
+        upgraded++;
+        log.push('   ⬆ 升级为实盘口径 @' + x.target + '：' + code + ' ' + p.name +
+          '（旧仅 gain=' + old.gain + ' → buyRet=' + nv.buyRet + '%）');
+      } else if (old.buyRet == null || Math.abs((old.buyRet || 0) - nv.buyRet) > 0.005) {
+        corrected++;
+        log.push('   ⚠ 数据纠正 @' + x.target + '：' + code + ' ' + p.name +
+          '（旧 openPct=' + old.openPct + ' buyRet=' + old.buyRet + ' gain=' + old.gain +
+          ' → 新 openPct=' + nv.openPct + ' buyRet=' + nv.buyRet + ' gain=' + nv.gain + '）');
+      }
+      changed++;
+    });
+  }
+
+  if (log.length) { console.log('   回补明细：'); log.forEach(function (l) { console.log(l); }); }
+  return { total: items.length, pending: pending.length, changed: changed, reattached: reattached, added: added, corrected: corrected, upgraded: upgraded, suspended: suspended, failed: failed };
+}
+
 async function main() {
   const now = new Date();
   const todayStr = fmtDate(now);
+  const dry = process.argv.includes('--dry');
+  const rebuildOnly = process.argv.includes('--rebuild');
   console.log('▶ 次日验证开始 ' + todayStr + ' ' +
-    String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-
-  // 交易日感知：周末/节假日跳过
-  if (!isTradingDay(now)) {
-    console.log('   非交易日（周末/节假日），跳过验证，不写文件');
-    return;
-  }
+    String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') +
+    (rebuildOnly ? '　【--rebuild 历史回补模式】' : ''));
 
   const loaded = loadDataStrict(DATA);
   const data = loaded.data;
 
-  const quotes = await fetchQuotes();
-  console.log('   行情样本 ' + Object.keys(quotes).length + ' 只');
-
   let changed = 0;
   let suspended = 0;
 
-  // 1. 今日早报「今日关注」→ 今日行情
-  (data.reports || []).forEach(function (rec) {
-    if (!rec || rec.date !== todayStr || !rec.morning || !rec.morning['今日关注']) return;
-    rec.morning['今日关注'].forEach(function (p) {
-      if (!p || p.verify) return;
-      const q = findQuote(quotes, p);
-      if (q) { p.code = q.code; p.verify = markVerify(q, todayStr); changed++; if (p.verify.hit === null) suspended++; }
-    });
-  });
+  // ── 当日快照标记（原 v5 路径；--rebuild 模式跳过）────────────────────────────
+  if (!rebuildOnly) {
+    if (!isTradingDay(now)) {
+      console.log('   非交易日（周末/节假日）→ 跳过当日快照标记（历史回补仍会执行）');
+    } else {
+      const quotes = await fetchQuotes();
+      console.log('   行情样本 ' + Object.keys(quotes).length + ' 只');
 
-  // 2. 最近一篇早于今天、且有「明日关注」的晚报 → 今日行情
-  let prevEv = null;
-  for (let i = (data.reports || []).length - 1; i >= 0; i--) {
-    const rec = data.reports[i];
-    if (rec && rec.date && rec.date < todayStr && rec.evening && rec.evening['明日关注']) { prevEv = rec; break; }
-  }
-  if (prevEv) {
-    console.log('   明日关注来源：' + prevEv.date + ' 晚报');
-    prevEv.evening['明日关注'].forEach(function (g) {
-      (g.picks || []).forEach(function (p) {
-        if (!p || p.verify) return;
-        const q = findQuote(quotes, p);
-        if (q) { p.code = q.code; p.verify = markVerify(q, todayStr); changed++; if (p.verify.hit === null) suspended++; }
+      // 1. 今日早报「今日关注」→ 今日行情
+      (data.reports || []).forEach(function (rec) {
+        if (!rec || rec.date !== todayStr || !rec.morning || !rec.morning['今日关注']) return;
+        rec.morning['今日关注'].forEach(function (p) {
+          if (!p || p.verify) return;
+          const q = findQuote(quotes, p);
+          if (q) { p.code = q.code; p.verify = markVerify(q, todayStr); changed++; if (p.verify.hit === null) suspended++; }
+        });
       });
-    });
-  } else {
-    console.log('   无早于今天的晚报明日关注');
+
+      // 2. 最近一篇早于今天、且有「明日关注」的晚报 → 今日行情
+      let prevEv = null;
+      for (let i = (data.reports || []).length - 1; i >= 0; i--) {
+        const rec = data.reports[i];
+        if (rec && rec.date && rec.date < todayStr && rec.evening && rec.evening['明日关注']) { prevEv = rec; break; }
+      }
+      if (prevEv) {
+        console.log('   明日关注来源：' + prevEv.date + ' 晚报');
+        prevEv.evening['明日关注'].forEach(function (g) {
+          (g.picks || []).forEach(function (p) {
+            if (!p || p.verify) return;
+            const q = findQuote(quotes, p);
+            if (q) { p.code = q.code; p.verify = markVerify(q, todayStr); changed++; if (p.verify.hit === null) suspended++; }
+          });
+        });
+      } else {
+        console.log('   无早于今天的晚报明日关注');
+      }
+
+      console.log('   补充验证标记 ' + changed + ' 条' + (suspended ? '（其中停牌/无数据 ' + suspended + ' 条）' : ''));
+    }
   }
 
-  console.log('   补充验证标记 ' + changed + ' 条' + (suspended ? '（其中停牌/无数据 ' + suspended + ' 条）' : ''));
+  // ── v6 历史缺口回补 ────────────────────────────────────────────────────────
+  // 默认模式**只处理「应验日 < 今天」**的推荐，把当天的判定完全留给快照路径（职责不重叠）；
+  // --rebuild 模式额外放行今天（仅当已收盘），用于一次性全量重算。
+  // 注意：绝不能用「是否 --rebuild」当 allowToday —— 凌晨补跑时今天还没开盘，
+  // 会把「尚未到来的应验日」误判为停牌（2026-09-18 首次试跑即踩到）。
+  const sessionClosed = now.getHours() > 15 || (now.getHours() === 15 && now.getMinutes() >= 5);
+  console.log('   ── 历史缺口回补 ──');
+  const rb = await applyRebuild(data, { allowToday: rebuildOnly ? sessionClosed : false });
 
-  if (process.argv.includes('--dry')) { console.log('（--dry 模式，未写入文件）'); return; }
+  if (rb && rb.failed) {
+    console.warn('   ⚠ 有 ' + rb.failed + ' 条因日线拉取失败未处理，下轮会自动重试');
+  }
 
-  data.updatedAt = fmtDate(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  if (dry) { console.log('（--dry 模式，未写入文件）'); return; }
+
+  const stamp = fmtDate(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  const touched = changed + ((rb && rb.changed) || 0);
+  if (!touched) {
+    console.log('   · 本轮无新增/无修正标记，不写文件（保持 updatedAt 不变）');
+    return;
+  }
+  data.updatedAt = stamp;
   saveDataSafe(DATA, data, loaded, loaded.src);   // baseline 传 loadDataStrict 的返回对象（含 reports0/calendar0 数字快照）
-  console.log('   ✔ 已写回 dashboard/data.js');
+  console.log('   ✔ 已写回 dashboard/data.js（快照 ' + changed + ' 条｜回补 ' + ((rb && rb.changed) || 0) + ' 条）');
 }
 
 if (require.main === module) {
@@ -283,4 +559,8 @@ if (require.main === module) {
   });
 }
 
-module.exports = { markVerify, findQuote, fetchQuotes, num, main };
+module.exports = {
+  markVerify, findQuote, fetchQuotes, num, main,
+  // v6 新增（供审计脚本/测试复用）
+  applyRebuild, fetchDayBars, barAsQuote, txSymbol, isTradingDay, nextTradingDay, shiftTradingDays
+};
