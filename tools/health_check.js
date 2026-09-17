@@ -114,13 +114,18 @@ reports.forEach(function (r) {
 });
 
 // ── 3. verify 标记合理性 ──
-let vTotal = 0, vHit = 0, vBad = 0;
+let vTotal = 0, vHit = 0, vBad = 0, vNoBy = 0;
+const noBy = [];
 reports.forEach(function (r) {
   const scan = function (arr, tag) {
     (arr || []).forEach(function (p) {
       if (!p || !p.verify) return;
       vTotal++;
       const v = p.verify;
+      // 来源标记：v6 起 verify.js 写 by='snapshot'|'hist'。
+      // 缺 by ⇒ 该条不是经 verify.js 落的（历史上的临时回补脚本正是这么写错的：
+      // 把运行日快照填进 at=报告日 的记录，事后无法与真数据区分）。
+      if (!v.by) { vNoBy++; if (noBy.length < 5) noBy.push(r.date + ' ' + tag + ' ' + p.name); }
       // hit=null 表示「停牌/无数据」（verify.js 约定），此时 gain 本就为 null，不算异常。
       if (v.hit === null || v.hit === undefined) return;
       if (typeof v.gain !== 'number' || !isFinite(v.gain)) { vBad++; warn(r.date + ' ' + tag + ' ' + p.name + ' 的 verify.gain 非数字：' + JSON.stringify(v.gain)); }
@@ -136,6 +141,12 @@ reports.forEach(function (r) {
   if (r.evening) (r.evening['明日关注'] || []).forEach(function (g) { scan(g.picks, '晚报'); });
 });
 console.log('✅ verify 标记：' + vTotal + ' 条，其中上涨 ' + vHit + ' 条（胜率 ' + (vTotal ? (vHit / vTotal * 100).toFixed(1) : 0) + '%）');
+if (vNoBy) {
+  warn('verify 缺来源标记 by 的条目 ' + vNoBy + ' 条（应=0）：' + noBy.join('、') +
+    (vNoBy > noBy.length ? '…' : '') +
+    '。这些条目不是 verify.js 落的，数据来源与日期是否对应**无法自证**；' +
+    '请用 `node tools/verify.js --rebuild` 重算（见 AGENTS.md 规则 25b）');
+}
 
 // ── 4. calendar 结构 ──
 (data.calendar || []).forEach(function (c, i) {
