@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-09-17 13:12",
+  "updatedAt": "2026-09-17 13:14",
   "calendar": [
     {
       "id": "2z8wv1jyq8n",
@@ -2620,6 +2620,7 @@ window.REPORTS = {
         "title": "9月17日开盘必读资讯",
         "source": "韭研公社·开盘必读",
         "sourceUrl": "https://www.jiuyangongshe.com/a/1hv5cw12s49",
+        "generatedAt": "2026-09-17 13:14",
         "sections": {
           "要闻简讯": [
             "文旅部印发《文化和旅游发展“十五五”规划》：到2030年文化强国、旅游强国建设纵深推进，推动落实带薪休假制度、鼓励结合实际设立中小学生春秋假，发展邮轮游艇、房车露营等休闲消费。",
