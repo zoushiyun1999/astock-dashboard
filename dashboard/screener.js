@@ -1,5 +1,48 @@
 window.SCREENER = [
   {
+    "date": "2026-09-17",
+    "runAt": "2026-09-17 15:20",
+    "count": 2,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": ">1",
+      "yang": "≥2连阳",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "603236",
+        "name": "移远通信",
+        "industry": "通信设备",
+        "price": 73.66,
+        "gain": 5.62,
+        "turnover": 7.01,
+        "volRatio": 1.56,
+        "cap": 299,
+        "yang": 3,
+        "aboveRate": 97,
+        "sector": "算力/AI"
+      },
+      {
+        "code": "601579",
+        "name": "会稽山",
+        "industry": "非白酒",
+        "price": 29.85,
+        "gain": 5.37,
+        "turnover": 8.64,
+        "volRatio": 1.8,
+        "cap": 143,
+        "yang": 2,
+        "aboveRate": 98,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-09-14",
     "runAt": "2026-09-14 18:12",
     "count": 25,
