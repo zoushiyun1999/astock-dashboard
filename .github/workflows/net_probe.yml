@@ -1,0 +1,15 @@
+name: 数据源连通性探测
+
+# 仅手动触发。用于回答「把生成层（选股 / 验证 / 早报晚报抓取）搬到 GitHub Actions
+# 是否可行」——即海外 runner 能否直连国内数据源。
+# 结果看运行日志，不产生任何仓库改动。
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 探测
+        run: bash tools/net_probe.sh
