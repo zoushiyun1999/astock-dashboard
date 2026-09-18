@@ -128,11 +128,17 @@ reports.forEach(function (r) {
       if (!v.by) { vNoBy++; if (noBy.length < 5) noBy.push(r.date + ' ' + tag + ' ' + p.name); }
       // hit=null 表示「停牌/无数据」（verify.js 约定），此时 gain 本就为 null，不算异常。
       if (v.hit === null || v.hit === undefined) return;
+      // ±21% 闸门的前提是「该股有涨跌幅限制」。**次新股（上市前 5 个交易日）不设涨跌幅限制**，
+      // 单日 ±200% 都合法 —— 2026-09-18 实测 601091 C沈鼓 20.80 → 57.77（+177.7%），
+      // 曾被本检查误报为「可能数据错配」。判定依据用**本期报告自己声明的文字**
+      // （本系统的 C 前缀次新在 status/reason 里必然写明），声明缺失时仍按异常上报。
+      const NO_LIMIT = /无涨跌幅限制|不设.{0,2}涨跌幅/;
+      const nolimit = NO_LIMIT.test((p.status || '') + ' ' + (p.role || '') + ' ' + (p.reason || ''));
       if (typeof v.gain !== 'number' || !isFinite(v.gain)) { vBad++; warn(r.date + ' ' + tag + ' ' + p.name + ' 的 verify.gain 非数字：' + JSON.stringify(v.gain)); }
       else {
         if (v.gain > 0) vHit++;
-        if (v.gain > 21) warn(r.date + ' ' + tag + ' ' + p.name + ' 涨幅 ' + v.gain + '% 异常（可能数据错配，A股单日上限约20%）');
-        if (v.gain < -21) warn(r.date + ' ' + tag + ' ' + p.name + ' 跌幅 ' + v.gain + '% 异常');
+        if (v.gain > 21) { if (!nolimit) warn(r.date + ' ' + tag + ' ' + p.name + ' 涨幅 ' + v.gain + '% 异常（可能数据错配，A股单日上限约20%）'); }
+        if (v.gain < -21) { if (!nolimit) warn(r.date + ' ' + tag + ' ' + p.name + ' 跌幅 ' + v.gain + '% 异常'); }
       }
       if (v.hit !== true && v.hit !== false) warn(r.date + ' ' + tag + ' ' + p.name + ' 的 verify.hit 非布尔：' + JSON.stringify(v.hit));
     });
