@@ -23,7 +23,12 @@ fi
 # 复用本步骤：早报/晚报/量价选股跑 bump 时都会顺带校正，避免定时任务写入乱序
 NODE_BIN="/c/Users/zoush/.workbuddy/binaries/node/versions/22.22.2-2/node.exe"
 [ -x "$NODE_BIN" ] || NODE_BIN="node"
-WIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd -W)"
+# 仓库根的「原生路径」：Windows 上 node.exe 需要 D:\... 形式，Linux runner 上就是 POSIX 路径。
+# ⚠️ `pwd -W` 是 MSYS 专有选项，在 ubuntu runner 上会失败并把 WIN_DIR 变成**空串**，
+#    导致下面每个 `"$NODE_BIN" "$WIN_DIR/tools/xxx.js"` 都找不到文件，
+#    最终 export_json.js 失败 → 整个 workflow exit 1。2026-09-19 修。
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+WIN_DIR="$(cd "$ROOT_DIR" && pwd -W 2>/dev/null || printf '%s' "$ROOT_DIR")"
 # 安全阀感知（缺口 A）：sort_reports 因「规模骤减 / 解析失败 / 乐观锁冲突」主动中止时退出码 2，
 # 表示 data.js 已异常，此时继续 commit+push 无意义且危险 → 硬中止发布；
 # 退出码 1 等其他错误仍软放行（符合规则 16b：日历压缩/排序等软步骤失败不阻塞发布）。
