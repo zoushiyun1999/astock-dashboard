@@ -203,17 +203,37 @@ if [ -n "$PY" ]; then
   fi
 
   if "$PY" -c "import PIL" >/dev/null 2>&1; then
-    ok "Pillow 已安装"
+    ok "Pillow 已安装（$("$PY" -c 'import PIL;print(PIL.__version__)' 2>/dev/null)）"
   else
-    # 先走默认源；国内机房直连 PyPI 可能很慢 → 再走阿里云 PyPI 镜像
-    if "$PY" -m pip install --quiet Pillow 2>/dev/null; then
-      ok "Pillow 安装完成"
+    # ⚠️ 优先用发行版 RPM，**不要**先试 pip ——
+    #    Alibaba Cloud Linux 3 的系统 python3 是 **3.6**（2021 年 EOL），
+    #    Pillow 早已没有 cp36 预编译包，pip 会退化成「从源码编译」，
+    #    然后必然失败：缺 zlib 头文件，而且该 python 连 `_ctypes` 都没有
+    #    （2026-09-21 在真实 ECS 上实测，报 RequiredDependencyException: zlib）。
+    #    RPM（python3-pillow）是编译好的成品，一条命令几秒钟完成。
+    PY_VER="$("$PY" -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null)"
+    case "$PKG" in
+      apt) PIL_PKG="python3-pil" ;;
+      *)   PIL_PKG="python3-pillow" ;;
+    esac
+    if [ "${PY_VER:-}" = "3.6" ]; then
+      warn "系统 python 是 3.6（已 EOL）→ 走 RPM 装 Pillow，避免源码编译"
+    fi
+
+    if pkg_install "$PIL_PKG" >/dev/null 2>&1 && "$PY" -c "import PIL" >/dev/null 2>&1; then
+      ok "Pillow 安装完成（RPM $PIL_PKG：$("$PY" -c 'import PIL;print(PIL.__version__)' 2>/dev/null)）"
+    elif "$PY" -m pip install --quiet Pillow 2>/dev/null && "$PY" -c "import PIL" >/dev/null 2>&1; then
+      ok "Pillow 安装完成（pip 默认源）"
     elif "$PY" -m pip install --quiet \
            -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com \
-           Pillow 2>/dev/null; then
+           Pillow 2>/dev/null && "$PY" -c "import PIL" >/dev/null 2>&1; then
       ok "Pillow 安装完成（走阿里云 PyPI 镜像）"
     else
-      bad "Pillow 安装失败（长图切片会不可用）→ 手工：$PY -m pip install -i https://mirrors.aliyun.com/pypi/simple/ Pillow"
+      bad "Pillow 安装失败 → 长图切片不可用（晚报读图会长图糊掉）"
+      warn "补救：装新版 Python 后指定解释器 ——"
+      warn "  dnf install -y python3.11 python3.11-pip"
+      warn "  python3.11 -m pip install -i https://mirrors.aliyun.com/pypi/simple/ Pillow"
+      warn "  然后在本文件环境变量里加 PYTHON_BIN=python3.11"
     fi
   fi
 
