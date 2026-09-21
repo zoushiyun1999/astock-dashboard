@@ -97,6 +97,17 @@ else
 fi
 
 say "③ Node 22"
+
+# 判断「现有 node 是否 ≥22」。包管理器装完 node 后 bash 可能还缓存着「找不到」，
+# 所以每次先 hash -r 清缓存，否则会把刚装好的 node 误判为未安装。
+node_ok22() {
+  hash -r 2>/dev/null
+  command -v node >/dev/null 2>&1 || return 1
+  local m
+  m="$(node -v 2>/dev/null | sed 's/^v\([0-9]*\).*/\1/')"
+  [ "${m:-0}" -ge 22 ] 2>/dev/null
+}
+
 NODE_MAJOR=0
 if command -v node >/dev/null 2>&1; then
   NODE_MAJOR="$(node -v 2>/dev/null | sed 's/^v\([0-9]*\).*/\1/')"
@@ -107,16 +118,59 @@ else
   if [ "$NODE_MAJOR" != "0" ]; then
     warn "现有 node 版本为 v$NODE_MAJOR，低于 22（本项目的 job_*.js 依赖全局 fetch）→ 尝试升级"
   fi
-  case "$PKG" in
-    apt) curl -fsSL https://deb.nodesource.com/setup_22.x | bash - ;;
-    *)   curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - ;;
-  esac
-  pkg_install nodejs
-  if command -v node >/dev/null 2>&1; then
-    NODE_MAJOR="$(node -v | sed 's/^v\([0-9]*\).*/\1/')"
-    [ "${NODE_MAJOR:-0}" -ge 22 ] 2>/dev/null && ok "node $(node -v)" || bad "node 版本仍偏低：$(node -v)"
+
+  # ⚠️ 国内机房**不要**直接走 rpm.nodesource.com —— 实测在阿里云内地 ECS 上经常只有
+  #    几十 KB/s 甚至直接超时，卡住整条部署且报错信息指向不了真因。按「就近」顺序回退：
+  #      ① dnf 自带 nodejs:22 模块（走阿里云内网镜像，最快且受包管理器统一管理）
+  #      ② 阿里云 nodejs-release 镜像的官方 tarball
+  #      ③ 最后才用 nodesource 脚本（保底）
+
+  # ① 发行版模块
+  if dnf -q module list nodejs 2>/dev/null | grep -qE '^[[:space:]]*nodejs[[:space:]]+22'; then
+    echo "  · 尝试 dnf 模块 nodejs:22（阿里云镜像）"
+    dnf -y module install nodejs:22 >/dev/null 2>&1 || true
+  fi
+
+  # ② 官方 tarball 走阿里云镜像
+  if ! node_ok22; then
+    MIRROR="https://mirrors.aliyun.com/nodejs-release"
+    REL="$(curl -fsSL -m 25 "$MIRROR/latest-v22.x/" 2>/dev/null \
+           | grep -oE 'node-v22\.[0-9]+\.[0-9]+-linux-x64\.tar\.xz' | head -1)"
+    # 镜像索引取不到时用固定版本（与开发机同版本，便于行为一致）
+    [ -n "$REL" ] || REL="node-v22.22.2-linux-x64.tar.xz"
+    echo "  · 尝试阿里云镜像 tarball：$REL"
+    if curl -fsS -m 300 "$MIRROR/latest-v22.x/$REL" -o "/tmp/$REL"; then
+      SZ="$(stat -c %s "/tmp/$REL" 2>/dev/null || echo 0)"
+      if [ "${SZ:-0}" -gt 1000000 ]; then
+        mkdir -p /usr/local/lib
+        NODEDIR="${REL%.tar.xz}"
+        if tar -xJf "/tmp/$REL" -C /usr/local/lib; then
+          for b in node npm npx; do
+            [ -x "/usr/local/lib/$NODEDIR/bin/$b" ] && \
+              ln -sf "/usr/local/lib/$NODEDIR/bin/$b" "/usr/local/bin/$b"
+          done
+        fi
+      else
+        warn "下载不完整（${SZ} 字节）→ 换下一种方式"
+      fi
+      rm -f "/tmp/$REL"
+    fi
+  fi
+
+  # ③ 保底：nodesource（国内可能很慢）
+  if ! node_ok22; then
+    echo "  · 回退到 nodesource 脚本（国内可能很慢，请耐心等待）"
+    case "$PKG" in
+      apt) curl -fsSL https://deb.nodesource.com/setup_22.x | bash - ;;
+      *)   curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - ;;
+    esac
+    pkg_install nodejs
+  fi
+
+  if node_ok22; then
+    ok "node $(node -v)（路径 $(command -v node)）"
   else
-    bad "node 安装失败"
+    bad "node 22 安装失败（三条路径都不通）→ 手工安装见 docs/上云部署方案.md"
   fi
 fi
 
@@ -134,11 +188,28 @@ if [ -z "$PY" ]; then
 fi
 if [ -n "$PY" ]; then
   ok "$PY $("$PY" --version 2>&1)"
+
+  # 有的发行版自带 python3 但没带 pip（阿里云 Linux 3 常见）→ 缺了下面必然失败
+  if ! "$PY" -m pip --version >/dev/null 2>&1; then
+    warn "缺少 pip → 安装 python3-pip"
+    pkg_install python3-pip || true
+  fi
+
   if "$PY" -c "import PIL" >/dev/null 2>&1; then
     ok "Pillow 已安装"
   else
-    "$PY" -m pip install --quiet Pillow && ok "Pillow 安装完成" || bad "Pillow 安装失败（长图切片会不可用）"
+    # 先走默认源；国内机房直连 PyPI 可能很慢 → 再走阿里云 PyPI 镜像
+    if "$PY" -m pip install --quiet Pillow 2>/dev/null; then
+      ok "Pillow 安装完成"
+    elif "$PY" -m pip install --quiet \
+           -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com \
+           Pillow 2>/dev/null; then
+      ok "Pillow 安装完成（走阿里云 PyPI 镜像）"
+    else
+      bad "Pillow 安装失败（长图切片会不可用）→ 手工：$PY -m pip install -i https://mirrors.aliyun.com/pypi/simple/ Pillow"
+    fi
   fi
+
   # 若解释器名不是 python3，告知调用方如何指定
   if [ "$PY" != "python3" ]; then
     warn "Python 命令名是 $PY；请在 ~/.astock.env 里加：PYTHON_BIN=$PY"
@@ -215,15 +286,20 @@ else
 fi
 cat <<'EOF'
 
-  1) 配置凭据（智谱 BigModel：文本与视觉各有一个永久免费模型）
+  1) 配置凭据（智谱 BigModel）
        umask 077
        cat > ~/.astock.env <<'ENV'
 LLM_API_KEY=<智谱 key，形如 id.secret>
 LLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
 LLM_TEXT_MODEL=glm-4.7-flash
-LLM_VISION_MODEL=glm-4.6v-flash
+LLM_THINKING=disabled
+LLM_VISION_MODEL=glm-4.6v-flashx
+PYTHON_BIN=python3
 ENV
        # ⚠️ heredoc 的结束标记 ENV 必须顶格，否则内容会一直读到文件末尾
+       # 说明：glm-4.7-flash 是「思考模型」，不关思考则 content 恒为空 → 必须 LLM_THINKING=disabled
+       #       视觉用付费档 glm-4.6v-flashx：免费档实测持续 429，晚报 10~25 次请求根本跑不完
+       #       全天成本约 ¥0.01
        # 再把 GitHub PAT 写到仓库根（不要提交）
        echo 'github_pat_xxx' > .gh-token && chmod 600 .gh-token
 
