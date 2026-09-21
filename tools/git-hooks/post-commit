@@ -20,7 +20,11 @@ if [ ! -f "$TOKEN_FILE" ]; then
 fi
 
 MSG="$(git log -1 --pretty=%s)"
-WIN_ROOT="$(cd "$ROOT" && pwd -W)"
+# ⚠️ `pwd -W` 是 MSYS 专有选项，Linux（ECS）上会失败 → WIN_ROOT 变成**空串** →
+#    下面会去执行 `/tools/gh_push_api.js`（根目录下不存在）→ 钩子**永远推送失败**，
+#    而且因为本脚本没有 set -e，它**不报错**，只打印一句「同步失败」。
+#    这正是最危险的一类故障：数据不再上云，但一切看起来都正常。必须有兜底。
+WIN_ROOT="$(cd "$ROOT" && pwd -W 2>/dev/null || printf '%s' "$ROOT")"
 
 echo "[publish-hook] 同步到 GitHub：$MSG"
 if GITHUB_TOKEN="$(cat "$TOKEN_FILE")" "$NODE_BIN" "$WIN_ROOT/tools/gh_push_api.js" -m "$MSG"; then

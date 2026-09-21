@@ -17,8 +17,12 @@ NODE_BIN="/c/Users/zoush/.workbuddy/binaries/node/versions/22.22.2-2/node.exe"
 [ -x "$NODE_BIN" ] || NODE_BIN="node"
 
 # node.exe 是 Windows 程序，需要 Windows 风格路径（/c/... → C:/...）；提前算好，副闸也用得到。
-WIN_SCRIPT="$(cd "$SCRIPT_DIR" && pwd -W)"
-WIN_ROOT="$(cd "$ROOT" && pwd -W)"
+# ⚠️ `pwd -W` 是 MSYS 专有选项，Linux（ECS / ubuntu runner）上会失败；
+#    而本脚本第 10 行是 `set -e` —— **命令替换失败会让脚本就在这一行整体退出（退出码 2）**，
+#    后面 100 多行一行都不会执行。症状是「发布链路什么都没做就失败」。
+#    必须带兜底（bump_version.sh 早有同样写法，此处补齐）。
+WIN_SCRIPT="$(cd "$SCRIPT_DIR" && pwd -W 2>/dev/null || printf '%s' "$SCRIPT_DIR")"
+WIN_ROOT="$(cd "$ROOT" && pwd -W 2>/dev/null || printf '%s' "$ROOT")"
 
 # ── 应用级互斥锁（P2-5）：包住「bump → commit → push」全程 ──────────────
 # 与下方 index.lock 守卫正交：本锁管「两进程同时发布」，守卫管「陈旧 git 锁残留」。
@@ -45,11 +49,18 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
   GIT_DIR_PATH="$(git rev-parse --git-dir)"
   LOCK_FILE="$GIT_DIR_PATH/index.lock"
   if [ -f "$LOCK_FILE" ]; then
-    # 统计活跃 git 进程。两个坑：
-    #   1) tasklist 在 Git Bash 下要用单破折号 `-FI`，`//FI` 会报「无效参数」；
-    #   2) `grep -c` 无匹配时输出 0 但退出码为 1，若写成 `|| echo 0` 会拼出 "0\n0"
+    # 统计活跃 git 进程。三个坑：
+    #   1) **tasklist 是 Windows 专有命令**，Linux（ECS / ubuntu runner）上没有 →
+    #      原写法会让 GIT_PROCS **恒为 0**，于是「只要存在 index.lock 就无条件删除」，
+    #      可能删掉另一个正在进行的 git 操作的锁。故按平台分派，pgrep 优先。
+    #   2) tasklist 在 Git Bash 下要用单破折号 `-FI`，`//FI` 会报「无效参数」；
+    #   3) `grep -c` 无匹配时输出 0 但退出码为 1，若写成 `|| echo 0` 会拼出 "0\n0"
     #      让 [ -eq ] 崩掉。故先取原始输出再 tr 清空白，最后兜底赋 0。
-    GIT_PROCS="$(tasklist -FI "IMAGENAME eq git.exe" -NH 2>/dev/null | grep -ci "git.exe" | tr -d '[:space:]')"
+    if command -v pgrep >/dev/null 2>&1; then
+      GIT_PROCS="$(pgrep -c -x git 2>/dev/null | tr -d '[:space:]')"
+    else
+      GIT_PROCS="$(tasklist -FI "IMAGENAME eq git.exe" -NH 2>/dev/null | grep -ci "git.exe" | tr -d '[:space:]')"
+    fi
     [ -n "$GIT_PROCS" ] || GIT_PROCS=0
     if [ "$GIT_PROCS" -eq 0 ] 2>/dev/null; then
       echo "⚠️  检测到陈旧 git 锁（$LOCK_FILE，无活跃 git 进程）→ 自动清除"
@@ -108,8 +119,9 @@ if [ ! -f "$TOKEN_FILE" ] && [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 # node.exe 是 Windows 程序，需要 Windows 风格路径（/c/... → C:/...）
-WIN_SCRIPT="$(cd "$SCRIPT_DIR" && pwd -W)"
-WIN_ROOT="$(cd "$ROOT" && pwd -W)"
+# 同上：`pwd -W` 在 Linux 上失败且本脚本有 set -e，不带兜底的话推送段根本不可达。
+WIN_SCRIPT="$(cd "$SCRIPT_DIR" && pwd -W 2>/dev/null || printf '%s' "$SCRIPT_DIR")"
+WIN_ROOT="$(cd "$ROOT" && pwd -W 2>/dev/null || printf '%s' "$ROOT")"
 "$NODE_BIN" "$WIN_SCRIPT/gh_push_api.js" -m "$MSG" || {
   echo "✗ 推送失败，请检查 .gh-token 是否有效";
   "$NODE_BIN" "$WIN_SCRIPT/lib/ops.js" --append-alert --stage "3/4-推送" --script "publish.sh" \
