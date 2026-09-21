@@ -24,6 +24,9 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+// 同 screener.js / verify.js：本机 IPv6 到东财域名不通，undici 默认优先 IPv6 且不回落
+// → 全部请求 UND_ERR_SOCKET，会把「校验失败」伪装成「查不到该代码」，从而误剔真股票。
+require('dns').setDefaultResultOrder('ipv4first');
 const { saveDataSafe } = require('./lib/data_store');
 
 const ROOT = path.resolve(__dirname, '..');

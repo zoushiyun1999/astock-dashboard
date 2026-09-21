@@ -24,6 +24,12 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+// 优先 IPv4（与 verify.js / fetch_jy_article.js 保持一致）。本机 DNS 对这些域名同时返回 AAAA+A，
+// 默认顺序下 undici 走 IPv6 失败不回落，会把网络故障伪装成「没有数据」。
+// ⚠️ 注意：2026-09-21 曾出现「push2 全系域名持续被重置」的故障（IPv4 与 IPv6 均失败，
+//    同域 quote.eastmoney.com 正常），该行**当时并未修复它**。排查此类故障时不要止步于本行，
+//    需用「同域对照 + 沙箱外进程对照」区分是域名被针对、还是本机出网被限。
+require('dns').setDefaultResultOrder('ipv4first');
 const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
 const ops = require('./lib/ops');
 
@@ -31,6 +37,16 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
 const SC_FILE = path.join(ROOT, 'dashboard', 'screener.js'); // 独立文件，与 data.js 隔离，防早报/晚报整体重写覆盖
 const EM = 'https://push2delay.eastmoney.com';
+// 交易日判定口径与 health_check.js / verify.js 一致，收敛到 tools/lib/gap_check.js。
+// ⚠️ config/trade_holidays.json 结构是 { note, years: { "2026": [...] } }，必须取 .years[年份]（规则 16c）。
+const gapCheck = require('./lib/gap_check');
+const HOLIDAY_YEARS = (function () {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {};
+  } catch (e) {
+    return {};   // 读不到时退化为「仅排除周末」，不阻断主流程
+  }
+})();
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
 const H = { 'User-Agent': UA, 'Referer': 'https://quote.eastmoney.com/' };
 
@@ -269,6 +285,21 @@ async function main() {
   console.log('▶ 量价选股开始 ' + fmtTime(now));
   const market = await fetchMarket();
   console.log('  全市场（沪深主板）：' + market.length + ' 只');
+
+  // 🔴 上游闸门（2026-09-21 补）：全市场 0 只必须区分「非交易日」与「数据源故障」。
+  //   旧行为把两者都当成「入选 0 只」原样写进看板 —— 线上会出现一期假的「0 只」，
+  //   而 stdout 与休市完全一致，事后极难判断到底是休市还是抓取失败。
+  //   2026-09-21 实测：push2 全系域名被持续重置时，正是这个假「0 只」被写进了 dashboard/screener.js。
+  if (!market.length) {
+    if (!gapCheck.isTradingDay(now, HOLIDAY_YEARS)) {
+      console.log('  ℹ ' + fmtDate(now) + ' 为非交易日（周末/节假日）→ 正常跳过，不写入、不发布。');
+      return;
+    }
+    throw abortSc('全市场 0 只，但 ' + fmtDate(now) + ' 是交易日 → 判定为数据源故障，' +
+      '不是「没有符合条件个股」。本次不写入、不覆盖任何历史期。' +
+      '排查：① 用同域对照确认 push2 系列域名是否可达（如 quote.eastmoney.com 应正常）；' +
+      '② 用沙箱外进程（如 PowerShell）交叉验证，排除 agent 工具沙箱出网限制。');
+  }
 
   const base = market.filter(passBase);
   console.log('  ① 基础条件命中：' + base.length + ' 只');
