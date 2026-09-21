@@ -304,6 +304,15 @@ fi
 ENV_FILE="${ASTOCK_ENV:-$HOME/.astock.env}"
 if [ -f "$ENV_FILE" ]; then
   ok "环境变量文件 $ENV_FILE 存在"
+
+  # 先拦「占位符没替换」：若把 `<你的 key>` 原样写进文件，source 会报
+  # `syntax error near unexpected token 'newline'`（`<` `>` 是重定向符号），
+  # 报错信息完全看不出是「忘了填 key」。2026-09-21 实测踩到，故单独拦一道。
+  if grep -qE '^[A-Za-z_]+=.*[<>]' "$ENV_FILE"; then
+    bad "环境变量文件里仍有 <...> 占位符未替换 → source 必然失败"
+    warn "把占位符换成真实值；用 read 交互输入可避免（见文末「还需手工完成」）"
+  fi
+
   # shellcheck disable=SC1090
   set -a; . "$ENV_FILE"; set +a
   if [ -n "${LLM_API_KEY:-}" ]; then
@@ -327,19 +336,24 @@ fi
 cat <<'EOF'
 
   1) 配置凭据（智谱 BigModel）
+
+     ⚠️ **不要把 key 写进「粘贴块」**：模板里若留 `<你的 key>` 这类占位符，用户照贴会把
+        尖括号一起落盘，而 `<` `>` 在 shell 里是重定向符号 → source 时报
+        `syntax error near unexpected token 'newline'`（2026-09-21 实测踩到）。
+        正确做法是先写固定项，再用 read 交互输入 key：
+
        umask 077
        cat > ~/.astock.env <<'ENV'
-LLM_API_KEY=<智谱 key，形如 id.secret>
 LLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
 LLM_TEXT_MODEL=glm-4.7-flash
 LLM_THINKING=disabled
 LLM_VISION_MODEL=glm-4.6v-flashx
 PYTHON_BIN=python3
 ENV
-       # ⚠️ heredoc 的结束标记 ENV 必须顶格，否则内容会一直读到文件末尾
-       # 说明：glm-4.7-flash 是「思考模型」，不关思考则 content 恒为空 → 必须 LLM_THINKING=disabled
-       #       视觉用付费档 glm-4.6v-flashx：免费档实测持续 429，晚报 10~25 次请求根本跑不完
-       #       全天成本约 ¥0.01
+       # 结束标记 ENV 必须顶格；粘贴完按回车再 Ctrl+D
+       read -rp '粘贴智谱 API Key 后回车: ' K && printf 'LLM_API_KEY=%s\n' "$K" >> ~/.astock.env
+       # LLM_THINKING=disabled 不能漏：glm-4.7-flash 是「思考模型」，不关思考 content 恒为空
+       # 视觉用付费档 glm-4.6v-flashx：免费档实测持续 429，晚报 10~25 次请求跑不完，全天约 ¥0.01
        # 再把 GitHub PAT 写到仓库根（不要提交）
        echo 'github_pat_xxx' > .gh-token && chmod 600 .gh-token
 
