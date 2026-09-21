@@ -270,9 +270,22 @@ else
   if [ ! -f "$HOOK_SRC" ]; then
     bad "缺少钩子源文件 $HOOK_SRC"
   else
-    cp "$HOOK_SRC" "$HOOK_DST"
-    chmod +x "$HOOK_DST"
-    ok "已安装 post-commit 钩子（本地提交 → 自动推送 GitHub 的唯一通道）"
+    # ⚠️ 必须检查安装结果：这是「本地提交自动上云」的唯一通道，装失败 = 数据永远停在服务器，
+    #    而旧写法无论成败都打印「已安装」→ 又一处静默故障。
+    #    另外 cp 带 -f：阿里云 Linux 对 root 有 `alias cp='cp -i'`，脚本虽是非交互 shell
+    #    不展开 alias，但 -f 能顺带处理目标已存在/不可写的情况。
+    if cp -f "$HOOK_SRC" "$HOOK_DST" && chmod +x "$HOOK_DST" && [ -x "$HOOK_DST" ]; then
+      ok "已安装 post-commit 钩子（本地提交 → 自动推送 GitHub 的唯一通道）"
+      # 自检：钩子里不得存在「未加兜底的 pwd -W」—— Linux 上会让 WIN_ROOT 变空串，
+      # 于是去执行 /tools/gh_push_api.js（不存在）→ 推送永远失败**且不报错**（静默故障）。
+      if grep -v '^[[:space:]]*#' "$HOOK_DST" | grep 'pwd -W' | grep -qv '||'; then
+        bad "钩子里有未加兜底的 pwd -W → Linux 上推送会静默失败，请更新 tools/git-hooks/post-commit"
+      else
+        ok "钩子自检：pwd -W 均已兜底（或未使用）"
+      fi
+    else
+      bad "post-commit 钩子安装失败 → 本地提交不会自动上云，数据只留在服务器"
+    fi
   fi
 fi
 
