@@ -131,30 +131,37 @@ else
     dnf -y module install nodejs:22 >/dev/null 2>&1 || true
   fi
 
-  # ② 官方 tarball 走阿里云镜像
+  # ② 官方 tarball：按镜像逐个试（下列地址均已实测可下载）
+  #    ⚠️ 必须用**显式版本路径** `v<版本>/`：
+  #       · 阿里云镜像上 `latest-v22.x/` 返回 **404**（2026-09-21 实测），
+  #         曾据此写出「从索引解析最新版」的逻辑，结果 URL 拼成 latest-v22.x/<文件> 直接 404。
+  #       · 清华 tuna 的目录结构不同（同样 404），不要加进来。
   if ! node_ok22; then
-    MIRROR="https://mirrors.aliyun.com/nodejs-release"
-    REL="$(curl -fsSL -m 25 "$MIRROR/latest-v22.x/" 2>/dev/null \
-           | grep -oE 'node-v22\.[0-9]+\.[0-9]+-linux-x64\.tar\.xz' | head -1)"
-    # 镜像索引取不到时用固定版本（与开发机同版本，便于行为一致）
-    [ -n "$REL" ] || REL="node-v22.22.2-linux-x64.tar.xz"
-    echo "  · 尝试阿里云镜像 tarball：$REL"
-    if curl -fsS -m 300 "$MIRROR/latest-v22.x/$REL" -o "/tmp/$REL"; then
-      SZ="$(stat -c %s "/tmp/$REL" 2>/dev/null || echo 0)"
-      if [ "${SZ:-0}" -gt 1000000 ]; then
-        mkdir -p /usr/local/lib
-        NODEDIR="${REL%.tar.xz}"
-        if tar -xJf "/tmp/$REL" -C /usr/local/lib; then
-          for b in node npm npx; do
-            [ -x "/usr/local/lib/$NODEDIR/bin/$b" ] && \
-              ln -sf "/usr/local/lib/$NODEDIR/bin/$b" "/usr/local/bin/$b"
-          done
-        fi
-      else
-        warn "下载不完整（${SZ} 字节）→ 换下一种方式"
+    NODE_VER="22.22.2"
+    NODE_FILE="node-v$NODE_VER-linux-x64.tar.xz"
+    NODE_DIR="${NODE_FILE%.tar.xz}"
+    for M in \
+      "https://cdn.npmmirror.com/binaries/node" \
+      "https://mirrors.aliyun.com/nodejs-release" \
+      "https://mirrors.huaweicloud.com/nodejs" \
+      "https://nodejs.org/dist" ; do
+      node_ok22 && break
+      echo "  · 尝试 $M/v$NODE_VER/$NODE_FILE"
+      curl -fsS -m 300 -L "$M/v$NODE_VER/$NODE_FILE" -o "/tmp/$NODE_FILE" || { warn "该镜像不可用 → 换下一个"; continue; }
+      SZ="$(stat -c %s "/tmp/$NODE_FILE" 2>/dev/null || echo 0)"
+      if [ "${SZ:-0}" -lt 1000000 ]; then
+        warn "下载不完整（${SZ} 字节）→ 换下一个镜像"
+        rm -f "/tmp/$NODE_FILE"
+        continue
       fi
-      rm -f "/tmp/$REL"
-    fi
+      if mkdir -p /usr/local/lib && tar -xJf "/tmp/$NODE_FILE" -C /usr/local/lib; then
+        for b in node npm npx; do
+          [ -x "/usr/local/lib/$NODE_DIR/bin/$b" ] && \
+            ln -sf "/usr/local/lib/$NODE_DIR/bin/$b" "/usr/local/bin/$b"
+        done
+      fi
+      rm -f "/tmp/$NODE_FILE"
+    done
   fi
 
   # ③ 保底：nodesource（国内可能很慢）
