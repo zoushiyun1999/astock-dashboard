@@ -276,6 +276,25 @@ docs/              方案与说明文档
     `dns.setDefaultResultOrder('ipv4first')` 误判为故障的修复（随后 IPv4 路径同样被重置）。
     判据必须看**持续成功率**（如每 10s × 15 次），而不是单次结果。
 
+35. 🔴 **shell 脚本必须同时能在 Windows(Git Bash) 与 Linux(ECS) 上跑**。项目已从
+    「只在 Windows 本机」变成「本机 + 阿里云 ECS」双端，任何 MSYS / Windows 专有构造
+    在 Linux 上都会失败。**2026-09-21 部署 ECS 时一次性踩到三个**：
+    - **`pwd -W`**（MSYS 专有）。`publish.sh` 开头有 `set -e` → 命令替换失败会让脚本
+      **在该行整体退出（rc=2）**，后面 100 多行（含 git 提交与推送）**一行都不执行**；
+      `post-commit` 没有 `set -e` 所以不崩，但变量变成**空串** → 去执行 `/tools/gh_push_api.js`
+      → **钩子永远推送失败且不报错**（只打印一句「同步失败」），是最危险的静默故障。
+      统一写法：`X="$(cd "$D" && pwd -W 2>/dev/null || printf '%s' "$D")"`。
+      ⚠️ `bump_version.sh` 早有这个兜底，注释还写明「ubuntu runner 上会失败」——
+      **修了一个地方、漏了另外两个**：改这类构造时务必全仓库 grep 一遍。
+    - **`tasklist`**（Windows 专有）。`publish.sh` 用它统计活跃 git 进程，Linux 上命令不存在 →
+      计数**恒为 0** → 退化成「只要有 `index.lock` 就无条件删除」，可能删掉正在进行的
+      git 操作的锁。改为 `pgrep -c -x git` 优先、`tasklist` 兜底。
+    - **硬编码 `/c/Users/…node.exe`**：均带 `[ -x "$p" ] || NODE_BIN="node"` 兜底，
+      新脚本必须照抄这个模式（服务器上 `node` 在 PATH 里，见 `cron.sh` 的 PATH 补全）。
+    **验证手法**：`enable -n pwd` 禁掉内建 + 往 PATH 前面放一个拒绝 `-W` 的假 `pwd`，
+    即可在本机真实模拟 Linux（只改 PATH **遮不住** bash 内建 `pwd`，必须 `enable -n`）。
+    断言要带对照组（「修复前的写法必须 rc=2」），否则无法证明模拟真的生效。
+
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 
 ```
