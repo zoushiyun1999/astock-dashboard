@@ -21,6 +21,9 @@ tools/git-hooks/* text eol=lf
 *.css           text eol=lf
 *.svg           text eol=lf
 
+# Python 脚本同样带 shebang，CRLF 会让 Linux 报 `bad interpreter: python3^M`
+*.py            text eol=lf
+
 # Windows 批处理必须 CRLF
 *.bat           text eol=crlf
 *.cmd           text eol=crlf

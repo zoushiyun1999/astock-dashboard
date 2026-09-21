@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+# tools/deploy_ecs.sh —— ECS 环境初始化（幂等，可重复执行）
+#
+# 在**服务器上**执行。前置：仓库已经在服务器上（git clone，或本机打包上传后解压）。
+#
+#   cd /opt/astock && sudo bash tools/deploy_ecs.sh
+#
+# 它做四件事：
+#   ① 时区设为 Asia/Shanghai —— 定时任务的前提。时区错了不会报错，
+#      只会把数据写到错误的日期，症状隐蔽、排查成本高。
+#   ② 安装运行时：Node 22、Python 3 + Pillow（长图切片必需）、git、curl、flock。
+#   ③ 安装 git post-commit 钩子 —— 本地提交自动上云的唯一通道（AGENTS 规则 10）。
+#   ④ 自检并打印还缺什么。
+#
+# **不做**的三件事（涉及凭据与调度，必须手工确认）：
+#   · 不写 LLM_API_KEY（见 docs/上云部署方案.md 的环境变量清单）
+#   · 不写 .gh-token（GitHub PAT）
+#   · 不改 crontab（脚本末尾会把该贴的内容打印出来）
+#
+# 退出码：0 全部就绪；1 有步骤失败（会打印具体哪一步）。
+
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT" || exit 1
+
+FAIL=0
+say()  { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
+ok()   { printf '  \033[32m✔\033[0m %s\n' "$*"; }
+bad()  { printf '  \033[31m✘\033[0m %s\n' "$*"; FAIL=1; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
+
+# ── 权限 ──
+if [ "$(id -u)" -ne 0 ]; then
+  bad "需要 root。请用：sudo bash tools/deploy_ecs.sh"
+  exit 1
+fi
+
+# ── 包管理器探测 ──
+if command -v dnf >/dev/null 2>&1; then
+  PKG=dnf
+elif command -v yum >/dev/null 2>&1; then
+  PKG=yum
+elif command -v apt-get >/dev/null 2>&1; then
+  PKG=apt
+else
+  bad "未识别的包管理器（既无 dnf/yum 也无 apt-get）"
+  exit 1
+fi
+ok "包管理器：$PKG"
+
+pkg_install() {
+  case "$PKG" in
+    dnf) dnf install -y "$@" ;;
+    yum) yum install -y "$@" ;;
+    apt) DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" ;;
+  esac
+}
+
+# ── ① 时区 ──
+say "① 时区"
+if command -v timedatectl >/dev/null 2>&1; then
+  CURRENT_TZ="$(timedatectl show -p Timezone --value 2>/dev/null || echo '')"
+  if [ "$CURRENT_TZ" = "Asia/Shanghai" ]; then
+    ok "已为 Asia/Shanghai"
+  else
+    timedatectl set-timezone Asia/Shanghai && ok "已设为 Asia/Shanghai（原：${CURRENT_TZ:-未知}）"
+  fi
+else
+  ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone \
+    && ok "已通过 /etc/localtime 设为 Asia/Shanghai"
+fi
+
+OFFSET="$(date '+%z')"
+if [ "$OFFSET" = "+0800" ]; then
+  ok "当前偏移 $OFFSET"
+else
+  bad "时区偏移仍为 $OFFSET（应为 +0800）→ 定时任务会写错日期，务必先解决"
+fi
+
+# ── ② 运行时 ──
+say "② 基础依赖"
+for c in git curl; do
+  if command -v "$c" >/dev/null 2>&1; then ok "$c 已存在"; else
+    pkg_install "$c" && ok "$c 安装完成" || bad "$c 安装失败"
+  fi
+done
+
+if command -v flock >/dev/null 2>&1; then
+  ok "flock 已存在（tools/cron.sh 的并发互斥依赖它）"
+else
+  case "$PKG" in
+    apt) pkg_install util-linux ;;
+    *)   pkg_install util-linux ;;
+  esac
+  command -v flock >/dev/null 2>&1 && ok "flock 安装完成" || bad "flock 安装失败"
+fi
+
+say "③ Node 22"
+NODE_MAJOR=0
+if command -v node >/dev/null 2>&1; then
+  NODE_MAJOR="$(node -v 2>/dev/null | sed 's/^v\([0-9]*\).*/\1/')"
+fi
+if [ "${NODE_MAJOR:-0}" -ge 22 ] 2>/dev/null; then
+  ok "已装 node $(node -v)"
+else
+  if [ "$NODE_MAJOR" != "0" ]; then
+    warn "现有 node 版本为 v$NODE_MAJOR，低于 22（本项目的 job_*.js 依赖全局 fetch）→ 尝试升级"
+  fi
+  case "$PKG" in
+    apt) curl -fsSL https://deb.nodesource.com/setup_22.x | bash - ;;
+    *)   curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - ;;
+  esac
+  pkg_install nodejs
+  if command -v node >/dev/null 2>&1; then
+    NODE_MAJOR="$(node -v | sed 's/^v\([0-9]*\).*/\1/')"
+    [ "${NODE_MAJOR:-0}" -ge 22 ] 2>/dev/null && ok "node $(node -v)" || bad "node 版本仍偏低：$(node -v)"
+  else
+    bad "node 安装失败"
+  fi
+fi
+
+say "④ Python + Pillow（长图切片用）"
+PY=""
+for c in python3 python; do
+  command -v "$c" >/dev/null 2>&1 && { PY="$c"; break; }
+done
+if [ -z "$PY" ]; then
+  case "$PKG" in
+    apt) pkg_install python3 python3-pip ;;
+    *)   pkg_install python3 python3-pip ;;
+  esac
+  command -v python3 >/dev/null 2>&1 && PY=python3
+fi
+if [ -n "$PY" ]; then
+  ok "$PY $("$PY" --version 2>&1)"
+  if "$PY" -c "import PIL" >/dev/null 2>&1; then
+    ok "Pillow 已安装"
+  else
+    "$PY" -m pip install --quiet Pillow && ok "Pillow 安装完成" || bad "Pillow 安装失败（长图切片会不可用）"
+  fi
+  # 若解释器名不是 python3，告知调用方如何指定
+  if [ "$PY" != "python3" ]; then
+    warn "Python 命令名是 $PY；请在 ~/.astock.env 里加：PYTHON_BIN=$PY"
+  fi
+else
+  bad "未找到 python3"
+fi
+
+# ── ⑤ git 钩子 ──
+say "⑤ git post-commit 钩子（本地提交自动上云的唯一通道）"
+if [ ! -d "$ROOT/.git" ]; then
+  bad "当前目录不是 git 仓库（$ROOT/.git 不存在）"
+else
+  HOOK_SRC="$ROOT/tools/git-hooks/post-commit"
+  HOOK_DST="$ROOT/.git/hooks/post-commit"
+  if [ ! -f "$HOOK_SRC" ]; then
+    bad "缺少钩子源文件 $HOOK_SRC"
+  else
+    cp "$HOOK_SRC" "$HOOK_DST"
+    chmod +x "$HOOK_DST"
+    ok "已安装 $HOOK_DST"
+  fi
+fi
+
+# ── ⑥ 自检 ──
+say "⑥ 自检"
+[ -f "$ROOT/dashboard/data.js" ] && ok "dashboard/data.js 存在" || bad "dashboard/data.js 缺失"
+[ -f "$ROOT/config/site.json" ] && ok "config/site.json 存在" || bad "config/site.json 缺失"
+[ -f "$ROOT/config/trade_holidays.json" ] && ok "config/trade_holidays.json 存在" || bad "缺失休市日配置"
+
+if [ -f "$ROOT/.gh-token" ]; then
+  ok ".gh-token 已存在（注意：需 Contents: RW + Workflows: RW 两个权限）"
+else
+  warn ".gh-token 缺失 → publish.sh 会降级为「仅本地提交」，数据不上云"
+fi
+
+ENV_FILE="${ASTOCK_ENV:-$HOME/.astock.env}"
+if [ -f "$ENV_FILE" ]; then
+  ok "环境变量文件 $ENV_FILE 存在"
+  # shellcheck disable=SC1090
+  set -a; . "$ENV_FILE"; set +a
+  if [ -n "${LLM_API_KEY:-}" ]; then
+    ok "LLM_API_KEY 已配置（长 ${#LLM_API_KEY}）"
+  else
+    bad "LLM_API_KEY 未配置 → job_morning / job_evening 无法运行"
+  fi
+  echo "     LLM_BASE_URL     = ${LLM_BASE_URL:-（默认 dashscope 兼容模式）}"
+  echo "     LLM_TEXT_MODEL   = ${LLM_TEXT_MODEL:-（默认 qwen-plus）}"
+  echo "     LLM_VISION_MODEL = ${LLM_VISION_MODEL:-（默认 qwen-vl-max）}"
+else
+  warn "环境变量文件 $ENV_FILE 不存在（job_morning / job_evening 会因缺 key 退出）"
+fi
+
+echo ""
+if [ "$FAIL" -eq 0 ]; then
+  printf '\033[32m环境就绪。\033[0m 接下来手工做两件事：\n'
+else
+  printf '\033[31m有步骤失败\033[0m（见上方 ✘ 项）。修复后重新运行本脚本即可（幂等）。\n\n还需手工完成：\n'
+fi
+cat <<'EOF'
+
+  1) 配置凭据（智谱 BigModel：文本与视觉各有一个永久免费模型）
+       umask 077
+       cat > ~/.astock.env <<'ENV'
+LLM_API_KEY=<智谱 key，形如 id.secret>
+LLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
+LLM_TEXT_MODEL=glm-4.7-flash
+LLM_VISION_MODEL=glm-4.6v-flash
+ENV
+       # ⚠️ heredoc 的结束标记 ENV 必须顶格，否则内容会一直读到文件末尾
+       # 再把 GitHub PAT 写到仓库根（不要提交）
+       echo 'github_pat_xxx' > .gh-token && chmod 600 .gh-token
+
+  2) 装 crontab
+       crontab -e    # 粘贴：
+       0  7  * * *    cd REPO && bash tools/cron.sh health    >> logs/cron.log 2>&1
+       30 8  * * *    cd REPO && bash tools/cron.sh morning   >> logs/cron.log 2>&1
+       10 15 * * 1-5  cd REPO && bash tools/cron.sh screener  >> logs/cron.log 2>&1
+       0  21 * * *    cd REPO && bash tools/cron.sh evening   >> logs/cron.log 2>&1
+       30 21 * * 1-5  cd REPO && bash tools/cron.sh verify    >> logs/cron.log 2>&1
+       （把 REPO 换成实际路径）
+
+  3) 手工验收（不要等定时触发，先手动跑一遍）
+       node tools/lib/llm.js --check      # 配置自检，缺 key 退 1
+       node tools/lib/llm.js --ping       # 真实调用一次，验证鉴权
+       node tools/job_morning.js --dry    # 只抓取+提炼，不写盘
+       node tools/job_evening.js --dry    # 同上（晚报会真的下载并读图）
+
+EOF
+exit "$FAIL"
