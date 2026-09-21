@@ -147,10 +147,25 @@ else
   bad "未找到 python3"
 fi
 
-# ── ⑤ git 钩子 ──
-say "⑤ git post-commit 钩子（本地提交自动上云的唯一通道）"
+# ── ⑤ git 身份 + 钩子 ──
+say "⑤ git 身份与钩子"
+if command -v git >/dev/null 2>&1; then
+  if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
+    git config --global user.name "astock-bot"
+    git config --global user.email "astock-bot@localhost"
+    ok "已设置 git 身份 astock-bot@localhost（没有它 publish.sh 的 commit 会失败）"
+  else
+    ok "git 身份已配置：$(git config --global user.name) <$(git config --global user.email)>"
+  fi
+  # 服务器上不做换行符转换，一切交给仓库的 .gitattributes（否则脚本可能被写成 CRLF）
+  git config --global core.autocrlf input
+  ok "core.autocrlf=input"
+else
+  bad "git 不可用，跳过身份配置"
+fi
+
 if [ ! -d "$ROOT/.git" ]; then
-  bad "当前目录不是 git 仓库（$ROOT/.git 不存在）"
+  bad "当前目录不是 git 仓库（$ROOT/.git 不存在）→ 无法安装钩子"
 else
   HOOK_SRC="$ROOT/tools/git-hooks/post-commit"
   HOOK_DST="$ROOT/.git/hooks/post-commit"
@@ -159,7 +174,7 @@ else
   else
     cp "$HOOK_SRC" "$HOOK_DST"
     chmod +x "$HOOK_DST"
-    ok "已安装 $HOOK_DST"
+    ok "已安装 post-commit 钩子（本地提交 → 自动推送 GitHub 的唯一通道）"
   fi
 fi
 
