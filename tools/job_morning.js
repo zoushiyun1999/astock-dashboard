@@ -161,14 +161,18 @@ function shapeMorning(c, today, now, url) {
       //    缺失会导致 dashboard/js/app.js 判「早报未生成」，且 health_check.js 报警。
       generatedAt: now,
       sections: {
-        '要闻简讯': Array.isArray(s['要闻简讯']) ? s['要闻简讯'].map(String) : [],
+        // 同样加硬上限：模型在长文里倾向"全列"（实测出现过 36 条，建议区间 5–12）。
+        '要闻简讯': (Array.isArray(s['要闻简讯']) ? s['要闻简讯'] : []).slice(0, 12).map(String),
         '盘前人气股': {
           '韭研公社': String(renqi['韭研公社'] || ''),
           '同花顺': String(renqi['同花顺'] || ''),
           '东方财富': String(renqi['东方财富'] || ''),
           '淘股吧': String(renqi['淘股吧'] || ''),
         },
-        '重点公告': Array.isArray(s['重点公告']) ? s['重点公告'].map(String) : [],
+        // 硬上限 15 条：prompt 已要求最多 12 条，但仍可能被模型无视
+        //（实测 glm-4.7-flash 在长文里会倾向全列，出现过 51 条）。
+        // 模型已按重要性排序，截尾不会丢最重要的条目。
+        '重点公告': (Array.isArray(s['重点公告']) ? s['重点公告'] : []).slice(0, 15).map(String),
         '今日新股': String(s['今日新股'] || ''),
       },
       '今日关注': (Array.isArray(c['今日关注']) ? c['今日关注'] : []).map(function (p) {
@@ -278,14 +282,15 @@ async function main() {
       '要闻 ' + payload.morning.sections['要闻简讯'].length + ' 条，' +
       '公告 ' + payload.morning.sections['重点公告'].length + ' 条');
 
-    if (args.dry) {
-      console.log('· --dry：已写出 ' + path.basename(jsonFile) + '，不再写盘/发布');
-      return 0;
+    /* ⑦ merge_report（--dry 时也走一遍校验，只加 --dry 不落盘 —— 否则 --dry 属于假验证） */
+    const mrArgs = ['tools/merge_report.js', '--kind', 'morning', '--in', jsonFile];
+    if (args.dry) mrArgs.push('--dry');
+    const mr = run('node', mrArgs);
+    if (mr.code === 0) {
+      lastErr = '';
+      if (args.dry) console.log('· 结构校验通过（--dry 未写盘）');
+      break;
     }
-
-    /* ⑦ merge_report */
-    const mr = run('node', ['tools/merge_report.js', '--kind', 'morning', '--in', jsonFile]);
-    if (mr.code === 0) { lastErr = ''; break; }
 
     lastErr = (mr.stderr || mr.stdout).trim();
     if (mr.code === 3 && attempt === 0) {
@@ -305,6 +310,12 @@ async function main() {
     }
     console.error('✗ merge_report 失败（退出码 ' + mr.code + '）：' + lastErr);
     return 4;
+  }
+
+  if (!lastErr && args.dry) {
+    console.log('\n===== morning JSON 预览（--dry 不写盘）=====');
+    console.log(JSON.stringify(payload, null, 2).slice(0, 2500));
+    return 0;
   }
 
   if (lastErr) {
@@ -362,8 +373,10 @@ async function main() {
   return 0;
 }
 
-main().then(function (rc) { process.exit(rc); })
+// ⚠️ 不要用 process.exit()：会立即终止、不等 stdout flush，
+// Windows + undici 下实测触发 libuv 断言崩溃（退出码 3221226505）。改用 exitCode。
+main().then(function (rc) { process.exitCode = rc; })
   .catch(function (e) {
     console.error('✗ 未捕获异常：' + (e && e.stack ? e.stack : e));
-    process.exit(1);
+    process.exitCode = 1;
   });

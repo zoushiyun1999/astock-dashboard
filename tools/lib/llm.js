@@ -55,12 +55,28 @@ function cfg() {
     // 想换阿里云百炼只改环境变量即可（认证方式已自动适配，见 authHeader）。
     baseUrl: String(process.env.LLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4').replace(/\/+$/, ''),
     apiKey: String(process.env[KEY_ENV] || '').trim(),
+    // glm-4.7-flash 是「思考模型」：**必须同时关掉思考**（LLM_THINKING=disabled，已默认），
+    // 否则 message.content 恒为空、token 全被 reasoning 吃掉。
+    // 实测（2026-09-21）：关掉思考后，早报的 8 只个股代码与板块判断全部正确，
+    // 质量与线上人工产出基本一致；不关思考则完全不可用（content 恒空）。
     textModel: String(process.env.LLM_TEXT_MODEL || 'glm-4.7-flash').trim(),
-    visionModel: String(process.env.LLM_VISION_MODEL || 'glm-4.6v-flash').trim(),
+    // ⚠️ 不要用免费的 glm-4.6v-flash：实测（2026-09-21）免费档连发请求会被持久 429
+    //    （「该模型当前访问量过大」，连续 5 次、累计等 135s 才成功一次），
+    //    而晚报要发 10~25 次视觉请求，免费档根本跑不动。
+    //    改用 glm-4.6v-flashx（0.15 / 1.5 元每百万 token）→ 全天不到 5 分钱，且不限流。
+    visionModel: String(process.env.LLM_VISION_MODEL || 'glm-4.6v-flashx').trim(),
     timeoutMs: intEnv('LLM_TIMEOUT_MS', 180000),
-    maxRetry: intEnv('LLM_MAX_RETRY', 3),
+    maxRetry: intEnv('LLM_MAX_RETRY', 5),
     maxTokens: intEnv('LLM_MAX_TOKENS', 8192),
     jsonMode: String(process.env.LLM_JSON_MODE || '') === '1',
+    // 智谱「思考模型」（GLM-4.7 系列）默认把 token 花在 reasoning_content 上、
+    // 导致 message.content 为空。设成 disabled 显式关闭思考。
+    // ⚠️ 不支持该参数的模型不要设此变量，否则可能 400。
+    // 默认 disabled：默认文本模型 glm-4.7-flash 是思考模型，不关就拿不到正文。
+    // 若换成非思考模型（如 glm-4-flash），请显式设 LLM_THINKING='' 以免 400。
+    thinking: process.env.LLM_THINKING === ''
+      ? ''
+      : String(process.env.LLM_THINKING || 'disabled').trim(),
     verbose: String(process.env.LLM_VERBOSE || '') === '1',
   };
 }
@@ -202,6 +218,7 @@ async function chat(opts) {
   };
   if (typeof o.temperature === 'number') body.temperature = o.temperature;
   if (o.json && c.jsonMode) body.response_format = { type: 'json_object' };
+  if (c.thinking) body.thinking = { type: c.thinking };
 
   const maxRetry = o.maxRetry != null ? o.maxRetry : c.maxRetry;
   let lastErr = null;
@@ -211,7 +228,13 @@ async function chat(opts) {
     try {
       const res = await callOnce(c, body);
       const choice = (res.choices && res.choices[0]) || {};
-      const content = (choice.message && choice.message.content) || '';
+      const msgObj = choice.message || {};
+      let content = msgObj.content || '';
+      // 兜底：部分模型（智谱 GLM-4.7 系列等「思考模型」）正文可能落在 reasoning_content
+      // 而 content 为空。此处取 reasoning 兜底，避免把"能拿到内容"误判成"空返回"。
+      if (!content && msgObj.reasoning_content) {
+        content = String(msgObj.reasoning_content);
+      }
       const usage = res.usage || {};
       if (c.verbose || o.verbose) {
         console.log('  [llm] ' + body.model + ' ' + ((Date.now() - t0) / 1000).toFixed(1) + 's' +
@@ -221,11 +244,14 @@ async function chat(opts) {
       if (!content) {
         throw new Error('模型返回空内容（finish_reason=' + (choice.finish_reason || '?') + '）');
       }
-      return { text: content, model: body.model, usage: usage };
+      return { text: content, model: body.model, usage: usage, finishReason: choice.finish_reason || '' };
     } catch (e) {
       lastErr = e;
       if (i < maxRetry && retriable(e)) {
-        const wait = Math.min(30000, 2000 * Math.pow(2, i));
+        // 429 是免费档的常态（「该模型当前访问量过大」）。退避要比其他错误更长，
+        // 否则晚报要连发十几次请求时会被限流打穿。
+        const base = (e && e.status === 429) ? 5000 : 2000;
+        const wait = Math.min(60000, base * Math.pow(2, i));
         console.warn('  [llm] 第 ' + (i + 1) + ' 次失败：' + String(e.message).slice(0, 160) +
           ' → ' + (wait / 1000) + 's 后重试');
         await sleep(wait);
@@ -252,18 +278,52 @@ async function askJson(opts) {
   }
 }
 
-/** 从模型输出里尽力取出 JSON：原文 → ``` 围栏 → 首尾大括号截取。 */
+/**
+ * 修复模型常见的非法 JSON：**字符串值里出现裸换行 / 回车 / 制表符**。
+ *
+ * 为什么必须有：实测（2026-09-21）视觉模型转录长表格时，会在 `"content": "…"` 里直接
+ * 输出真实换行（而不是 `\n`），JSON.parse 直接失败。表面症状是「模型输出截断 / 格式错误」，
+ * 极易误判成 token 不够而去做无用的调参（本次就这样绕过一圈）。
+ * 做法：逐字符扫描，只在「字符串内部」把控制字符转成转义形式，字符串外原样保留。
+ */
+function sanitizeJsonText(s) {
+  let out = '';
+  let inStr = false;
+  let esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (esc) { out += ch; esc = false; continue; }
+    if (ch === '\\') { out += ch; esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; out += ch; continue; }
+    if (inStr && (ch === '\n' || ch === '\r' || ch === '\t')) {
+      out += (ch === '\n') ? '\\n' : (ch === '\r' ? '\\r' : '\\t');
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+/** 从模型输出里尽力取出 JSON：原文 → 剥 ``` 围栏 → 截取首尾大括号 → 修复裸换行后重试。 */
 function extractJson(text) {
   const s = String(text || '').trim();
-  const candidates = [s];
+  const raw = [s];
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) candidates.push(fence[1].trim());
+  if (fence) raw.push(fence[1].trim());
   const a = s.indexOf('{'), b = s.lastIndexOf('}');
-  if (a >= 0 && b > a) candidates.push(s.slice(a, b + 1));
-  for (let i = 0; i < candidates.length; i++) {
-    try { return JSON.parse(candidates[i]); } catch (e) { /* 试下一个 */ }
+  if (a >= 0 && b > a) raw.push(s.slice(a, b + 1));
+
+  const tried = [];
+  for (let i = 0; i < raw.length; i++) {
+    const cands = [raw[i], sanitizeJsonText(raw[i])];
+    for (let k = 0; k < cands.length; k++) {
+      if (tried.indexOf(cands[k]) >= 0) continue;
+      tried.push(cands[k]);
+      try { return JSON.parse(cands[k]); } catch (e) { /* 试下一个 */ }
+    }
   }
-  throw new Error('无法解析模型输出为 JSON。原始输出前 300 字：' + s.slice(0, 300));
+  throw new Error('无法解析模型输出为 JSON（已尝试：原文 / 剥围栏 / 截大括号 / 修复裸换行 共 ' +
+    tried.length + ' 种）。原始输出前 300 字：' + s.slice(0, 300));
 }
 
 /* ───────────────────────── CLI ───────────────────────── */

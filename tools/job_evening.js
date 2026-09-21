@@ -56,7 +56,12 @@ const BLOGS = [
   { key: 'xy', author: '行鱼复盘', blog: '563404' },
 ];
 
-const BATCH = 4;                 // 每批送入视觉模型的切片数
+// 每批送入视觉模型的切片数。
+// 实测（2026-09-21）：送 4 张 → 输出被截断、JSON 不闭合；降到 2 张**仍会截断**
+// （长表格在转录到 1564 token 处断开，而 max_tokens 已设 8192，说明是模型侧的输出上限）。
+// 故取 1 张/次。代价是调用次数 = 切片数（湖南人约 9 次、行鱼可达 60+ 次），
+// 但这是无人值守任务，多花十几分钟远好过整份晚报失败。
+const BATCH = 1;
 const NET_HINTS = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|ENOTFOUND|socket hang up|timeout|HTTP [45]\d\d/i;
 
 /* ───────────────────────── 基础设施 ───────────────────────── */
@@ -193,9 +198,16 @@ function fetchBlog(b, date, imgDir) {
   };
 }
 
+/** MSYS / Git-Bash 风格路径（/c/Users/…）→ Windows 风格（C:/Users/…）。
+ *  Node 的 spawn 不认前者，会直接报 ENOENT；Linux 上原样返回。 */
+function normalizeBin(p) {
+  const m = String(p).match(/^\/([a-zA-Z])\/(.*)$/);
+  return m ? (m[1].toUpperCase() + ':/' + m[2]) : p;
+}
+
 /** 调 slice_image.py 把图片目录切成适合视觉模型的片段。返回切片路径数组（保序）。 */
 function sliceImages(imgDir, sliceDir) {
-  const py = process.env.PYTHON_BIN || 'python3';
+  const py = normalizeBin(process.env.PYTHON_BIN || 'python3');
   const r = run(py, ['tools/slice_image.py', imgDir, sliceDir]);
   if (r.code !== 0) {
     throw new Error('切片失败（' + py + ' 退出码 ' + r.code + '）：' + (r.stderr || '').trim().slice(0, 400) +
@@ -209,26 +221,38 @@ function sliceImages(imgDir, sliceDir) {
   return { parts: parts, failed: (j.failed || []).length };
 }
 
-/** 分批送入视觉模型转录，返回拼接后的文本。 */
+/** 分批送入视觉模型转录，返回 { text, failures }。
+ *  ⚠️ 单批失败**不终止整份任务**：跳过后继续，最后汇报失败数。
+ *  （视觉模型偶发输出截断导致 JSON 不闭合；若直接抛错，整份晚报就没了 ——
+ *   部分内容远好过零产出。） */
 async function transcribe(date, author, parts) {
-  if (!parts.length) return '';
+  if (!parts.length) return { text: '', failures: 0 };
   const batches = [];
   for (let i = 0; i < parts.length; i += BATCH) batches.push(parts.slice(i, i + BATCH));
   const chunks = [];
+  let failures = 0;
   for (let i = 0; i < batches.length; i++) {
-    console.log('· 读图 ' + author + ' 第 ' + (i + 1) + '/' + batches.length + ' 批（' + batches[i].length + ' 张）…');
-    const r = await llm.askJson({
-      system: P.IMAGE_READ_SYSTEM,
-      user: P.imageReadUser(date, author, i, batches.length, batches[i]),
-      images: batches[i],
-      maxTokens: 4096,
-    });
-    const txt = (Array.isArray(r.blocks) ? r.blocks : []).map(function (b) {
-      return '【' + String(b.title || '未命名').trim() + '】\n' + String(b.content || '').trim();
-    }).join('\n');
-    if (txt.trim()) chunks.push(txt.trim());
+    const tag = '· 读图 ' + author + ' ' + (i + 1) + '/' + batches.length;
+    try {
+      const r = await llm.askJson({
+        system: P.IMAGE_READ_SYSTEM,
+        user: P.imageReadUser(date, author, i, batches.length, batches[i]),
+        images: batches[i],
+        maxTokens: 8192,
+      });
+      const txt = (Array.isArray(r.blocks) ? r.blocks : []).map(function (b) {
+        return '【' + String(b.title || '未命名').trim() + '】\n' + String(b.content || '').trim();
+      }).join('\n');
+      if (txt.trim()) chunks.push(txt.trim());
+    } catch (e) {
+      failures++;
+      console.warn(tag + ' 失败（跳过）：' + String(e.message).slice(0, 110));
+    }
   }
-  return chunks.join('\n\n');
+  if (failures) {
+    console.warn('⚠️ ' + author + '：' + failures + '/' + batches.length + ' 张转录失败，内容可能不完整');
+  }
+  return { text: chunks.join('\n\n'), failures: failures };
 }
 
 /* ───────────────────────── 主流程 ───────────────────────── */
@@ -324,21 +348,21 @@ async function main() {
       parts = parts.slice(0, keep);
     }
     totalSlices += parts.length;
-    const txt = await transcribe(today, f.author, parts);
+    const tr = await transcribe(today, f.author, parts);
     materials.push({
       author: f.author,
-      kind: '图片转录（' + parts.length + ' 张切片）',
-      text: txt || '（转录为空）',
+      kind: '图片转录（' + parts.length + ' 张切片' + (tr.failures ? '，失败 ' + tr.failures : '') + '）',
+      text: tr.text || '（转录为空）',
     });
   }
 
   if (args.dry) {
-    console.log('\n===== 转录结果预览（--dry，不写盘）=====');
+    console.log('\n===== 转录结果预览 =====');
     materials.forEach(function (m) {
       console.log('\n--- ' + m.author + ' [' + m.kind + '] ---');
-      console.log(m.text.slice(0, 1200) + (m.text.length > 1200 ? '\n…（截断）' : ''));
+      console.log(m.text.slice(0, 1500) + (m.text.length > 1500 ? '\n…（截断）' : ''));
     });
-    return 0;
+    console.log('\n===== 继续生成 evening 结构并走校验（--dry 不写盘）=====');
   }
 
   /* ⑦ 生成 evening JSON */
@@ -367,8 +391,20 @@ async function main() {
     const jsonFile = path.join(ROOT, 'tmp_evening_' + today + '.json');
     fs.writeFileSync(jsonFile, JSON.stringify(payload, null, 2), 'utf8');
 
-    const mr = run('node', ['tools/merge_report.js', '--kind', 'evening', '--in', jsonFile]);
-    if (mr.code === 0) { lastErr = ''; break; }
+    // --dry：仍然走一遍 merge_report 的结构校验（它自带 --dry），只是不落盘。
+    // 否则「产出能不能通过校验」这一环在 --dry 下永远是假验证。
+    const mrArgs = ['tools/merge_report.js', '--kind', 'evening', '--in', jsonFile];
+    if (args.dry) mrArgs.push('--dry');
+    const mr = run('node', mrArgs);
+    if (mr.code === 0) {
+      lastErr = '';
+      if (args.dry) {
+        console.log('· 结构校验通过（--dry 未写盘）：明日关注 ' +
+          payload.evening['明日关注'].length + ' 个 / 板块热点 ' +
+          payload.evening['板块热点'].length + ' 个');
+      }
+      break;
+    }
 
     lastErr = (mr.stderr || mr.stdout).trim();
     if (mr.code === 3 && attempt === 0) {
@@ -388,6 +424,12 @@ async function main() {
     }
     console.error('✗ merge_report 失败（退出码 ' + mr.code + '）：' + lastErr);
     return 4;
+  }
+
+  if (!lastErr && args.dry) {
+    console.log('\n===== evening JSON 预览（--dry 不写盘）=====');
+    console.log(JSON.stringify(payload, null, 2).slice(0, 2500));
+    return 0;
   }
 
   if (lastErr) {
@@ -442,8 +484,10 @@ async function main() {
   return 0;
 }
 
-main().then(function (rc) { process.exit(rc); })
+// ⚠️ 不要用 process.exit()：会立即终止、不等 stdout flush，
+// Windows + undici 下实测触发 libuv 断言崩溃（退出码 3221226505）。改用 exitCode。
+main().then(function (rc) { process.exitCode = rc; })
   .catch(function (e) {
     console.error('✗ 未捕获异常：' + (e && e.stack ? e.stack : e));
-    process.exit(1);
+    process.exitCode = 1;
   });

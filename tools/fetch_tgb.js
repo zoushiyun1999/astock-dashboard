@@ -256,8 +256,12 @@ async function main() {
   return 0;
 }
 
-main().then(function (rc) { process.exit(rc); })
+// ⚠️ 不要用 process.exit()：它立即终止进程、不等 stdout flush，
+// 在 Windows + undici 组合下实测会触发 libuv 断言崩溃
+// （Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)，退出码 3221226505）。
+// 改为设置 exitCode 让 Node 自行退出（keep-alive 连接约 4s 后回收）。
+main().then(function (rc) { process.exitCode = rc; })
   .catch(function (e) {
     console.error('✗ ' + (e && e.message ? e.message : e));
-    process.exit(1);
+    process.exitCode = 1;
   });
