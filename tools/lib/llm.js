@@ -188,6 +188,25 @@ function retriable(e) {
  *   maxRetry    {number}
  * @returns {Promise<{text:string, model:string, usage:object}>}
  */
+/**
+ * 发请求前先校验 key 的「形状」。
+ *
+ * 为什么需要：智谱的 key 是 `<32位id>.<16位secret>`（共 49 字符，**中间有一个点**）。
+ * 「只复制前半段」是最常见的失误（2026-09-21 在 ECS 上实测踩到：值长度 32、无点号），
+ * 而服务端返回的是 `401 {"code":"401","message":"令牌已过期或验证不正确"}` ——
+ * **文案极易被误判成「key 失效 / 需要充值」**，排查方向完全跑偏。
+ * 在这里拦下，直接告诉调用方「少粘了后半段」。
+ */
+function assertKeyShape(c) {
+  const k = String(c.apiKey || '');
+  if (!k) return;
+  if (!/bigmodel\.cn/i.test(c.baseUrl)) return;   // 非智谱端点不套用其格式
+  if (k.indexOf('.') >= 0) return;                // 已含点号 → 形状正确
+  throw new Error(KEY_ENV + ' 看起来不完整：智谱的 key 形如 <32位id>.<16位secret>' +
+    '（共 49 字符，中间有一个点），当前值不含「.」、长度为 ' + k.length + '。' +
+    '请到 open.bigmodel.cn 的 API Keys 页面复制**完整**密钥（不是单独的 Key ID）。');
+}
+
 async function chat(opts) {
   const o = opts || {};
   const c = cfg();
@@ -195,6 +214,7 @@ async function chat(opts) {
     throw new Error('缺少环境变量 ' + KEY_ENV + '。它必须由部署环境提供（见 docs/上云部署方案.md），' +
       '不得写进仓库；本模块不提供默认值，避免误用他人配额。');
   }
+  assertKeyShape(c);
 
   const images = Array.isArray(o.images) ? o.images : [];
   let userContent;
@@ -340,7 +360,16 @@ async function mainCli() {
     console.log('apiKey      = ' + (c.apiKey
       ? '已配置（' + c.apiKey.slice(0, 6) + '…，长 ' + c.apiKey.length + '）'
       : '✗ 未配置'));
-    process.exit(c.apiKey ? 0 : 1);
+    if (!c.apiKey) process.exit(1);
+    // 形状不对时立即给出可执行的提示，而不是等 API 返回 401（那个文案会误导排查方向）
+    try {
+      assertKeyShape(c);
+      console.log('key 形状    = ✔ 正常');
+    } catch (e) {
+      console.log('key 形状    = ✗ ' + (e && e.message ? e.message : e));
+      process.exit(1);
+    }
+    process.exit(0);
   }
 
   if (argv.includes('--ping')) {
