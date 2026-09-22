@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>热点板块 · A股速览</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="热点板块">
+<link rel="stylesheet" href="css/style.css?v=202609222018">
+<style>
+/* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ── */
+body { padding-bottom: 24px; }
+.sp-header { position: sticky; top: 0; z-index: 30; }
+.sp-headbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 6px 12px; min-height: 46px;
+}
+.sp-brand { display: flex; align-items: center; gap: 8px; }
+.sp-logo { font-size: 20px; line-height: 1; }
+.sp-title { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--ink); }
+.sp-date { text-align: right; }
+.sp-date b { font-size: var(--fs-base); color: var(--ink); display: block; line-height: 1.2; }
+.sp-date span { font-size: var(--fs-xs); color: var(--ink-2); }
+.sp-controls { display: flex; gap: 8px; padding: 0 12px 8px; align-items: center; }
+.sp-select {
+  flex: 1; min-width: 0; font-size: var(--fs-sm); color: var(--ink);
+  background: var(--bg-card, #fff); border: 1px solid var(--line, #ddd);
+  border-radius: var(--radius-md, 8px); padding: 7px 10px;
+  appearance: none; -webkit-appearance: none;
+}
+.sp-summary { padding: 0 12px 10px; font-size: var(--fs-xs); color: var(--ink-2); }
+.sp-main { padding: 0 12px; max-width: 640px; margin: 0 auto; }
+/* 强度行：style.css 的 .st 作用域在 .sc-head 下拿不到，用自有块级胶囊 */
+.sp-st {
+  display: inline-block; margin-top: 4px; font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  color: var(--risk-mid); background: var(--amber-soft); padding: 3px 8px;
+  border-radius: var(--radius-md, 8px); line-height: 1.5;
+}
+/* 连续上榜徽章 */
+.sp-streak {
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--amber-deep, #9a6b00);
+  background: var(--amber-soft); padding: 2px 8px; border-radius: var(--radius-pill, 99px);
+  white-space: nowrap;
+}
+.sp-streak.cold { color: var(--ink-2); background: var(--bg-soft, #f2f2f2); }
+/* 板块卡内个股换行（.stocks 原样式已够，这里只做序号着色提示） */
+.sp-heat5 { font-size: var(--fs-xs); color: var(--ink-2); padding: 2px 0 0; }
+.sp-empty {
+  padding: 28px 16px; text-align: center; color: var(--ink-2); font-size: var(--fs-sm);
+}
+.sp-empty b { display: block; font-size: var(--fs-base); color: var(--ink); margin-bottom: 6px; }
+.sp-foot { text-align: center; padding: 18px 0 6px; font-size: var(--fs-xs); }
+.sp-foot a { color: var(--ink-2); text-decoration: none; border-bottom: 1px dashed currentColor; }
+.sp-tip { padding: 10px 12px 0; font-size: var(--fs-xs); color: var(--ink-2); max-width: 640px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<header class="sp-header">
+  <div class="h-inner">
+    <div class="sp-headbar">
+      <div class="sp-brand">
+        <span class="sp-logo">🔥</span>
+        <span class="sp-title">热点板块</span>
+      </div>
+      <div class="sp-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
+    </div>
+    <div class="sp-controls">
+      <select class="sp-select" id="dateSel" aria-label="选择日期"></select>
+    </div>
+  </div>
+</header>
+
+<div class="sp-summary" id="spSummary"></div>
+<main class="sp-main" id="app"></main>
+<div class="sp-tip" id="spTip" hidden>「连续 N 期」按出现板块热点的期数连续计（中间缺晚报的日期自动跳过不断档）；徽标灰显 = 上榜不足 2 期。</div>
+<footer class="sp-foot"><a href="index.html">← 返回主看板</a></footer>
+
+<script>
+(function () {
+  'use strict';
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function weekOf(ds) {
+    var d = new Date(ds + 'T00:00:00');
+    return isNaN(d) ? '' : '周' + '日一二三四五六'.charAt(d.getDay());
+  }
+
+  function boot() {
+  var reports = (window.REPORTS && window.REPORTS.reports) || [];
+
+  // 只关心「有板块热点数据」的期：{ds, list, map}
+  var secDates = [];
+  // 全部期日期（用于无数据时给出准确原因）
+  var allDates = {};
+  reports.forEach(function (r) {
+    allDates[r.date] = r;
+    var list = r.evening && r.evening['板块热点'];
+    if (list && list.length) {
+      var map = {};
+      list.forEach(function (x) { if (x && x.name) map[x.name] = x; });
+      secDates.push({ ds: r.date, list: list, map: map });
+    }
+  });
+  // 升序排列（reports 本身 newest-at-bottom，但按 date 排序兜底）
+  secDates.sort(function (a, b) { return a.ds < b.ds ? -1 : 1; });
+
+  var sel = document.getElementById('dateSel');
+  var app = document.getElementById('app');
+  var hdDate = document.getElementById('hdDate');
+  var hdWeek = document.getElementById('hdWeek');
+  var summary = document.getElementById('spSummary');
+
+  // ── 日期下拉：有板块数据的期在前（标 ●），其余期在后，最新在前 ──
+  var options = [];
+  reports.slice().reverse().forEach(function (r) { options.push(r.date); });
+  Object.keys(allDates).forEach(function (ds) { if (options.indexOf(ds) < 0) options.push(ds); });
+  options.sort(function (a, b) { return a < b ? 1 : -1; });
+  var hasData = {};
+  secDates.forEach(function (x) { hasData[x.ds] = true; });
+  sel.innerHTML = options.map(function (ds) {
+    return '<option value="' + ds + '"' + (hasData[ds] ? '' : ' disabled') + '>' +
+      ds + ' ' + weekOf(ds) + (hasData[ds] ? '' : ' · 无晚报') + '</option>';
+  }).join('');
+  // 默认选中：最新一期有板块数据的日期；一个都没有 → 全部禁用
+  var def = secDates.length ? secDates[secDates.length - 1].ds : null;
+
+  function streakStats(name, p) {
+    // p = 所选日期在 secDates 中的下标。连续期数：中间「没有板块数据的期」被整体排除在
+    // secDates 之外（天然跳过、不断档），一旦某期有板块数据但没有该板块 → 断。
+    // last5 = 含本期在内最近 5 期板块数据中上榜次数。
+    var streak = 0, last5 = 0;
+    for (var j = p; j >= 0; j--) {
+      if (secDates[j].map[name]) {
+        streak++;
+        if (p - j < 5) last5++;
+      } else break;
+    }
+    return { streak: streak, last5: last5 };
+  }
+
+  function render(ds) {
+    hdDate.textContent = ds;
+    hdWeek.textContent = weekOf(ds);
+    var r = allDates[ds];
+
+    if (!r) {
+      summary.textContent = '';
+      app.innerHTML = '<div class="sp-empty"><b>' + esc(ds) + ' 无简报数据</b>休市日，或该日早报/晚报任务未运行（历史缺口）。</div>';
+      return;
+    }
+    var ev = r.evening;
+    if (!ev) {
+      summary.textContent = '';
+      app.innerHTML = '<div class="sp-empty"><b>' + esc(ds) + ' 晚报未产出</b>当日两位博主均未发帖，或晚报任务未运行 —— 没有板块热点可展示。</div>';
+      return;
+    }
+    var list = ev['板块热点'];
+    if (!list || !list.length) {
+      summary.textContent = '';
+      app.innerHTML = '<div class="sp-empty"><b>' + esc(ds) + ' 当期无板块热点</b>晚报已产出，但该期未提取到板块热点数据。</div>';
+      return;
+    }
+
+    var p = -1;
+    for (var i = 0; i < secDates.length; i++) if (secDates[i].ds === ds) { p = i; break; }
+
+    summary.textContent = '共 ' + list.length + ' 个板块 · 数据来自 ' + ds + ' 晚报（博主复盘提炼）';
+
+    app.innerHTML = '<div class="card"><h3 data-dot="rank3"><span class="dot"></span>板块热点（按强度排序）</h3>' +
+      list.map(function (x, i) {
+        var st = (p >= 0 && x.name) ? streakStats(x.name, p) : { streak: 1, last5: 1 };
+        var badge = st.streak >= 2
+          ? '<span class="sp-streak">🔥 连续 ' + st.streak + ' 期</span>'
+          : '<span class="sp-streak cold">新上榜</span>';
+        return '<div class="sector">' +
+          '<div class="sc-head"><span class="rank">' + (i + 1) + '</span>' +
+          '<span class="nm">' + esc(x.name) + '</span>' +
+          badge +
+          '</div>' +
+          (x.strength ? '<div><span class="sp-st">' + esc(x.strength) + '</span></div>' : '') +
+          (x.stocks ? '<div class="stocks">' + esc(x.stocks) + '</div>' : '') +
+          (x.catalyst ? '<div class="cat"><b>催化</b>' + esc(x.catalyst) + '</div>' : '') +
+          '<div class="sp-heat5">近 5 期上榜 ' + Math.max(st.last5, 1) + ' 次</div>' +
+          '</div>';
+      }).join('') + '</div>';
+  }
+
+  sel.addEventListener('change', function () { render(sel.value); });
+  if (def) { sel.value = def; render(def); document.getElementById('spTip').hidden = false; }
+  else {
+    sel.innerHTML = '<option>暂无任何晚报数据</option>';
+    sel.disabled = true;
+    app.innerHTML = '<div class="sp-empty"><b>还没有数据</b>等晚报任务（每天 21:00）产出后这里自动出现板块热点。</div>';
+  }
+  } // boot
+
+  // 数据动态加载：每次带时间戳请求 data.js，杜绝手机缓存旧数据
+  // （主看板靠 bump_version.sh 刷 ?v=，独立页没有这个流程，自管缓存最稳）
+  if (window.REPORTS) { boot(); }
+  else {
+    fetch('data.js?ts=' + Date.now())
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (t) { (new Function(t))(); boot(); })
+      .catch(function (e) {
+        document.getElementById('app').innerHTML =
+          '<div class="sp-empty"><b>数据加载失败</b>' + esc(e.message) + ' —— 请稍后刷新重试。</div>';
+      });
+  }
+})();
+</script>
+</body>
+</html>
