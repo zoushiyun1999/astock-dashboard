@@ -342,8 +342,20 @@ function extractJson(text) {
       try { return JSON.parse(cands[k]); } catch (e) { /* 试下一个 */ }
     }
   }
+  // 🔴 报错必须能区分「被截断」与「格式错误」—— 只看开头 300 字分辨不出来。
+  //    2026-09-21 就因为看不到尾部，把「JSON 字符串里的裸换行」误判成「输出被 token 截断」，
+  //    白白把批次从 4 调到 2 再到 1（无效改动，且让调用次数翻倍）。
+  //    故补充：总长度 + 花括号配对数 + 首尾各 200 字。花括号不配对 ≈ 被截断。
+  const head = s.slice(0, 200);
+  const tail = s.length > 200 ? s.slice(-200) : '';
+  const openBrace = (s.match(/\{/g) || []).length;
+  const closeBrace = (s.match(/\}/g) || []).length;
+  const verdict = openBrace > closeBrace
+    ? '花括号不配对 → **极可能是输出被截断**'
+    : '花括号配对 → 大概率是格式问题（非法字符 / 尾逗号等）';
   throw new Error('无法解析模型输出为 JSON（已尝试：原文 / 剥围栏 / 截大括号 / 修复裸换行 共 ' +
-    tried.length + ' 种）。原始输出前 300 字：' + s.slice(0, 300));
+    tried.length + ' 种）。长度 ' + s.length + ' 字符；{ =' + openBrace + '，} =' + closeBrace +
+    '；' + verdict + '。\n【开头】' + head + (tail ? '\n【结尾】' + tail : ''));
 }
 
 /* ───────────────────────── CLI ───────────────────────── */

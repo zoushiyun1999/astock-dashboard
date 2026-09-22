@@ -57,11 +57,15 @@ const BLOGS = [
 ];
 
 // 每批送入视觉模型的切片数。
-// 实测（2026-09-21）：送 4 张 → 输出被截断、JSON 不闭合；降到 2 张**仍会截断**
-// （长表格在转录到 1564 token 处断开，而 max_tokens 已设 8192，说明是模型侧的输出上限）。
-// 故取 1 张/次。代价是调用次数 = 切片数（湖南人约 9 次、行鱼可达 60+ 次），
-// 但这是无人值守任务，多花十几分钟远好过整份晚报失败。
-const BATCH = 1;
+// 🔴 变更史（2026-09-21 → 09-22）：
+//   起初送 4 张 → 报「无法解析模型输出为 JSON」，当时判为「输出被 token 截断」，
+//   于是 4 → 2 → 1 逐步下调。**但这个归因是错的**：真因是模型在 JSON 字符串值里
+//   输出了裸换行（已在 llm.js 的 sanitizeJsonText 修复）。
+//   证据：09-21 晚报在 BATCH=1（单张图）下**仍然**出现同样的解析失败 →
+//   说明截断与批次无关，而是「单张图内容过多」本身超过模型输出上限。
+//   结论：BATCH=1 是无效改动（既没解决问题，又把调用次数翻倍、耗时拉长），
+//   故调回 2。若后续仍见单张图失败，要修的是「那类图的切片粒度」而不是批次。
+const BATCH = 2;
 const NET_HINTS = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|ENOTFOUND|socket hang up|timeout|HTTP [45]\d\d/i;
 
 /* ───────────────────────── 基础设施 ───────────────────────── */
@@ -221,18 +225,22 @@ function sliceImages(imgDir, sliceDir) {
   return { parts: parts, failed: (j.failed || []).length };
 }
 
-/** 分批送入视觉模型转录，返回 { text, failures }。
- *  ⚠️ 单批失败**不终止整份任务**：跳过后继续，最后汇报失败数。
+/** 分批送入视觉模型转录，返回 { text, failures, failDetails }。
+ *  ⚠️ 单批失败**不终止整份任务**：跳过后继续，最后汇报失败数并落盘清单。
  *  （视觉模型偶发输出截断导致 JSON 不闭合；若直接抛错，整份晚报就没了 ——
- *   部分内容远好过零产出。） */
+ *   部分内容远好过零产出。）
+ *  🔴 `failDetails` 必须保留并向调用方返回：**失败只能从终端滚屏里找的话事后完全不可追溯**
+ *  （2026-09-21 实测——事后想定位是哪些图失败，已经找不回来了）。
+ *  tag 也带上切片文件名：只有序号同样无法回溯。 */
 async function transcribe(date, author, parts) {
-  if (!parts.length) return { text: '', failures: 0 };
+  if (!parts.length) return { text: '', failures: 0, failDetails: [] };
   const batches = [];
   for (let i = 0; i < parts.length; i += BATCH) batches.push(parts.slice(i, i + BATCH));
   const chunks = [];
-  let failures = 0;
+  const failDetails = [];
   for (let i = 0; i < batches.length; i++) {
-    const tag = '· 读图 ' + author + ' ' + (i + 1) + '/' + batches.length;
+    const names = batches[i].map(function (p) { return path.basename(p); }).join(' + ');
+    const tag = '· 读图 ' + author + ' ' + (i + 1) + '/' + batches.length + ' [' + names + ']';
     try {
       const r = await llm.askJson({
         system: P.IMAGE_READ_SYSTEM,
@@ -245,14 +253,21 @@ async function transcribe(date, author, parts) {
       }).join('\n');
       if (txt.trim()) chunks.push(txt.trim());
     } catch (e) {
-      failures++;
-      console.warn(tag + ' 失败（跳过）：' + String(e.message).slice(0, 110));
+      const msg = String(e && e.message ? e.message : e);
+      failDetails.push({
+        slices: batches[i].map(function (p) { return path.basename(p); }),
+        error: msg.slice(0, 400),
+      });
+      console.warn(tag + ' 失败（跳过）：' + msg.slice(0, 160));
     }
   }
-  if (failures) {
-    console.warn('⚠️ ' + author + '：' + failures + '/' + batches.length + ' 张转录失败，内容可能不完整');
+  if (failDetails.length) {
+    console.warn('⚠️ ' + author + '：' + failDetails.length + '/' + batches.length + ' 批转录失败，内容可能不完整');
+    failDetails.forEach(function (d) {
+      console.warn('   ✗ ' + d.slices.join(' + ') + ' → ' + d.error.slice(0, 130));
+    });
   }
-  return { text: chunks.join('\n\n'), failures: failures };
+  return { text: chunks.join('\n\n'), failures: failDetails.length, failDetails: failDetails };
 }
 
 /* ───────────────────────── 主流程 ───────────────────────── */
@@ -320,6 +335,7 @@ async function main() {
 
   /* ⑤⑥ 切片 + 读图 */
   const materials = [];
+  const allFails = [];          // 读图失败清单，最后落盘供事后追溯
   let totalSlices = 0;
   for (const f of active) {
     if (!f.images.length) {
@@ -349,11 +365,24 @@ async function main() {
     }
     totalSlices += parts.length;
     const tr = await transcribe(today, f.author, parts);
+    tr.failDetails.forEach(function (d) {
+      allFails.push({ author: f.author, slices: d.slices, error: d.error });
+    });
     materials.push({
       author: f.author,
       kind: '图片转录（' + parts.length + ' 张切片' + (tr.failures ? '，失败 ' + tr.failures : '') + '）',
       text: tr.text || '（转录为空）',
     });
+  }
+
+  // 读图失败清单落盘（tmp_ 前缀 → 已 gitignore，且 gh_push_api 的 SKIP_PATH 会跳过）
+  // 为什么必须落盘：失败只能从终端滚屏里找的话，事后完全不可追溯 —— 2026-09-21 实测过。
+  if (allFails.length) {
+    const fp = path.join(ROOT, 'tmp_evening_failures_' + today + '.json');
+    try {
+      fs.writeFileSync(fp, JSON.stringify(allFails, null, 2));
+      console.warn('⚠️ 读图共失败 ' + allFails.length + ' 批 → 清单已写入 ' + path.basename(fp));
+    } catch (e) { /* 落盘失败不阻塞主流程 */ }
   }
 
   if (args.dry) {
