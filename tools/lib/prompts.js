@@ -137,7 +137,7 @@ const EVENING_SHAPE = {
   明日关注: [{
     sector: '板块名', stage: '主升/分歧/退潮', why: '逻辑依据', chain: '产业链',
     picks: [{
-      name: '个股名', code: '', role: '龙头/跟风',
+      name: '个股名', code: '', role: '可跟/接力/观察（三选一）',
       status: '板数+位置+特征', reason: '一句话入选理由',
     }],
   }],

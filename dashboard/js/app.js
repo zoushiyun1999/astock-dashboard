@@ -469,6 +469,12 @@
     var cls = r > 0 ? 'v-up' : r < 0 ? 'v-down' : 'v-none';
     var txt = (r > 0 ? '+' : '') + r + '%';
     var html = '<span class="st-verify ' + cls + '">' + (r > 0 ? '✅' : r < 0 ? '❌' : '➖') + txt + '</span>';
+    // 高开惩罚警示（2026-09-22 统计：高开>5% 追入 n=17，胜率 35.3%，平均净 -3.40%）
+    if (typeof v.openPct === 'number' && isFinite(v.openPct) && v.openPct > 5) {
+      html += '<span class="st-verify v-warn" ' +
+        'title="历史统计：高开>5%的推荐按开盘买入，胜率仅35%、平均净亏3.4%（n=17）——不建议追">' +
+        '⚠️高开' + v.openPct + '%·勿追</span>';
+    }
     if (hasLive && typeof v.gain === 'number' && isFinite(v.gain)) {
       html += '<span class="st-verify v-old-note v-old">' + (v.gain > 0 ? '+' : '') + v.gain + '%</span>';
     }
@@ -484,6 +490,17 @@
       '</div></li>';
   }
 
+  /** 观察类判定（2026-09-22 v7）：role 含「观察」或最高板数 ≥5（多板数取最高，如
+   *  「2/17天9板」按 9 板计）→ 高位风向标/买不进的票，从可跟名单剥离、组尾灰显。 */
+  function isWatchPick(p) {
+    if (!p) return false;
+    if (p.role && /观察/.test(p.role)) return true;
+    var ms = ((p.status || '').match(/(\d+)\s*板/g) || []);
+    var mx = 0;
+    ms.forEach(function (m) { var n = +(m.match(/(\d+)/)[1]); if (n > mx) mx = n; });
+    return mx >= 5;
+  }
+
   function pickLi(x, i) {
     return '<li><span class="rank">' + (i + 1) + '</span><div class="body">' +
       '<div class="nm">' + esc(x.name) +
@@ -493,16 +510,33 @@
       '</div></li>';
   }
 
+  /** 观察股条目：无序号、灰显、固定「不参与」标签 */
+  function pickLiWatch(x) {
+    return '<li><span class="rank rank-gray">👁</span><div class="body">' +
+      '<div class="nm">' + esc(x.name) +
+      (x.role ? '<span class="tag tag-gray">' + esc(x.role) + '</span>' : '') +
+      '<span class="tag tag-gray">不参与</span>' +
+      stBadge(x.status) + verifyBadge(x.verify) + '</div>' +
+      (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
+      '</div></li>';
+  }
+
   function pickCard(g, gi) {
-    var picks = g.picks || [];
-    var lis = picks.length
-      ? '<ul class="watch">' + picks.map(pickLi).join('') + '</ul>'
-      : '<div class="pick-none">该板块明日不建议参与（见上方推导）</div>';
+    var all = g.picks || [];
+    var follow = [], watch = [];
+    all.forEach(function (p) { (isWatchPick(p) ? watch : follow).push(p); });
+    var lis = follow.length
+      ? '<ul class="watch">' + follow.map(pickLi).join('') + '</ul>'
+      : '<div class="pick-none">该板块无可跟标的（见上方推导）</div>';
+    if (watch.length) {
+      lis += '<div class="watch-sep">👁 观察 · 高位风向标，不参与（' + watch.length + '）</div>' +
+        '<ul class="watch watch-gray">' + watch.map(pickLiWatch).join('') + '</ul>';
+    }
     return '<div class="pick-card">' +
       '<div class="lg-head"><span class="pg-no">' + (gi + 1) + '</span>' +
       '<span class="lg-sector">' + esc(g.sector) + '</span>' +
       (g.stage ? '<span class="lg-stage">' + esc(g.stage) + '</span>' : '') +
-      '<span class="pg-count">' + picks.length + ' 只</span></div>' +
+      '<span class="pg-count">' + follow.length + ' 只' + (watch.length ? ' · 观察 ' + watch.length : '') + '</span></div>' +
       (g.why ? '<div class="lg-why"><b>为什么热：</b>' + esc(g.why) + '</div>' : '') +
       (g.chain ? '<div class="lg-chain"><b>博主思路：</b>' + esc(g.chain) + '</div>' : '') +
       '<div class="pick-list">' + lis + '</div>' +
@@ -533,7 +567,7 @@
     }
 
     html += renderHotRepeat();
-    html += '<div class="card tip"><span class="ico">📌</span><span>以上为博主看好个股提炼 + 当前状态标注，仅供盯盘参考，不构成投资建议。红色状态=高位风险，绿色=低位相对安全，灰色=需验证。✅/❌ 为推荐后实际表现（次日验证）。</span></div>';
+    html += '<div class="card tip"><span class="ico">📌</span><span>以上为博主看好个股提炼 + 当前状态标注，仅供盯盘参考，不构成投资建议。红色状态=高位风险，绿色=低位相对安全，灰色=需验证。✅/❌ 为推荐后实际表现（次日验证）；⚠️高开=次日开盘涨幅超5%（历史统计该类追入为负收益，勿追）。👁 观察区为高位风向标，仅跟踪板块高度，不参与。</span></div>';
     return html;
   }
 

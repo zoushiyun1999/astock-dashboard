@@ -542,6 +542,14 @@ body.scrolled header { padding-top: 8px; padding-bottom: 7px; }
 .st-verify.v-up { color: var(--up-ink); background: var(--up-soft); }
 .st-verify.v-down { color: var(--down-ink); background: var(--down-soft); }
 .st-verify.v-none { color: var(--risk-none); background: var(--risk-none-bg); font-weight: var(--fw-medium); }
+/* 高开惩罚警示（2026-09-22 v7）：高开>5% 追入历史为负 EV（n=17 胜率35% 净-3.4%） */
+.st-verify.v-warn { color: var(--amber); background: var(--amber-soft); }
+/* 观察股灰显区（高位风向标，不参与） */
+.watch-sep { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink-3);
+  border-top: 1px dashed var(--line); margin-top: 8px; padding: 8px 0 2px; }
+.watch-gray { opacity: .62; }
+.watch-gray .rank-gray { background: var(--line); color: var(--ink-3); }
+.watch .tag-gray { color: var(--ink-3); background: var(--risk-none-bg); }
 /* 旧口径（收盘涨跌幅，相对昨收）—— 弱化显示，避免被误读为实盘收益 */
 .st-verify .v-old { opacity: .65; font-weight: var(--fw-medium); margin-left: 3px; }
 /* v7 量价表「次日实盘」列：净收益芯片复用 st-verify 配色；未标列淡显示 */
