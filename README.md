@@ -112,17 +112,26 @@ dashboard/
 `cron.sh` 做三件事：**flock 互斥**（防并发覆盖 data.js）、**时区断言**（非 +0800 中止）、
 **任务前 `sync_from_api --apply` 全量预同步**（防落后侧把旧文件推回远端）。
 
-**本机 WorkBuddy 任务（备份 + 看门狗）**：
+**云端看门狗（2026-09-22 起，独立于 ECS 的第三方检测）**：
+
+- **GitHub Actions `watchdog.yml`**：每天北京时间 10:30 查早报、22:45 查晚报 —— 在 GitHub runner 上
+  抓取线上 `data.json`（`tools/watchdog_check.js`），交易日缺失则**开/评 GitHub issue 告警**，
+  数据恢复后自动关闭。退出码 0=正常/跳过（休市/已知缺口）、1=缺失（告警）、2=网络失败（不告警）。
+  ⚠️ 需在 GitHub Settings → Notifications 勾选 Issues 参与通知，否则告警只在仓库 Issues 页可见。
+- **ECS 幂等补跑**：crontab 另设 10:05 / 22:35 两条重试（`cron.sh` 的 flock + job 幂等守卫使其天然安全），
+  兜住「任务失败但服务器还在」的场景；服务器整体宕机则由 Actions 看门狗说话。
+
+**本机 WorkBuddy 任务（B 方案后全部停用，随时可一键恢复）**：
 
 | 任务名 | 运行时间 | 状态 |
 |---|---|---|
-| A股晚报-AI读图复盘+投资日历专版 | 每天 21:00 | ACTIVE（与 ECS 互为备份） |
-| A股量价选股 | 周一至周五 15:10 | ACTIVE |
-| A股早报补跑看门狗 | 每天 10:00 | ACTIVE（仅当日 morning 缺失时补跑） |
-| A股晚报补跑看门狗 | 每天 22:30 | ACTIVE（仅当日 evening 缺失时补跑） |
-| A股早报-开盘必读资讯 | 每天 08:30 | PAUSED（已由 ECS 接管） |
-| A股次日验证 | 周一至周五 21:30 | PAUSED（已由 ECS 接管） |
-| 数据健康体检 | 每天 07:00 | ACTIVE |
+| A股晚报-AI读图复盘+投资日历专版 | 每天 21:00 | PAUSED（ECS 接管） |
+| A股量价选股 | 周一至周五 15:10 | PAUSED（ECS 接管） |
+| A股早报-开盘必读资讯 | 每天 08:30 | PAUSED（ECS 接管） |
+| A股次日验证 | 周一至周五 21:30 | PAUSED（ECS 接管） |
+| A股早报补跑看门狗 | 每天 10:00 | PAUSED（由 Actions+ECS 重试替代） |
+| A股晚报补跑看门狗 | 每天 22:30 | PAUSED（由 Actions+ECS 重试替代） |
+| 数据健康体检 | 每天 07:00 | PAUSED（ECS health cron 接管） |
 
 > 双端写同一份远端仓库，靠「预同步 + 推送闸门」防互相覆盖；一端发布后另一端跑
 > `node tools/sync_from_api.js --apply` 即可对齐。

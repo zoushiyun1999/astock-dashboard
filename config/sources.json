@@ -9,48 +9,30 @@
   },
   "automations": [
     {
-      "name": "A股早报-开盘必读资讯",
-      "time": "08:30",
-      "rule": "FREQ=DAILY;BYHOUR=8;BYMINUTE=30",
+      "name": "ECS cron 全套（health/morning/screener/evening/verify）",
+      "time": "07:00 / 08:30 / 15:10 / 21:00 / 21:30",
       "status": "ACTIVE",
-      "writes": "reports[].morning"
+      "writes": "主产线；入口 tools/cron.sh",
+      "_note": "2026-09-22 B 方案起本机 automation 全部 PAUSED，调度单点在 ECS；另加 10:05/22:35 幂等补跑重试"
     },
     {
-      "name": "A股早报补跑看门狗",
-      "time": "10:00",
-      "rule": "FREQ=DAILY;BYHOUR=10;BYMINUTE=0",
+      "name": "云端看门狗（GitHub Actions watchdog.yml）",
+      "time": "北京时间 10:30 / 22:45",
       "status": "ACTIVE",
-      "writes": "仅在当日 morning 缺失时补跑"
+      "writes": "检测线上 data.json 当日 morning/evening；缺失开 GitHub issue 告警，恢复自动关",
+      "_note": "第三方仲裁，独立于 ECS 与本机；检测逻辑 tools/watchdog_check.js"
     },
     {
-      "name": "A股量价选股",
-      "time": "15:10",
-      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=15;BYMINUTE=10",
+      "name": "ECS 试用到期提醒",
+      "time": "2026-11-21 / 2026-12-14 10:00（一次性）",
       "status": "ACTIVE",
-      "writes": "dashboard/screener.js（独立文件；data.screener 已停写，前端走 window.SCREENER）",
-      "_note": "原为 14:30，2026-09-12 后移 —— 14:30 仍在盘中，行情未定，入选数会被系统性压低"
+      "writes": "决策提醒（购买 or 迁移），试用至 2026-12-21"
     },
     {
-      "name": "A股晚报-AI读图复盘+投资日历专版",
-      "time": "21:00",
-      "rule": "FREQ=DAILY;BYHOUR=21;BYMINUTE=0",
-      "status": "ACTIVE",
-      "writes": "reports[].evening + calendar"
-    },
-    {
-      "name": "A股次日验证",
-      "time": "21:30",
-      "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=21;BYMINUTE=30",
-      "status": "ACTIVE",
-      "writes": "各推荐股的 verify 字段"
-    },
-    {
-      "name": "A股晚报补跑看门狗",
-      "time": "22:30",
-      "rule": "FREQ=DAILY;BYHOUR=22;BYMINUTE=30",
-      "status": "ACTIVE",
-      "writes": "仅在当日 evening 缺失时补跑",
-      "_note": "原系统为 PAUSED，2026-09-12 改为 ACTIVE"
+      "name": "本机 WorkBuddy 全部任务（早报/晚报/量价/验证/两看门狗/体检）",
+      "time": "—",
+      "status": "PAUSED",
+      "writes": "2026-09-22 B 方案停用；恢复方法=automation 置回 ACTIVE（双端共存需先跑 sync_from_api --apply 对齐）"
     }
   ],
   "morning": {
