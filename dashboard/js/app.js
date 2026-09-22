@@ -888,39 +888,31 @@
     }
   }
 
-  /** 晚报未读红点：最新一期有晚报、且用户没在"最新一期"上打开过晚报时显示 */
-  /** Tab 源状态点：早报/晚报/量价/日历四个 Tab 标题旁的小圆点（替代原 header 状态行）。
+  /** Tab 源状态符号（2026-09-22 二次迭代：圆点 → ✓/✕，用户要求）。
    *  基准 = 各源**最新一期**（与 footer 一致，与当前选中日期无关）：
-   *    ok 绿 = 最新一期已生成；wait 黄 = 今天还没到/刚过计划点未生成；
-   *    miss 红 = 交易日已过点未生成；close = 休市语义不亮灯。
-   *  日历是低频源特殊处理：最新一篇是今天才亮绿，否则灰点（正常，不参与红黄告警）。
-   *  状态词与时间戳细节仍在 title（桌面悬停可见）；异常详情由 healthBar 承接。 */
+   *    ✓ 绿 = 无异常（已生成 / 还没到计划点 / 休市 / 低频源非今日）；
+   *    ✕ 红 = 缺失（交易日已过计划点仍未生成）。
+   *  短线 Tab 的数据来自晚报「明日关注」，符号跟随晚报状态。
+   *  原 header 告警条已撤（用户要求），异常只在 Tab 符号上表达。 */
   function updateSrcDots() {
     var newest = list[list.length - 1];
     var meta = newest ? srcMeta(newest, newest.date) : [];
     var byName = {};
     meta.forEach(function (s) { byName[s.name] = s; });
-    var map = { morning: '早报', evening: '晚报', screener: '量价选股', calendar: '投资日历' };
+    var map = { morning: '早报', evening: '晚报', watchlist: '晚报', screener: '量价选股', calendar: '投资日历' };
     Object.keys(map).forEach(function (tab) {
       var el = document.getElementById('srcDot-' + tab);
       if (!el) return;
       var s = byName[map[tab]];
       var st = s ? s.state : '';
-      if (tab === 'calendar') {
-        var cal = (window.REPORTS && window.REPORTS.calendar) || [];
-        var isToday = !!(cal.length && cal[0].publishedAt &&
-          cal[0].publishedAt.slice(0, 10) === todayYmd());
-        st = isToday ? 'ok' : 'old';
-      }
-      var show = st === 'ok' || st === 'wait' || st === 'miss' || st === 'old';
-      el.className = 'tab-src' + (show ? ' ' + st + ' show' : '');
-      if (s) {
-        el.title = s.name + ' ' + (metaTime(s) ||
-          (st === 'wait' ? '计划中' : (st === 'miss' ? '未更新' : '')));
-      }
+      var miss = st === 'miss';
+      el.className = 'tab-src show ' + (miss ? 'miss' : 'ok');
+      el.textContent = miss ? '✕' : '✓';
+      if (s) el.title = s.name + (miss ? ' 缺失（今日未生成）' : ' 无异常');
     });
   }
 
+  /** 晚报未读红点：最新一期有晚报、且用户没在"最新一期"上打开过晚报时显示 */
   function updateEveningDot() {
     var dot = document.getElementById('eveningDot');
     if (!dot) return;

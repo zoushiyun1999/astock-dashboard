@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="A股速览">
-<link rel="stylesheet" href="css/style.css?v=202609222115">
+<link rel="stylesheet" href="css/style.css?v=202609222121">
 </head>
 <body>
 
@@ -28,8 +28,8 @@
       <a href="sectors.html" style="flex:none;font-size:12px;font-weight:600;color:#0062CC;text-decoration:none;border:1px solid rgba(0,122,255,.22);background:rgba(0,122,255,.10);border-radius:99px;padding:3px 9px;white-space:nowrap">🔥 板块</a>
       <div class="h-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     </div>
-    <!-- 告警条：正常时不占位（各源状态已改到 Tab 点上），异常/休市时才整行出现 -->
-    <div id="healthBar" class="health"></div>
+    <!-- 源健康状态已全部上 Tab（✓/✕ 符号）；原告警条 element 移除（2026-09-22 用户要求）。
+         renderHealth() 保留（测试依赖），bar 不存在时自动 no-op。 -->
   </div>
 </header>
 
@@ -39,7 +39,7 @@
     <div class="tabs" id="tabs">
       <button class="tab on" data-tab="morning" onclick="switchTab('morning')">早报<i class="tab-src" id="srcDot-morning"></i></button>
       <button class="tab" data-tab="evening" onclick="switchTab('evening')">晚报<i class="tab-src" id="srcDot-evening"></i><i class="tab-dot" id="eveningDot"></i></button>
-      <button class="tab" data-tab="watchlist" onclick="switchTab('watchlist')">短线</button>
+      <button class="tab" data-tab="watchlist" onclick="switchTab('watchlist')">短线<i class="tab-src" id="srcDot-watchlist"></i></button>
       <button class="tab" data-tab="screener" onclick="switchTab('screener')">量价<i class="tab-src" id="srcDot-screener"></i></button>
       <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">日历<i class="tab-src" id="srcDot-calendar"></i></button>
       <span class="tab-glider" id="tabGlider"></span>
@@ -83,13 +83,13 @@
 </div>
 
 <!-- 数据（定时任务自动写入，勿手改） -->
-<script src="data.js?v=202609222115"></script>
+<script src="data.js?v=202609222121"></script>
 <!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
-<script src="screener.js?v=202609222115"></script>
+<script src="screener.js?v=202609222121"></script>
 <!-- 休市日（节假日，用于前端显示「休市」） -->
-<script src="holidays.js?v=202609222115"></script>
+<script src="holidays.js?v=202609222121"></script>
 <!-- 渲染逻辑 -->
-<script src="js/app.js?v=202609222115"></script>
+<script src="js/app.js?v=202609222121"></script>
 
 <!-- 破缓存自检：服务端无 Cache-Control，手机会缓存旧 HTML 导致更新看不见。
      这里比对「当前页面引用的版本号」与「服务端最新 HTML 的版本号」，
