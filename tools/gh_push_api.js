@@ -10,10 +10,14 @@
  *   · 自动删除：远端有、本地没有的文件会被删掉（可用 --no-delete 关闭）
  *   · 二进制走 blobs API，文本内联进 tree
  *   · 跳过 .git / .workbuddy / .gh-config / node_modules / logs / docs/归档
+ *   · 陈旧推送闸（2026-09-22 新增）：要推 data.js/screener.js 而远端时间戳更新时拦截 ——
+ *     双环境（本机 + ECS）下落后侧一旦发布会把另一端刚生成的成果**静默退回**，
+ *     规模骤减闸拦不住「规模相近但内容更旧」的这种回退。旁路键与主闸相同：ASTOCK_SKIP_GATE=1
  *
  * 用法：
  *   node tools/gh_push_api.js                        # 全量比对（默认仓库见 config/site.json）
- *   node tools/gh_push_api.js --only dashboard/data.js dashboard/data.json
+ *   node tools/gh_push_api.js --only dashboard/data.js dashboard/data.json -m "说明"
+ *      （⚠️ --only 的文件列表在下一个 `-` 开头的参数处结束，所以 -m 放在 --only 之后也安全）
  *   node tools/gh_push_api.js -m "自定义提交信息"
  *
  * 令牌读取顺序：环境变量 GITHUB_TOKEN → 项目根 .gh-token 文件（已 gitignore）
@@ -180,6 +184,53 @@ async function scaleGate(repo, remoteMap) {
   }
 }
 
+/** 从 `window.X = {...}` 的 JSON 源码里提取时间戳字段（如 updatedAt / runAt）。
+ *  产物都是 JSON.stringify 写出（键带双引号），所以精确匹配 `"key": "value"` 即可。
+ *  格式 "YYYY-MM-DD HH:MM" 字典序 = 时间序。取不到 → null（调用方跳过判定）。 */
+function extractStamp(src, key) {
+  const m = src.match(new RegExp('"' + key + '"\\s*:\\s*"([^"]+)"'));
+  return m ? m[1] : null;
+}
+
+/** 陈旧推送闸：本次变更集里若含 dashboard/data.js 或 dashboard/screener.js，
+ *  且**远端对应文件的时间戳比本地新** → 本地是落后侧，推上去会把另一端刚生成的
+ *  成果退回旧版（2026-09-22 两次实证：ECS 旧代码回推、本机旧 data.js 回推）。
+ *  旁路与规模主闸同键 ASTOCK_SKIP_GATE=1；远端无该文件（首推）/ 取不到时间戳 → 放行。 */
+async function staleGate(repo, remoteMap, tree) {
+  if (process.env.ASTOCK_SKIP_GATE === '1') return;   // 旁路提示已由 scaleGate 打印
+  const targets = [
+    { p: 'dashboard/data.js', key: 'updatedAt' },
+    { p: 'dashboard/screener.js', key: 'runAt' }
+  ];
+  const changed = new Set(tree
+    .filter(function (t) { return t.type === 'blob'; })
+    .map(function (t) { return t.path; }));
+  for (const tg of targets) {
+    if (!changed.has(tg.p)) continue;                 // 本次没推这个文件 → 不查
+    try {
+      const localTs = extractStamp(fs.readFileSync(path.join(ROOT, tg.p), 'utf8'), tg.key);
+      if (!localTs) continue;                         // 本地无时间戳 → 无法判定，放行
+      const remoteSha = remoteMap[tg.p];
+      if (!remoteSha) continue;                       // 远端还没有该文件 → 首推，放行
+      const blob = await api('GET', '/repos/' + repo + '/git/blobs/' + remoteSha);
+      if (!blob || !blob.content) continue;
+      const buf = blob.encoding === 'base64'
+        ? Buffer.from(blob.content, 'base64')
+        : Buffer.from(blob.content, 'utf8');
+      const remoteTs = extractStamp(buf.toString('utf8'), tg.key);
+      if (!remoteTs) continue;
+      if (remoteTs > localTs) {
+        fail('陈旧推送闸拦截：' + tg.p + ' 远端时间戳（' + remoteTs + '）比本地（' + localTs +
+          '）新 → 本地是落后侧，推送会把另一端的成果退回旧版。' +
+          '先跑 node tools/sync_from_api.js --apply 对齐；确属正常请用 ASTOCK_SKIP_GATE=1 重试。');
+      }
+      console.log('✔ 陈旧闸通过（' + tg.p + ' 本地 ' + localTs + ' ≥ 远端 ' + remoteTs + '）');
+    } catch (e) {
+      console.log('· 陈旧闸异常，跳过（不阻断发布）：' + e.message);
+    }
+  }
+}
+
 function collect(onlyList) {
   if (onlyList && onlyList.length) return onlyList.map((f) => f.replace(/\\/g, '/'));
   const out = [];
@@ -200,12 +251,22 @@ function collect(onlyList) {
   return out;
 }
 
-(async function main() {
+async function main() {
   const argv = process.argv.slice(2);
   const ri = argv.indexOf('--repo');
   const repo = (ri >= 0 ? argv[ri + 1] : '') || DEFAULT_REPO;
   const oi = argv.indexOf('--only');
-  const only = oi >= 0 ? argv.slice(oi + 1).filter((a) => !a.startsWith('--')) : null;
+  // ⚠️ 文件列表在下一个 `-` 开头的参数处结束。旧写法 `filter(a => !a.startsWith('--'))`
+  //    会把 `-m 消息` 整个吞进文件列表（`-m` 只有一个 `-`）→ 提交信息被当成文件名，
+  //    实际提交只能落到默认消息（2026-09-22 两次实证）。
+  const only = oi >= 0 ? (function () {
+    const out = [];
+    for (let i = oi + 1; i < argv.length; i++) {
+      if (argv[i].startsWith('-')) break;
+      out.push(argv[i]);
+    }
+    return out;
+  })() : null;
   const noDelete = argv.includes('--no-delete');
   const message = (argv.includes('-m') ? argv[argv.indexOf('-m') + 1] : null) ||
     ('看板更新 ' + new Date().toISOString().slice(0, 16).replace('T', ' '));
@@ -280,6 +341,9 @@ function collect(onlyList) {
   // 2.5 主闸：比较远端公开现状与本地待推 data.js 的规模，骤减即拦截（P1-1 的唯一必经咽喉）
   await scaleGate(repo, remoteMap);
 
+  // 2.6 陈旧推送闸：远端 data.js/screener.js 时间戳比本地新 → 本地是落后侧，拦截回退式推送
+  await staleGate(repo, remoteMap, tree);
+
   if (!tree.length) {
     console.log('✓ 无变化（扫描 ' + files.length + ' 个文件，全部与线上一致）');
     return;
@@ -302,4 +366,11 @@ function collect(onlyList) {
 
   console.log('✓ 已提交 ' + commitRes.sha.slice(0, 8) + ' → https://github.com/' + repo);
   console.log('  GitHub Actions 正在发布，约 1 分钟后线上更新。');
-})().catch((e) => fail(e.message));
+}
+
+if (require.main === module) {
+  main().catch((e) => fail(e.message));
+}
+
+// 供 test_scripts.js / tmp 测试 require（main 已加守卫，require 不触发网络）
+module.exports = { extractStamp, staleGate, parseDataSrc, scaleGate };

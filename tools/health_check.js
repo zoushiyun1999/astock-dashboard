@@ -194,6 +194,13 @@ const HOLIDAYS = (function () {
   try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {}; }
   catch (e) { return {}; }
 })();
+// 已知永久缺口（config/known_gaps.json）：历史数据不可再得的交易日。
+// 长期对 09-16 报「管线未运行，需排查」是噪音（每次体检都 ERROR/WARN 一条无法消除的旧账），
+// 改为单独提示；前端空态卡已向用户说明「历史缺口或当时未运行」。
+const KNOWN_GAPS = (function () {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'known_gaps.json'), 'utf8')).dates || []; }
+  catch (e) { return []; }   // 配置缺失/损坏 → 视为无已知缺口，行为与旧版一致
+})();
 function isTradingDay(d) {
   return gapCheck.isTradingDay(d, HOLIDAYS);   // 口径收敛到 tools/lib/gap_check.js，与 verify.js 一致
 }
@@ -207,11 +214,13 @@ function isTradingDay(d) {
     reportDates: dates,
     now: new Date(),
     holidayYears: HOLIDAYS,
+    knownGaps: KNOWN_GAPS,
     hasLog: function (ds) { return fs.existsSync(path.join(ROOT, 'logs', ds + '.md')); }
   });
-  const stalled = g.stalled, skipped = g.skipped;
-  if (!stalled.length && !skipped.length) return;
+  const stalled = g.stalled, skipped = g.skipped, known = g.known || [];
+  if (!stalled.length && !skipped.length && !known.length) return;
   if (skipped.length) notes.push('交易日无数据但已运行（数据源未发布，属正常）：' + skipped.join(', '));
+  if (known.length) notes.push('已知永久缺口（历史数据不可再得，不再告警）：' + known.join(', '));
   if (stalled.length) {
     warn('交易日无数据且无运行日志（管线未运行，需排查）：' + stalled.join(', ') +
       '。检查 logs/ 与任务执行记录，常见原因是 PC 关机/休眠或任务报错。');

@@ -28,7 +28,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { loadDataStrict, saveDataSafe } = require('./lib/data_store');   // 复用统一安全阀
+const { loadDataStrict, saveDataSafe, acquireDataLock, releaseDataLock } = require('./lib/data_store');   // 复用统一安全阀
 const ops = require('./lib/ops');                                        // ALERT 通道 + stampMin
 
 const ROOT = path.resolve(__dirname, '..');
@@ -535,6 +535,12 @@ function mergeReport(kind, jsonPath, file, opts) {
   }
 
   // 3) 严格读（解析失败 / 结构异常 → __abort）
+  //    🔒 跨进程文件锁：本函数 load→save 之间无网络请求（毫秒级），适合跨段持锁 ——
+  //    并发场景（开机补跑时主任务与看门狗同时跑 merge_report）下，后到者先等锁、
+  //    拿到后读到最新数据再合并，替代「乐观锁发现被改 → 整轮作废」。持锁期间若
+  //    校验失败/dry 提前返回，锁由 dry 分支的显式释放或 process.on('exit') 兜底释放。
+  //    注意：loadDataStrict 本身不加锁（job_* 用它做幂等读后还会子进程调本脚本）。
+  acquireDataLock(file);
   let loaded;
   try { loaded = loadDataStrict(file); }
   catch (e) { if (e && e.__abort) e.__kind = kind; throw e; }
@@ -554,6 +560,7 @@ function mergeReport(kind, jsonPath, file, opts) {
     ' | warnings:' + v.warnings.length;
 
   if (opts.dry) {
+    releaseDataLock(file);          // dry 不落盘 → 显式还锁（正常写回路径由 saveDataSafe 释放）
     console.log('✔ ' + summary);
     emitWarnings(v.warnings);
     return next;

@@ -55,17 +55,22 @@ function isBeforeEarliestTask(now, earliestMin) {
  * @param {Date}     o.now          当前时刻
  * @param {Object}   o.holidayYears 休市日 { "2026": ["2026-09-25", ...] }
  * @param {Function} o.hasLog       (ds) => boolean：logs/<ds>.md 是否存在
- * @returns {{stalled: string[], skipped: string[]}}
+ * @param {string[]} [o.knownGaps]  已知永久缺口日期（config/known_gaps.json）。
+ *                                  这些日子的历史数据因故不可再得，长期挂 WARN 是噪音 →
+ *                                  单独归入 known，由调用方决定降级为提示。
+ * @returns {{stalled: string[], skipped: string[], known: string[]}}
  *   stalled —— 交易日无数据且无日志（管线未运行，需排查）
  *   skipped —— 交易日无数据但有日志（数据源未发布，正常）
+ *   known   —— 已知永久缺口（历史原因，不再告警，仅提示）
  *   当 now 早于当天最早任务时刻（08:30）时，今天不出现在任一列表中。
  */
 function computeGaps(o) {
   const reportDates = (o && o.reportDates) || [];
-  if (!reportDates.length) return { stalled: [], skipped: [] };
+  if (!reportDates.length) return { stalled: [], skipped: [], known: [] };
   const now = (o && o.now) || new Date();
   const holidayYears = (o && o.holidayYears) || {};
   const hasLog = (o && o.hasLog) || function () { return false; };
+  const knownSet = new Set((o && o.knownGaps) || []);
   const skipToday = isBeforeEarliestTask(now);
   const todayStr = fmtDate(now);
   const have = new Set(reportDates);
@@ -75,12 +80,14 @@ function computeGaps(o) {
     if (!isTradingDay(d, holidayYears)) continue;
     const ds = fmtDate(d);
     if (have.has(ds)) continue;
+    if (knownSet.has(ds)) { gaps.push({ ds: ds, kind: 'known' }); continue; }
     if (ds === todayStr && skipToday) continue;   // 当天首个任务尚未开始 → 今天不是既成事实
-    gaps.push({ ds: ds, ran: !!hasLog(ds) });
+    gaps.push({ ds: ds, kind: hasLog(ds) ? 'skipped' : 'stalled' });
   }
   return {
-    stalled: gaps.filter(function (g) { return !g.ran; }).map(function (g) { return g.ds; }),
-    skipped: gaps.filter(function (g) { return g.ran; }).map(function (g) { return g.ds; })
+    stalled: gaps.filter(function (g) { return g.kind === 'stalled'; }).map(function (g) { return g.ds; }),
+    skipped: gaps.filter(function (g) { return g.kind === 'skipped'; }).map(function (g) { return g.ds; }),
+    known: gaps.filter(function (g) { return g.kind === 'known'; }).map(function (g) { return g.ds; })
   };
 }
 
