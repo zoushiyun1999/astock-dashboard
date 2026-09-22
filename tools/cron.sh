@@ -75,10 +75,19 @@ if [ "$TZ_OFFSET" != "+0800" ]; then
 fi
 
 # ── 并发互斥 ──
-exec 9>"/tmp/astock_job.lock"
-if ! flock -n 9; then
-  log "· 另一个 astock 任务正在运行 → 跳过 $TASK（避免 dashboard/data.js 并发覆盖）"
-  exit 0
+# ⚠️ flock 属 util-linux：Linux（含 ECS）必有，**Git Bash 上没有**。
+#    旧写法 `if ! flock -n 9` 在 flock 缺失时会因 `!` 取反而被当成「拿到锁失败」→
+#    **每个任务都被静默跳过**，且日志写成「另一个任务正在运行」（完全误导）。
+#    2026-09-22 本机 Git Bash 实测：health / morning 全部被跳过、退出码还是 0。
+#    现在显式区分「真抢占不到锁」与「本机没有 flock」两种情况。
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"/tmp/astock_job.lock"
+  if ! flock -n 9; then
+    log "· 另一个 astock 任务正在运行 → 跳过 $TASK（避免 dashboard/data.js 并发覆盖）"
+    exit 0
+  fi
+else
+  log "! flock 不可用（非 Linux 环境？）→ 跳过并发互斥，继续执行 $TASK"
 fi
 
 DAY="$(date '+%Y-%m-%d')"
