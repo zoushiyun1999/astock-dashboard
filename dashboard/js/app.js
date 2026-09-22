@@ -407,18 +407,12 @@
       html += sectionCard('连板梯队', 'rank1', '<ul class="ladder">' + lis + '</ul>');
     }
 
-    // 板块热点
+    // 板块热点已独立成页（sectors.html，2026-09-22）：晚报里不再重复展示完整卡片，
+    // 只留一条轻提示指路（数据仍由晚报任务照常生成，独立页依赖它）。
     if (r['板块热点'] && r['板块热点'].length) {
-      var secs = r['板块热点'].map(function (x, i) {
-        return '<div class="sector">' +
-          '<div class="sc-head"><span class="rank">' + (i + 1) + '</span>' +
-          '<span class="nm">' + esc(x.name) + '</span>' +
-          (x.strength ? '<span class="st">' + esc(x.strength) + '</span>' : '') + '</div>' +
-          '<div class="stocks">' + esc(x.stocks) + '</div>' +
-          (x.catalyst ? '<div class="cat"><b>催化</b>' + esc(x.catalyst) + '</div>' : '') +
-          '</div>';
-      }).join('');
-      html += sectionCard('板块热点', 'rank3', secs);
+      html += '<div class="card tip"><span class="ico">🔥</span><span>板块热点已独立成页：' +
+        '<a href="sectors.html" style="color:inherit;font-weight:600">点此查看</a>' +
+        '（含连续上榜期数统计）</span></div>';
     }
 
     // 市场情绪
