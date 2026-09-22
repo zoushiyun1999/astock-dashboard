@@ -1,0 +1,95 @@
+# 云端看门狗（B 方案，2026-09-22）—— 独立于 ECS 与本机的第三方检测
+#
+# 背景：主产线全量迁到阿里云 ECS 后，本机看门狗任务已全部停用（单点风险转移到 ECS）。
+# 本工作流跑在 GitHub 的 runner 上：定时抓取 https://asx.79zl.cn/data.json，
+# 检查「今天的早报/晚报是否真的上线了」。缺失 → 开/评 GitHub issue 告警；
+# 数据恢复后自动关闭 issue。
+#
+# 时刻表（cron 是 UTC，北京时间 = UTC+8）：
+#   02:30 UTC = 10:30 北京 —— 查早报（ECS 08:30 跑，留 2 小时余量）
+#   14:45 UTC = 22:45 北京 —— 查晚报（ECS 21:00 跑 + 21:30 验证，留余量）
+#
+# 告警通道 = GitHub issue（仓库 zoushiyun1999/astock-dashboard）。
+# 👉 请在 GitHub Settings → Notifications 勾选「Issues」参与通知，否则告警只在仓库页可见。
+#
+# 设计约束（AGENTS 规则 11：改 workflow 后必须过 YAML 校验）：
+#   · 检测逻辑全部在 tools/watchdog_check.js（可本地测试，真实样本见文件头注释）
+#   · 退出码语义：0 正常/跳过；1 = 数据缺失（告警）；2 = 用法/网络失败（不告警）
+#   · GITHUB_TOKEN 由 Actions 自动注入，无需任何 Secret
+
+name: watchdog
+
+on:
+  schedule:
+    - cron: '30 2 * * *'    # 10:30 北京 —— 查早报
+    - cron: '45 14 * * *'   # 22:45 北京 —— 查晚报
+  workflow_dispatch:         # 手动触发（两个检查都跑，便于验证）
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  morning:
+    if: github.event.schedule == '30 2 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 检测今日早报
+        run: node tools/watchdog_check.js morning
+      - name: 告警（开/评 issue）
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[watchdog] $(date +%F) 早报缺失"
+          NUM=$(gh issue list --search "$TITLE in:title" --state open --json number -q '.[0].number' || true)
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body "仍未恢复：$(date -u '+%F %T') UTC 再次检测到早报缺失"
+          else
+            gh issue create --title "$TITLE" \
+              --body "交易日 $(date +%F) 线上缺少早报（morning）。排查：ECS \`logs/cron.log\` / \`logs/ALERT.md\`；手动补跑 \`bash tools/cron.sh morning\`。数据恢复后本 issue 会自动关闭。"
+          fi
+      - name: 恢复（关闭已解决的 issue）
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for NUM in $(gh issue list --search "[watchdog] in:title 早报" --state open --json number -q '.[].number'); do
+            gh issue close "$NUM" --comment "早报已上线（$(date -u '+%F %T') UTC 检测通过），自动关闭。"
+          done
+
+  evening:
+    if: github.event.schedule == '45 14 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 检测今日晚报
+        run: node tools/watchdog_check.js evening
+      - name: 告警（开/评 issue）
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[watchdog] $(date +%F) 晚报缺失"
+          NUM=$(gh issue list --search "$TITLE in:title" --state open --json number -q '.[0].number' || true)
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body "仍未恢复：$(date -u '+%F %T') UTC 再次检测到晚报缺失"
+          else
+            gh issue create --title "$TITLE" \
+              --body "交易日 $(date +%F) 线上缺少晚报（evening）。排查：ECS \`logs/cron.log\` / \`logs/ALERT.md\`；手动补跑 \`bash tools/cron.sh evening\`。数据恢复后本 issue 会自动关闭。"
+          fi
+      - name: 恢复（关闭已解决的 issue）
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for NUM in $(gh issue list --search "[watchdog] in:title 晚报" --state open --json number -q '.[].number'); do
+            gh issue close "$NUM" --comment "晚报已上线（$(date -u '+%F %T') UTC 检测通过），自动关闭。"
+          done
