@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-09-22 13:54",
+  "updatedAt": "2026-09-22 14:27",
   "calendar": [
     {
       "id": "4ep5unl7h92",
@@ -2182,7 +2182,7 @@ window.REPORTS = {
                   "netRet": -3.42,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2203,7 +2203,7 @@ window.REPORTS = {
                   "netRet": -3.11,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2224,7 +2224,7 @@ window.REPORTS = {
                   "netRet": 1.96,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2245,7 +2245,7 @@ window.REPORTS = {
                   "netRet": -8.48,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2274,7 +2274,7 @@ window.REPORTS = {
                   "netRet": -2.81,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2295,7 +2295,7 @@ window.REPORTS = {
                   "netRet": 2.14,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2316,7 +2316,7 @@ window.REPORTS = {
                   "netRet": 5.62,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2337,7 +2337,7 @@ window.REPORTS = {
                   "netRet": -0.77,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2366,7 +2366,7 @@ window.REPORTS = {
                   "netRet": -3.46,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2387,7 +2387,7 @@ window.REPORTS = {
                   "netRet": -8.78,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2408,7 +2408,7 @@ window.REPORTS = {
                   "netRet": -3.48,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2429,7 +2429,7 @@ window.REPORTS = {
                   "netRet": -1.59,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2458,7 +2458,7 @@ window.REPORTS = {
                   "netRet": 8.74,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2479,7 +2479,7 @@ window.REPORTS = {
                   "netRet": 1.44,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2500,7 +2500,7 @@ window.REPORTS = {
                   "netRet": 2.57,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2529,7 +2529,7 @@ window.REPORTS = {
                   "netRet": 10.79,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2550,7 +2550,7 @@ window.REPORTS = {
                   "netRet": 7.48,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2571,7 +2571,7 @@ window.REPORTS = {
                   "netRet": 8.96,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2592,7 +2592,7 @@ window.REPORTS = {
                   "netRet": -1.15,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2621,7 +2621,7 @@ window.REPORTS = {
                   "netRet": -6.75,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2642,7 +2642,7 @@ window.REPORTS = {
                   "netRet": 1.93,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2663,7 +2663,7 @@ window.REPORTS = {
                   "netRet": 2.36,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2692,7 +2692,7 @@ window.REPORTS = {
                   "netRet": -9.22,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2713,7 +2713,7 @@ window.REPORTS = {
                   "netRet": 6.31,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2734,7 +2734,7 @@ window.REPORTS = {
                   "netRet": 3.93,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2763,7 +2763,7 @@ window.REPORTS = {
                   "netRet": -0.2,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2784,7 +2784,7 @@ window.REPORTS = {
                   "netRet": 10.02,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               },
               {
@@ -2805,7 +2805,7 @@ window.REPORTS = {
                   "netRet": -8.22,
                   "locked": false,
                   "basis": "open-to-close",
-                  "by": "snapshot"
+                  "by": "hist"
                 }
               }
             ]
@@ -2926,7 +2926,7 @@ window.REPORTS = {
               "netRet": -3.42,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -2947,7 +2947,7 @@ window.REPORTS = {
               "netRet": 284.36,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -2968,7 +2968,7 @@ window.REPORTS = {
               "netRet": 1.6,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -2989,7 +2989,7 @@ window.REPORTS = {
               "netRet": -0.93,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -3010,7 +3010,7 @@ window.REPORTS = {
               "netRet": -2.81,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -3031,7 +3031,7 @@ window.REPORTS = {
               "netRet": 8.74,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -3052,7 +3052,7 @@ window.REPORTS = {
               "netRet": 7.48,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -3073,7 +3073,7 @@ window.REPORTS = {
               "netRet": -3.46,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           },
           {
@@ -3094,7 +3094,7 @@ window.REPORTS = {
               "netRet": 6.89,
               "locked": false,
               "basis": "open-to-close",
-              "by": "snapshot"
+              "by": "hist"
             }
           }
         ]
@@ -3182,42 +3182,126 @@ window.REPORTS = {
                 "code": "002453",
                 "role": "材料方向身位股·板块唯一连板",
                 "status": "2连板·低位·光刻胶基材",
-                "reason": "光刻胶基材，10:41封板收5.34元。是半导体板块内唯一一只连板股，材料方向的资金旗帜；次日能否3板直接决定板块短线高度能否延续。"
+                "reason": "光刻胶基材，10:41封板收5.34元。是半导体板块内唯一一只连板股，材料方向的资金旗帜；次日能否3板直接决定板块短线高度能否延续。",
+                "verify": {
+                  "gain": 9.93,
+                  "hit": true,
+                  "price": 5.87,
+                  "code": "002453",
+                  "at": "2026-09-21",
+                  "open": 5.85,
+                  "openPct": 9.55,
+                  "buyRet": 0.34,
+                  "netRet": 0.14,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "和顺石油",
                 "code": "603353",
                 "role": "存储芯片·二次启动位",
                 "status": "4天2板·中位·存储芯片跨界",
-                "reason": "存储芯片概念，全天封板收48.55元。原主营成品油零售，跨界存储带来高弹性；属板块内二次启动品种，涨幅积累已较厚，须防高位剧烈波动。"
+                "reason": "存储芯片概念，全天封板收48.55元。原主营成品油零售，跨界存储带来高弹性；属板块内二次启动品种，涨幅积累已较厚，须防高位剧烈波动。",
+                "verify": {
+                  "gain": -4.45,
+                  "hit": false,
+                  "price": 46.39,
+                  "code": "603353",
+                  "at": "2026-09-21",
+                  "open": 49.28,
+                  "openPct": 1.5,
+                  "buyRet": -5.86,
+                  "netRet": -6.05,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "和远气体",
                 "code": "002971",
                 "role": "电子特气·产业逻辑较硬",
                 "status": "首板·中位·六氟化钨+电子特气",
-                "reason": "六氟化钨+电子特气，10:41封板收42.68元。特气是晶圆厂扩产的直接受益环节，与中船特气同属一条线，产业逻辑硬于纯题材。"
+                "reason": "六氟化钨+电子特气，10:41封板收42.68元。特气是晶圆厂扩产的直接受益环节，与中船特气同属一条线，产业逻辑硬于纯题材。",
+                "verify": {
+                  "gain": -2.86,
+                  "hit": false,
+                  "price": 41.46,
+                  "code": "002971",
+                  "at": "2026-09-21",
+                  "open": 42.08,
+                  "openPct": -1.41,
+                  "buyRet": -1.47,
+                  "netRet": -1.67,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "诚邦股份",
                 "code": "603316",
                 "role": "存储芯片·封板靠前",
                 "status": "首板·低位·存储芯片",
-                "reason": "存储芯片，10:06封板收16.69元。低价小市值，在存储涨价周期下属弹性品种，封板时间靠前、资金认可度较好。"
+                "reason": "存储芯片，10:06封板收16.69元。低价小市值，在存储涨价周期下属弹性品种，封板时间靠前、资金认可度较好。",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 18.36,
+                  "code": "603316",
+                  "at": "2026-09-21",
+                  "open": 17.46,
+                  "openPct": 4.61,
+                  "buyRet": 5.15,
+                  "netRet": 4.94,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "华天科技",
                 "code": "002185",
                 "role": "封测大票·机构资金证据",
                 "status": "首板·大票补涨·半导体封测",
-                "reason": "封测龙头之一，10:09封板收18.03元，成交63.9亿元为板块天量。大市值个股涨停说明机构资金进场，是判断本轮行情级别的关键证据。"
+                "reason": "封测龙头之一，10:09封板收18.03元，成交63.9亿元为板块天量。大市值个股涨停说明机构资金进场，是判断本轮行情级别的关键证据。",
+                "verify": {
+                  "gain": 2.88,
+                  "hit": true,
+                  "price": 18.55,
+                  "code": "002185",
+                  "at": "2026-09-21",
+                  "open": 18.68,
+                  "openPct": 3.61,
+                  "buyRet": -0.7,
+                  "netRet": -0.89,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "托伦斯",
                 "code": "301583",
                 "role": "次新+半导体交叉位",
                 "status": "首板·次新股·半导体设备零部件",
-                "reason": "次新股+半导体设备零部件，+20%涨停收142.56元，高价次新。它是近端次新与半导体两条主线的交叉点，弹性大但波动同样放大。"
+                "reason": "次新股+半导体设备零部件，+20%涨停收142.56元，高价次新。它是近端次新与半导体两条主线的交叉点，弹性大但波动同样放大。",
+                "verify": {
+                  "gain": -1.66,
+                  "hit": false,
+                  "price": 140.2,
+                  "code": "301583",
+                  "at": "2026-09-21",
+                  "open": 138.7,
+                  "openPct": -2.71,
+                  "buyRet": 1.08,
+                  "netRet": 0.88,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3232,28 +3316,84 @@ window.REPORTS = {
                 "code": "600448",
                 "role": "板块龙头·集合竞价秒板",
                 "status": "2连板·低位·外贸+服装",
-                "reason": "外贸+服装，9:25集合竞价即封板收3.54元。低价股开盘秒板是资金抢筹的最强形态，是板块身位股。"
+                "reason": "外贸+服装，9:25集合竞价即封板收3.54元。低价股开盘秒板是资金抢筹的最强形态，是板块身位股。",
+                "verify": {
+                  "gain": 9.89,
+                  "hit": true,
+                  "price": 3.89,
+                  "code": "600448",
+                  "at": "2026-09-21",
+                  "open": 3.8,
+                  "openPct": 7.34,
+                  "buyRet": 2.37,
+                  "netRet": 2.16,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "龙头股份",
                 "code": "600630",
                 "role": "双龙头·同步秒板",
                 "status": "2连板·低位·外贸+服装",
-                "reason": "外贸+服装，同为9:25秒板收8.29元，与华纺股份构成板块双龙头。两者同步晋级是板块延续的前提条件。"
+                "reason": "外贸+服装，同为9:25秒板收8.29元，与华纺股份构成板块双龙头。两者同步晋级是板块延续的前提条件。",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 9.12,
+                  "code": "600630",
+                  "at": "2026-09-21",
+                  "open": 9.12,
+                  "openPct": 10.01,
+                  "buyRet": 0,
+                  "netRet": -0.2,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "金健米业",
                 "code": "600127",
                 "role": "农产品出口·尾盘拉板",
                 "status": "2连板·中位·印巴大米出口",
-                "reason": "印巴大米出口概念，14:24封板收14.32元。属尾盘拉板，封板质量弱于前两者，须防次日低开与资金分歧。"
+                "reason": "印巴大米出口概念，14:24封板收14.32元。属尾盘拉板，封板质量弱于前两者，须防次日低开与资金分歧。",
+                "verify": {
+                  "gain": 9.99,
+                  "hit": true,
+                  "price": 15.75,
+                  "code": "600127",
+                  "at": "2026-09-21",
+                  "open": 14.5,
+                  "openPct": 1.26,
+                  "buyRet": 8.62,
+                  "netRet": 8.4,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "奥康国际",
                 "code": "603001",
                 "role": "跨境电商分支·低位首板",
                 "status": "首板·低位·鞋类皮具+跨境电商",
-                "reason": "鞋类皮具+跨境电商，10:12封板。跨境电商是出口链中受降税预期弹性最大的分支，位置低、想象空间足。"
+                "reason": "鞋类皮具+跨境电商，10:12封板。跨境电商是出口链中受降税预期弹性最大的分支，位置低、想象空间足。",
+                "verify": {
+                  "gain": 9.97,
+                  "hit": true,
+                  "price": 11.47,
+                  "code": "603001",
+                  "at": "2026-09-21",
+                  "open": 10.59,
+                  "openPct": 1.53,
+                  "buyRet": 8.31,
+                  "netRet": 8.09,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3268,21 +3408,63 @@ window.REPORTS = {
                 "code": "603248",
                 "role": "全场空间标·最高连板",
                 "status": "4连板·高位·本轮最高标·次新股+风电",
-                "reason": "次新股+风电，9:52封板收24.57元，为当日最高连板。全程空间高度是否延续完全看它，但4板后已进入高位分歧区，追高性价比差。"
+                "reason": "次新股+风电，9:52封板收24.57元，为当日最高连板。全程空间高度是否延续完全看它，但4板后已进入高位分歧区，追高性价比差。",
+                "verify": {
+                  "gain": -1.3,
+                  "hit": false,
+                  "price": 24.25,
+                  "code": "603248",
+                  "at": "2026-09-21",
+                  "open": 25.68,
+                  "openPct": 4.52,
+                  "buyRet": -5.57,
+                  "netRet": -5.76,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "托伦斯",
                 "code": "301583",
                 "role": "次新+半导体交叉",
                 "status": "首板·次新股·半导体设备零部件",
-                "reason": "+20%涨停收142.56元，高价次新。半导体设备零部件属国产替代硬逻辑，与主线重合度高。"
+                "reason": "+20%涨停收142.56元，高价次新。半导体设备零部件属国产替代硬逻辑，与主线重合度高。",
+                "verify": {
+                  "gain": -1.66,
+                  "hit": false,
+                  "price": 140.2,
+                  "code": "301583",
+                  "at": "2026-09-21",
+                  "open": 138.7,
+                  "openPct": -2.71,
+                  "buyRet": 1.08,
+                  "netRet": 0.88,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "电科思仪",
                 "code": "301689",
                 "role": "次新+光模块",
                 "status": "首板·次新股·光模块",
-                "reason": "次新股+光模块，13:15封板。光模块是CPO主线的核心环节，叠加次新属性后弹性被放大。"
+                "reason": "次新股+光模块，13:15封板。光模块是CPO主线的核心环节，叠加次新属性后弹性被放大。",
+                "verify": {
+                  "gain": -0.48,
+                  "hit": false,
+                  "price": 62.7,
+                  "code": "301689",
+                  "at": "2026-09-21",
+                  "open": 62.2,
+                  "openPct": -1.27,
+                  "buyRet": 0.8,
+                  "netRet": 0.6,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3297,21 +3479,63 @@ window.REPORTS = {
                 "code": "002161",
                 "role": "板块身位股·事件驱动",
                 "status": "6天3板·中位·拟收购光泰通信",
-                "reason": "拟收购光泰通信切入光通信，9:44封板收7.25元，为板块最高身位。重组预期是核心驱动，属事件型博弈，须防消息落地后的兑现压力。"
+                "reason": "拟收购光泰通信切入光通信，9:44封板收7.25元，为板块最高身位。重组预期是核心驱动，属事件型博弈，须防消息落地后的兑现压力。",
+                "verify": {
+                  "gain": -1.24,
+                  "hit": false,
+                  "price": 7.16,
+                  "code": "002161",
+                  "at": "2026-09-21",
+                  "open": 7.25,
+                  "openPct": 0,
+                  "buyRet": -1.24,
+                  "netRet": -1.44,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "共进股份",
                 "code": "603118",
                 "role": "800G交换机·产业同源",
                 "status": "首板·中位·800G交换机",
-                "reason": "800G交换机，11:13封板。交换设备是算力集群扩容的直接受益环节，产业逻辑与CPO主线同源。"
+                "reason": "800G交换机，11:13封板。交换设备是算力集群扩容的直接受益环节，产业逻辑与CPO主线同源。",
+                "verify": {
+                  "gain": 1.19,
+                  "hit": true,
+                  "price": 18.65,
+                  "code": "603118",
+                  "at": "2026-09-21",
+                  "open": 18.35,
+                  "openPct": -0.43,
+                  "buyRet": 1.63,
+                  "netRet": 1.43,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "华盛昌",
                 "code": "002980",
                 "role": "光模块检测·跟风补涨",
                 "status": "首板·低位·光模块检测",
-                "reason": "光模块检测，14:53尾盘封板。封板时间过晚，属跟风补涨性质，次日持续性存疑。"
+                "reason": "光模块检测，14:53尾盘封板。封板时间过晚，属跟风补涨性质，次日持续性存疑。",
+                "verify": {
+                  "gain": -7.48,
+                  "hit": false,
+                  "price": 118.45,
+                  "code": "002980",
+                  "at": "2026-09-21",
+                  "open": 128.38,
+                  "openPct": 0.27,
+                  "buyRet": -7.73,
+                  "netRet": -7.92,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3326,28 +3550,84 @@ window.REPORTS = {
                 "code": "603626",
                 "role": "板块身位股·最高身位",
                 "status": "2连板·5天3板·中位·TSL机器人",
-                "reason": "TSL机器人概念，11:05封板收23.42元。5天3板是板块最高身位，但3板后需防分歧加剧。"
+                "reason": "TSL机器人概念，11:05封板收23.42元。5天3板是板块最高身位，但3板后需防分歧加剧。",
+                "verify": {
+                  "gain": -0.3,
+                  "hit": false,
+                  "price": 23.35,
+                  "code": "603626",
+                  "at": "2026-09-21",
+                  "open": 23.05,
+                  "openPct": -1.58,
+                  "buyRet": 1.3,
+                  "netRet": 1.1,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "三羊马",
                 "code": "001317",
                 "role": "率先封板·物流机器人",
                 "status": "首板·低位·机器人+物流",
-                "reason": "机器人+物流，9:35封板，为板块内较早封板个股。低价+物流机器人属性，是板块低位承接位。"
+                "reason": "机器人+物流，9:35封板，为板块内较早封板个股。低价+物流机器人属性，是板块低位承接位。",
+                "verify": {
+                  "gain": 10,
+                  "hit": true,
+                  "price": 59.96,
+                  "code": "001317",
+                  "at": "2026-09-21",
+                  "open": 56.03,
+                  "openPct": 2.79,
+                  "buyRet": 7.01,
+                  "netRet": 6.8,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "博通集成",
                 "code": "603068",
                 "role": "端侧AI+机器人",
                 "status": "首板·中位·端侧AI+智能机器人",
-                "reason": "端侧AI+智能机器人，9:55封板收39.81元。端侧AI是机器人智能化的核心芯片环节，与半导体主线形成交叉。"
+                "reason": "端侧AI+智能机器人，9:55封板收39.81元。端侧AI是机器人智能化的核心芯片环节，与半导体主线形成交叉。",
+                "verify": {
+                  "gain": 10,
+                  "hit": true,
+                  "price": 43.79,
+                  "code": "603068",
+                  "at": "2026-09-21",
+                  "open": 40.79,
+                  "openPct": 2.46,
+                  "buyRet": 7.35,
+                  "netRet": 7.14,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "沈阳机床",
                 "code": "000410",
                 "role": "工业母机交叉位",
                 "status": "首板·中位·工业母机+机器人",
-                "reason": "工业母机+机器人，13:28封板。工业母机是机器人零部件的上游环节，属交叉题材，位置偏低。"
+                "reason": "工业母机+机器人，13:28封板。工业母机是机器人零部件的上游环节，属交叉题材，位置偏低。",
+                "verify": {
+                  "gain": -2.33,
+                  "hit": false,
+                  "price": 5.44,
+                  "code": "000410",
+                  "at": "2026-09-21",
+                  "open": 5.3,
+                  "openPct": -4.85,
+                  "buyRet": 2.64,
+                  "netRet": 2.44,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3362,21 +3642,63 @@ window.REPORTS = {
                 "code": "002836",
                 "role": "板块身位股·唯一连板",
                 "status": "2连板·低位·烟标",
-                "reason": "烟标，9:36封板。板块内唯一2连板，是资金认可度最高的低位品种，身位清晰。"
+                "reason": "烟标，9:36封板。板块内唯一2连板，是资金认可度最高的低位品种，身位清晰。",
+                "verify": {
+                  "gain": 0.5,
+                  "hit": true,
+                  "price": 11.98,
+                  "code": "002836",
+                  "at": "2026-09-21",
+                  "open": 12.93,
+                  "openPct": 8.47,
+                  "buyRet": -7.35,
+                  "netRet": -7.53,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "会稽山",
                 "code": "601579",
                 "role": "黄酒·老高标",
                 "status": "8天4板·高位·黄酒，涨速过快需防断板",
-                "reason": "黄酒，9:43封板收32.84元。8天4板已属高位反复品种，涨幅积累大，仅作情绪观察、不做参与。"
+                "reason": "黄酒，9:43封板收32.84元。8天4板已属高位反复品种，涨幅积累大，仅作情绪观察、不做参与。",
+                "verify": {
+                  "gain": 9.99,
+                  "hit": true,
+                  "price": 36.12,
+                  "code": "601579",
+                  "at": "2026-09-21",
+                  "open": 33.5,
+                  "openPct": 2.01,
+                  "buyRet": 7.82,
+                  "netRet": 7.61,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "国芳集团",
                 "code": "601086",
                 "role": "连锁百货·市场最长老高标",
                 "status": "16天8板·高位·连锁百货，高位不参与追高",
-                "reason": "连锁百货，13:12封板收16.06元。16天8板为市场最长老高标，累计涨幅巨大，风险收益比已严重不对称，仅作情绪风向标、不参与。"
+                "reason": "连锁百货，13:12封板收16.06元。16天8板为市场最长老高标，累计涨幅巨大，风险收益比已严重不对称，仅作情绪风向标、不参与。",
+                "verify": {
+                  "gain": 10.02,
+                  "hit": true,
+                  "price": 17.67,
+                  "code": "601086",
+                  "at": "2026-09-21",
+                  "open": 16.57,
+                  "openPct": 3.18,
+                  "buyRet": 6.64,
+                  "netRet": 6.43,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3391,14 +3713,42 @@ window.REPORTS = {
                 "code": "002285",
                 "role": "板块身位股·唯一连板",
                 "status": "3连板·中位·房地产服务",
-                "reason": "房地产服务，13:25封板收2.89元。低价+存量房交易逻辑，是板块唯一连板；次日能否4板决定板块是从权重脉冲转向题材延续，还是就此消退。"
+                "reason": "房地产服务，13:25封板收2.89元。低价+存量房交易逻辑，是板块唯一连板；次日能否4板决定板块是从权重脉冲转向题材延续，还是就此消退。",
+                "verify": {
+                  "gain": 10.03,
+                  "hit": true,
+                  "price": 3.18,
+                  "code": "002285",
+                  "at": "2026-09-21",
+                  "open": 2.87,
+                  "openPct": -0.69,
+                  "buyRet": 10.8,
+                  "netRet": 10.58,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "万科A",
                 "code": "000002",
                 "role": "权重开发龙头·首板",
                 "status": "首板·大票补涨·头部开发商",
-                "reason": "头部开发商，14:22封板。权重股涨停是资金对政策预期定价的直接体现，也说明板块启动级别较高，但大市值个股连板难度大。"
+                "reason": "头部开发商，14:22封板。权重股涨停是资金对政策预期定价的直接体现，也说明板块启动级别较高，但大市值个股连板难度大。",
+                "verify": {
+                  "gain": 9.94,
+                  "hit": true,
+                  "price": 3.65,
+                  "code": "000002",
+                  "at": "2026-09-21",
+                  "open": 3.3,
+                  "openPct": -0.6,
+                  "buyRet": 10.61,
+                  "netRet": 10.38,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -3413,14 +3763,43 @@ window.REPORTS = {
                 "code": "001216",
                 "role": "空间标·最高连板",
                 "status": "4连板·高位·本轮最高标·氧化锆粉体+MLCC",
-                "reason": "氧化锆粉体+MLCC，9:56封板收21.87元，与锡华科技并列为当日最高连板。是AI硬件方向的高度担当，4板后需防高位分歧。"
+                "reason": "氧化锆粉体+MLCC，9:56封板收21.87元，与锡华科技并列为当日最高连板。是AI硬件方向的高度担当，4板后需防高位分歧。",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 24.06,
+                  "code": "001216",
+                  "at": "2026-09-21",
+                  "open": 24.06,
+                  "openPct": 10.01,
+                  "buyRet": 0,
+                  "netRet": null,
+                  "locked": true,
+                  "basis": "open-to-close",
+                  "by": "hist",
+                  "note": "一字板·无法买入（剔除）"
+                }
               },
               {
                 "name": "祥鑫科技",
                 "code": "002965",
                 "role": "液冷服务器·确定性配套",
                 "status": "首板·中位·液冷服务器",
-                "reason": "液冷服务器，9:47封板。液冷是AI算力密度提升后的确定性配套环节，位置低、逻辑顺。"
+                "reason": "液冷服务器，9:47封板。液冷是AI算力密度提升后的确定性配套环节，位置低、逻辑顺。",
+                "verify": {
+                  "gain": 6.98,
+                  "hit": true,
+                  "price": 33.28,
+                  "code": "002965",
+                  "at": "2026-09-21",
+                  "open": 33,
+                  "openPct": 6.08,
+                  "buyRet": 0.85,
+                  "netRet": 0.65,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -3527,63 +3906,186 @@ window.REPORTS = {
             "code": "600825",
             "sector": "传媒/AI应用/资产重组",
             "status": "停牌复牌·未连板·低位重组催化·三平台人气共识",
-            "reason": "公社人气榜第一、同花顺第三、东方财富第二，是今日跨平台共识度最高的标的。公司自9/7起停牌筹划发行股份购买上海界面财联社100%股权，今日临停复牌，定增价3.93元/股较停牌前折价约26%。周五晚间信息关注度排序中，该股被列为关注度很高的第一条（拟发行股份购买界面财联社100%股权、今日复牌）。停牌期间传媒/AI应用方向已有内蒙新华2板等预热，复牌属事件驱动型催化；折价定增意味着重组对价偏低，复牌首日既有补涨弹性也有套利盘压力，需盯竞价换手与封单结构，不宜按板块连板身位对待。"
+            "reason": "公社人气榜第一、同花顺第三、东方财富第二，是今日跨平台共识度最高的标的。公司自9/7起停牌筹划发行股份购买上海界面财联社100%股权，今日临停复牌，定增价3.93元/股较停牌前折价约26%。周五晚间信息关注度排序中，该股被列为关注度很高的第一条（拟发行股份购买界面财联社100%股权、今日复牌）。停牌期间传媒/AI应用方向已有内蒙新华2板等预热，复牌属事件驱动型催化；折价定增意味着重组对价偏低，复牌首日既有补涨弹性也有套利盘压力，需盯竞价换手与封单结构，不宜按板块连板身位对待。",
+            "verify": {
+              "gain": null,
+              "hit": null,
+              "price": null,
+              "code": "600825",
+              "at": "2026-09-21",
+              "by": "hist",
+              "note": "停牌/无数据（该交易日无K线）"
+            }
           },
           {
             "name": "华天科技",
             "code": "002185",
             "sector": "半导体/封装测试",
             "status": "首板·低位补涨·封测大票机构资金证据",
-            "reason": "同花顺人气榜第二、东方财富人气榜第一。09-18 半导体是当日最强主线（涨停10只、涨停金额122亿元居首），公司10:09封板收18.03元，属封测环节的大市值补涨品种；当日华软科技2连板坐实身位、长电科技等封测大票同步放量，说明是增量机构资金推动的板块级行情。兴业证券最新调研指出公司持续推进先进封装研发量产、上半年新增授权专利30项，收购华羿微电有望延伸功率器件自有品牌业务。周末催化是长鑫科技G5平台量产（先进DRAM跳代突破）+安森美10月10日起涨价+美国拟放行中国新药授权交易，半导体链情绪延续，大票位置低于高位题材股。"
+            "reason": "同花顺人气榜第二、东方财富人气榜第一。09-18 半导体是当日最强主线（涨停10只、涨停金额122亿元居首），公司10:09封板收18.03元，属封测环节的大市值补涨品种；当日华软科技2连板坐实身位、长电科技等封测大票同步放量，说明是增量机构资金推动的板块级行情。兴业证券最新调研指出公司持续推进先进封装研发量产、上半年新增授权专利30项，收购华羿微电有望延伸功率器件自有品牌业务。周末催化是长鑫科技G5平台量产（先进DRAM跳代突破）+安森美10月10日起涨价+美国拟放行中国新药授权交易，半导体链情绪延续，大票位置低于高位题材股。",
+            "verify": {
+              "gain": 2.88,
+              "hit": true,
+              "price": 18.55,
+              "code": "002185",
+              "at": "2026-09-21",
+              "open": 18.68,
+              "openPct": 3.61,
+              "buyRet": -0.7,
+              "netRet": -0.89,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "风华高科",
             "code": "000636",
             "sector": "MLCC/被动元件",
             "status": "未连板·中位趋势型·MLCC涨价核心标的",
-            "reason": "公社人气榜第二、东方财富第三、同花顺第四，三平台同时在榜。周末最强产业催化落在MLCC：央视财经报道“电子工业大米”MLCC一小时一价、最高涨十倍，与09-11以来村田停产消费级/车用MLCC产品线、CCL与电子布涨价形成同一条“元器件涨价链”共振；该股此前封单5.74亿元、机构5席位净买6.62亿元，是资金最认可的元器件核心。需注意它是趋势型而非连板型（09-15曾因连涨超20%发布异动澄清），属“涨价周期+机构定价”逻辑，进攻节奏慢于题材股，适合作为元器件方向的强度锚点而非打板标的。"
+            "reason": "公社人气榜第二、东方财富第三、同花顺第四，三平台同时在榜。周末最强产业催化落在MLCC：央视财经报道“电子工业大米”MLCC一小时一价、最高涨十倍，与09-11以来村田停产消费级/车用MLCC产品线、CCL与电子布涨价形成同一条“元器件涨价链”共振；该股此前封单5.74亿元、机构5席位净买6.62亿元，是资金最认可的元器件核心。需注意它是趋势型而非连板型（09-15曾因连涨超20%发布异动澄清），属“涨价周期+机构定价”逻辑，进攻节奏慢于题材股，适合作为元器件方向的强度锚点而非打板标的。",
+            "verify": {
+              "gain": 1.8,
+              "hit": true,
+              "price": 59.25,
+              "code": "000636",
+              "at": "2026-09-21",
+              "open": 60.77,
+              "openPct": 4.42,
+              "buyRet": -2.5,
+              "netRet": -2.7,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "华瓷股份",
             "code": "001216",
             "sector": "MLCC/氧化锆粉体/AI硬件",
             "status": "4连板·高位·4进5接力风险大·三平台人气在榜",
-            "reason": "公社第三、同花顺第五、东方财富第四，三平台同时在榜。⚠️ 位置提示：该股09-18已收出4连板（9:56封板），与锡华科技并列当日全场最高标，是4进5的接力位。09-18全市场最高连板已从5板压缩至4板、昨日5板高标断板、中晶科技盘中几乎回吐全部涨幅，高位接力出现明显分歧，资金风险偏好正从高位股切向低位首板集群。逻辑上属氧化锆粉体+MLCC验证+越南基地，与MLCC涨价链交叉。高位标的仅作情绪温度观察，不参与追高，接力失败即为负反馈起点。"
+            "reason": "公社第三、同花顺第五、东方财富第四，三平台同时在榜。⚠️ 位置提示：该股09-18已收出4连板（9:56封板），与锡华科技并列当日全场最高标，是4进5的接力位。09-18全市场最高连板已从5板压缩至4板、昨日5板高标断板、中晶科技盘中几乎回吐全部涨幅，高位接力出现明显分歧，资金风险偏好正从高位股切向低位首板集群。逻辑上属氧化锆粉体+MLCC验证+越南基地，与MLCC涨价链交叉。高位标的仅作情绪温度观察，不参与追高，接力失败即为负反馈起点。",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 24.06,
+              "code": "001216",
+              "at": "2026-09-21",
+              "open": 24.06,
+              "openPct": 10.01,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "沈鼓集团",
             "code": "601091",
             "sector": "高端装备/离心压缩机/核电装备",
             "status": "未连板·次新高位·无涨跌幅限制·高风险不参与",
-            "reason": "同花顺人气榜第一、淘股吧第三。⚠️ 位置提示：该股为上市未满5个交易日的次新股，无涨跌幅限制，09-18单日涨幅达373.8%，公司公告明确提示市盈率、市净率显著高于行业平均、股价存在大幅回调的风险；上交所已依规对其异常交易相关投资者采取暂停账户交易等自律监管措施。近端次新在09-18被该股整体引爆（次新股涨停6只、涨停金额46亿元），关注度快速提升但属“双刃剑”。无涨跌幅限制意味着单日回撤可达数十个百分点，风险收益比极不对称，一律不参与。"
+            "reason": "同花顺人气榜第一、淘股吧第三。⚠️ 位置提示：该股为上市未满5个交易日的次新股，无涨跌幅限制，09-18单日涨幅达373.8%，公司公告明确提示市盈率、市净率显著高于行业平均、股价存在大幅回调的风险；上交所已依规对其异常交易相关投资者采取暂停账户交易等自律监管措施。近端次新在09-18被该股整体引爆（次新股涨停6只、涨停金额46亿元），关注度快速提升但属“双刃剑”。无涨跌幅限制意味着单日回撤可达数十个百分点，风险收益比极不对称，一律不参与。",
+            "verify": {
+              "gain": -34.71,
+              "hit": false,
+              "price": 37.72,
+              "code": "601091",
+              "at": "2026-09-21",
+              "open": 30,
+              "openPct": -48.07,
+              "buyRet": 25.73,
+              "netRet": 25.48,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "闽东电力",
             "code": "000993",
             "sector": "电力/海上风电/福建国资",
             "status": "6连板后断板·高位负反馈·不参与",
-            "reason": "淘股吧人气榜第一。⚠️ 位置提示：该股此前走出6连板成为全场空间标，09-18已断板（当日仍收涨约9.07%但未能回封），是典型的高位断板后负反馈阶段。公司在09-15已发布异动澄清（参股海上风电项目均处于未开工或未投产状态），逻辑缺乏业绩支撑。电力方向的容量电价改革与算电协同仍是中期政策线，但个股层面已进入高位退潮期，接力难度与被砸风险显著上升。继续列入榜单仅为跟踪情绪温度，不参与。"
+            "reason": "淘股吧人气榜第一。⚠️ 位置提示：该股此前走出6连板成为全场空间标，09-18已断板（当日仍收涨约9.07%但未能回封），是典型的高位断板后负反馈阶段。公司在09-15已发布异动澄清（参股海上风电项目均处于未开工或未投产状态），逻辑缺乏业绩支撑。电力方向的容量电价改革与算电协同仍是中期政策线，但个股层面已进入高位退潮期，接力难度与被砸风险显著上升。继续列入榜单仅为跟踪情绪温度，不参与。",
+            "verify": {
+              "gain": 4.23,
+              "hit": true,
+              "price": 20.43,
+              "code": "000993",
+              "at": "2026-09-21",
+              "open": 19.99,
+              "openPct": 1.99,
+              "buyRet": 2.2,
+              "netRet": 2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "华软科技",
             "code": "002453",
             "sector": "半导体材料/光刻胶基材",
             "status": "2连板·中位·半导体材料身位股·光刻胶业务澄清",
-            "reason": "东方财富人气榜第五。09-18半导体主线中10:41封板、以2连板坐实材料方向的连板身位，是当日板块内唯一连板股；板块结构上属“材料/气体→封测→设备零件→芯片设计”链条的最上游环节。但公司今日公告澄清：不生产光刻胶产品，仅有少量光引发剂产品，题材属性需打折。半导体为09-18最强主线（涨停10只、122亿元），次日核心是看半导体能否推出5板空间；若板块加速，2板身位仍有晋级预期，但需警惕澄清公告带来的预期差。"
+            "reason": "东方财富人气榜第五。09-18半导体主线中10:41封板、以2连板坐实材料方向的连板身位，是当日板块内唯一连板股；板块结构上属“材料/气体→封测→设备零件→芯片设计”链条的最上游环节。但公司今日公告澄清：不生产光刻胶产品，仅有少量光引发剂产品，题材属性需打折。半导体为09-18最强主线（涨停10只、122亿元），次日核心是看半导体能否推出5板空间；若板块加速，2板身位仍有晋级预期，但需警惕澄清公告带来的预期差。",
+            "verify": {
+              "gain": 9.93,
+              "hit": true,
+              "price": 5.87,
+              "code": "002453",
+              "at": "2026-09-21",
+              "open": 5.85,
+              "openPct": 9.55,
+              "buyRet": 0.34,
+              "netRet": 0.14,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中际旭创",
             "code": "300308",
             "sector": "光模块/CPO/AI算力",
             "status": "未连板·趋势位·光模块全球龙头",
-            "reason": "公社人气榜第四。光模块全球龙头、1.6T产品放量确定性高，是AI算力的机构核心仓位，属典型趋势型标的而非情绪连板股。周末催化密集：阿里云栖大会9月22日—24日在杭州举办、以Agentic AI为核心锚点，涉及芯片、云基础设施、模型服务到Agent应用的完整链路，会上或发布新一代模型及云端产品；海外费城半导体指数尾盘拉升收涨2.78%、存储与光通信概念普涨（Coherent涨超7%、美光涨超3%），瑞银预计全球AI资本支出明年升至1.4万亿美元。趋势股按波段与回踩节奏参与，不追单日冲高。"
+            "reason": "公社人气榜第四。光模块全球龙头、1.6T产品放量确定性高，是AI算力的机构核心仓位，属典型趋势型标的而非情绪连板股。周末催化密集：阿里云栖大会9月22日—24日在杭州举办、以Agentic AI为核心锚点，涉及芯片、云基础设施、模型服务到Agent应用的完整链路，会上或发布新一代模型及云端产品；海外费城半导体指数尾盘拉升收涨2.78%、存储与光通信概念普涨（Coherent涨超7%、美光涨超3%），瑞银预计全球AI资本支出明年升至1.4万亿美元。趋势股按波段与回踩节奏参与，不追单日冲高。",
+            "verify": {
+              "gain": 1.57,
+              "hit": true,
+              "price": 941,
+              "code": "300308",
+              "at": "2026-09-21",
+              "open": 939.5,
+              "openPct": 1.41,
+              "buyRet": 0.16,
+              "netRet": -0.04,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "南华生物",
             "code": "000504",
             "sector": "生物医药/细胞医疗",
             "status": "2连板·低位·细胞医疗+中报扭亏",
-            "reason": "淘股吧人气榜第二。09-18以2连板形态进入连板梯队（9:31封板），逻辑为生物医药+细胞医疗+资源再生+中报扭亏，属前期超跌方向的低位轮动反弹。周末政策面暖风明确：工信部等十部门印发《医药工业发展“十五五”规划》，明确加快人工智能、量子计算、计算医学等新技术赋能药物研发；浙江提出2030年生物医药产业集群营收超5000亿元；美媒报道美国拟放行中国新药授权交易。医药此前缺少连板承接、多为一日游，该股2连板是低位方向少见的连续性信号，但板块整体仍需龙头带动，关注能否走出3板确认方向延续性。"
+            "reason": "淘股吧人气榜第二。09-18以2连板形态进入连板梯队（9:31封板），逻辑为生物医药+细胞医疗+资源再生+中报扭亏，属前期超跌方向的低位轮动反弹。周末政策面暖风明确：工信部等十部门印发《医药工业发展“十五五”规划》，明确加快人工智能、量子计算、计算医学等新技术赋能药物研发；浙江提出2030年生物医药产业集群营收超5000亿元；美媒报道美国拟放行中国新药授权交易。医药此前缺少连板承接、多为一日游，该股2连板是低位方向少见的连续性信号，但板块整体仍需龙头带动，关注能否走出3板确认方向延续性。",
+            "verify": {
+              "gain": 9.99,
+              "hit": true,
+              "price": 11.01,
+              "code": "000504",
+              "at": "2026-09-21",
+              "open": 11.01,
+              "openPct": 9.99,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           }
         ]
       },
