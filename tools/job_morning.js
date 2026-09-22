@@ -48,6 +48,7 @@ const P = require('./lib/prompts');
 const ops = require('./lib/ops');
 const gapCheck = require('./lib/gap_check');
 const { loadDataStrict } = require('./lib/data_store');
+const { preSync } = require('./lib/pre_sync');
 
 /** 网络类故障关键词：命中才写 ALERT；否则视为「数据源今天没发」，属正常情况。 */
 const NET_HINTS = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|ENOTFOUND|socket hang up|timeout|HTTP [45]\d\d/i;
@@ -208,6 +209,9 @@ async function main() {
   }
 
   /* ② 幂等守卫 */
+  //  ⚠️ 必须在幂等守卫之前与远端对齐：另一侧（ECS）可能已经产出了今天的早报，
+  //     拿着陈旧的本地 data.js 判断会误判「今日无早报」→ 重复产出并覆盖。
+  preSync('早报');
   if (!args.force && hasMorning(today)) {
     console.log('· ' + today + ' 已存在早报 → 跳过（需要重写请加 --force）');
     return 0;

@@ -68,6 +68,7 @@ const path = require('path');
 require('dns').setDefaultResultOrder('ipv4first');
 const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
 const ops = require('./lib/ops');
+const { preSync } = require('./lib/pre_sync');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -462,6 +463,9 @@ async function main() {
     String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') +
     (rebuildOnly ? '　【--rebuild 历史回补模式】' : ''));
 
+  // ⚠️ 读 data.js 之前先与远端对齐：另一个环境可能刚写入过标记，
+  //    用陈旧数据会重复标记 / 覆盖对方的成果。
+  preSync('验证');
   const loaded = loadDataStrict(DATA);
   const data = loaded.data;
 

@@ -82,6 +82,24 @@ if ! flock -n 9; then
 fi
 
 DAY="$(date '+%Y-%m-%d')"
+
+# ── 过渡期预同步（双环境共存的安全阀）──────────────────────────────────
+# 本机与 ECS 会交替写 dashboard/ 与 tools/，而 gh_push_api.js 是**按文件内容差异推送**的：
+# 落后的一侧一旦发布，就会把它手里的旧文件推回远端、**静默撤销另一侧的成果**
+# （2026-09-22 两次实证：ECS 克隆后的旧代码；本机落后的 data.js）。
+# 服务器侧跑**全量**同步（代码与数据都不该落后）；任务的 dashboard 文件由各 job
+# 自己的 pre_sync 再兜一层。health 是只读任务（不写盘、不发布）→ 跳过。
+# 放在 flock 之后：避免两个任务同时同步。
+if [ "$TASK" != "health" ]; then
+  SYNC_OUT="$(node tools/sync_from_api.js --apply 2>&1)"
+  SYNC_RC=$?
+  if [ "$SYNC_RC" -eq 0 ]; then
+    log "· 预同步：$(printf '%s' "$SYNC_OUT" | tail -1)"
+  else
+    log "! 预同步失败（rc=$SYNC_RC）→ 继续执行；本次发布有「把旧文件推回远端」的风险"
+  fi
+fi
+
 log "▶ $TASK 开始"
 
 rc=0

@@ -32,6 +32,7 @@ const path = require('path');
 require('dns').setDefaultResultOrder('ipv4first');
 const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
 const ops = require('./lib/ops');
+const { preSync } = require('./lib/pre_sync');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -283,6 +284,9 @@ function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2,
 async function main() {
   const now = new Date();
   console.log('▶ 量价选股开始 ' + fmtTime(now));
+  // ⚠️ 抓数之前先与远端对齐：历史期数据（dashboard/screener.js）是**追加**的，
+  //    拿陈旧副本会丢掉另一侧已发布的期数，并在发布时把它推回远端。
+  preSync('选股');
   const market = await fetchMarket();
   console.log('  全市场（沪深主板）：' + market.length + ' 只');
 

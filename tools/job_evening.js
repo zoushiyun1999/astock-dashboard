@@ -49,6 +49,7 @@ const P = require('./lib/prompts');
 const ops = require('./lib/ops');
 const gapCheck = require('./lib/gap_check');
 const { loadDataStrict } = require('./lib/data_store');
+const { preSync } = require('./lib/pre_sync');
 
 /** 两个博主。blog id 见 automation 配置：湖南人 444409 / 行鱼复盘 563404。 */
 const BLOGS = [
@@ -306,6 +307,8 @@ async function main() {
     return 0;
   }
 
+  // ⚠️ 幂等守卫之前先与远端对齐：另一侧可能已产出今天的晚报，用陈旧本地 data.js 会误判重复产出。
+  preSync('晚报');
   if (!args.force && hasEvening(today)) {
     console.log('· ' + today + ' 已存在晚报 → 跳过（需要重写请加 --force）');
     return 0;
