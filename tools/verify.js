@@ -66,12 +66,16 @@ const path = require('path');
 // v6：历史日线/部分东财域名在本机走 IPv6 会被重置（UND_ERR_SOCKET），强制 IPv4 优先。
 // 已实测：push2delay 在两种解析顺序下均正常，故该设置不会影响原有快照路径。
 require('dns').setDefaultResultOrder('ipv4first');
-const { loadDataStrict, saveDataSafe } = require('./lib/data_store');
+const { loadDataStrict, saveDataSafe, acquireDataLock, releaseDataLock, abort } = require('./lib/data_store');
 const ops = require('./lib/ops');
 const { preSync } = require('./lib/pre_sync');
+// v7：量价入选股验证 —— dashboard/screener.js 是量价历史的唯一源（loadScreenerFile 自带
+// 「损坏即中止、绝不当作首期」的安全语义，复用它而非本地重写解析）。
+const { loadScreenerFile } = require('./screener');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
+const SC_FILE = path.join(ROOT, 'dashboard', 'screener.js');
 const HOLIDAYS_FILE = path.join(ROOT, 'config', 'trade_holidays.json');
 const EM = 'https://push2delay.eastmoney.com';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
@@ -165,11 +169,20 @@ function txSymbol(code) {
   return 'sz' + c;                                    // 深市
 }
 
-/** 拉一段日线（前复权）。返回 [{date,open,close,high,low}]；失败返回 null。 */
+/** 拉一段日线（前复权）。返回 [{date,open,close,high,low}]；失败返回 null。
+ *  v7 修正（2026-09-22）：改用**计数式**请求（`day,,,N,qfq`）。
+ *  日期区间式（`day,from,to,N,qfq`）在腾讯侧**不含当日 bar**（当日数据未进区间接口的库），
+ *  实测 19:04 回补时 target=当日的 13 条全被误标「停牌」，而计数式已含当日 bar。
+ *  故按 from..to 的自然日跨度 + 10 根余量换算 count，一次拉回后由 barAsQuote 按精确日期取用
+ *  （多余的早期 bar 恰好保证 barAsQuote 能取到「昨收」）。 */
 async function fetchDayBars(code, fromYmd, toYmd) {
   const s = txSymbol(code);
   if (!s) return null;
-  const url = TX_KLINE + '?param=' + s + ',day,' + fromYmd + ',' + toYmd + ',320,qfq';
+  const span = Math.round((new Date(toYmd + 'T00:00:00') - new Date(fromYmd + 'T00:00:00')) / 86400000) + 10;
+  const count = Math.min(Math.max(span, 10), 320);
+  // ⚠️ param 字段序：sym,day,start,end,count,fq —— start/end 留空 = 3 个逗号（day,,,N,qfq）。
+  //    多一个逗号 count 挤进 fq 位、少一个逗号 end 吃掉 count 位，都会整天拉取失败（实测）。
+  const url = TX_KLINE + '?param=' + s + ',day,,,' + count + ',qfq';
   for (let i = 0; i < 3; i++) {
     try {
       const r = await fetch(url, { headers: { 'User-Agent': UA } });
@@ -362,9 +375,13 @@ async function applyRebuild(data, opts) {
   //   ⚠️ 判据必须是 `by==='hist'`，不能只看 `at===target`：
   //   2026-09-18 审计发现 09-14 那次回补把运行日快照写进了 `at=09-07/09-09/09-10`，
   //   那些记录的 `at` **恰好等于**应验日，只看 at 会全部漏过、永远修不掉。
+  //   v7 补充：**停牌标记（note 含「停牌」）不参与幂等跳过** —— 2026-09-22 实测 13 条
+  //   target=当日的记录因腾讯区间接口缺当日 bar 被误标停牌；允许复核后，下轮数据源
+  //   出现该 bar 时会自动纠正为真实标记（真停牌股每轮多拉一次日线，代价可忽略）。
   const stale = todo.filter(function (x) {
     const v = x.p.verify;
-    return !(v && v.at === x.target && v.by === 'hist');
+    if (!(v && v.at === x.target && v.by === 'hist')) return true;
+    return !!(v.note && v.note.indexOf('停牌') >= 0);   // 停牌标记 → 复核
   });
 
   console.log('   回补扫描：推荐 ' + items.length + ' 条｜应验日未到/未收盘 ' + pending.length +
@@ -405,7 +422,7 @@ async function applyRebuild(data, opts) {
     const dates = group.map(function (x) { return x.target; }).sort();
     const from = shiftTradingDays(dates[0], 6);      // 往前多留几个交易日，保证能取到「昨收」
     const bars = await fetchDayBars(code, from, dates[dates.length - 1]);
-    await sleep(150);
+    await sleep(400);   // v7：150ms 连续拉 100+ 只会触发腾讯 WAF（HTTP 501），放宽到 400ms
     if (!bars) {
       failed += group.length;
       log.push('   ✗ ' + code + ' 日线拉取失败（' + group.length + ' 条未标，下轮重试）');
@@ -417,12 +434,17 @@ async function applyRebuild(data, opts) {
       if (!q) {
         // 该应验日没有 K 线 → 停牌/未上市。写一条"停牌"标记（前端显示 ⏸），
         // 并带 by='hist' 以避免每轮重复重试。
-        p.verify = {
+        // v7：与已有停牌标记完全相同 → 静默重写（复核不产生日志/计数噪音）。
+        const mark = {
           gain: null, hit: null, price: null, code: code, at: x.target,
           by: 'hist', note: '停牌/无数据（该交易日无K线）'
         };
-        suspended++;
-        log.push('   ⏸ ' + code + ' ' + p.name + ' @' + x.target + ' 无K线 → 标停牌');
+        const dup = old && old.at === mark.at && old.note === mark.note && old.by === mark.by;
+        p.verify = mark;
+        if (!dup) {
+          suspended++;
+          log.push('   ⏸ ' + code + ' ' + p.name + ' @' + x.target + ' 无K线 → 标停牌');
+        }
         return;
       }
       p.code = code;
@@ -452,6 +474,128 @@ async function applyRebuild(data, opts) {
 
   if (log.length) { console.log('   回补明细：'); log.forEach(function (l) { console.log(l); }); }
   return { total: items.length, pending: pending.length, changed: changed, reattached: reattached, added: added, corrected: corrected, upgraded: upgraded, suspended: suspended, failed: failed };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * v7：量价入选股验证（applyRebuildScreener）
+ *
+ * 动机：早报/晚报推荐都有 verify 实盘回路，量价选股是唯一没有成绩单的模块 ——
+ *   不知道赚不赚钱之前，任何调参都是拍脑袋（2026-09-22 与用户对齐后补上）。
+ *
+ * 判据（与晚报完全一致）：
+ *   · 数据源 = dashboard/screener.js 历史各期的 list（每只自带 code，无需名称匹配）
+ *   · 应验日 = 期日的**次一交易日**（选股 15:10 发布，次日开盘买入）
+ *   · 口径 = markVerify 的实盘口径：开盘买→收盘卖、扣双边万五+印花千五、一字板剔除
+ *   · 标记直接写回 screener.js 各期 list[].verify；`by==='hist'` 幂等跳过（同 v6）
+ *
+ * ⚠️ 与 reports 回补的关键差异：量价**没有快照路径**（21:30 的快照只标报告类推荐），
+ *   所以默认模式也要用 sessionClosed 判「今天已收盘」—— 否则昨日入选股的应验日（=今天）
+ *   永远不会被标记。allowToday 由调用方传 sessionClosed，而不是套用 reports 的 rebuildOnly 逻辑。
+ *
+ * 返回 { periods, sourceSerial, total, pending, changed, added, corrected, suspended, failed }：
+ *   periods/sourceSerial 供 main 做「期数守卫 + 乐观锁」后写回 SC_FILE。
+ * ───────────────────────────────────────────────────────────────────────────── */
+async function applyRebuildScreener(opts) {
+  opts = opts || {};
+  const now = new Date();
+  const todayStr = fmtDate(now);
+  const sessionClosed = now.getHours() > 15 || (now.getHours() === 15 && now.getMinutes() >= 5);
+  const allowToday = opts.allowToday !== undefined ? !!opts.allowToday : sessionClosed;
+
+  const periods = loadScreenerFile();          // null = 文件缺失（首期，合法）；抛 __abort = 损坏
+  if (!Array.isArray(periods) || !periods.length) {
+    console.log('   量价：screener.js 无历史期，跳过');
+    return { periods: periods || [], sourceSerial: '[]', total: 0, pending: 0, changed: 0, added: 0, corrected: 0, suspended: 0, failed: 0 };
+  }
+  const sourceSerial = JSON.stringify(periods);   // 写回前乐观锁比对基线（读→写期间被并发改过即中止）
+
+  // 1) 汇总应验条目：期日 r 的入选股 → 应验日 = nextTradingDay(r)
+  const items = [];
+  periods.forEach(function (period) {
+    if (!period || !period.date || period.date > todayStr) return;
+    (period.list || []).forEach(function (p) {
+      if (p) items.push({ p: p, target: nextTradingDay(period.date), kind: 's', rdate: period.date });
+    });
+  });
+  if (!items.length) {
+    console.log('   量价：历史期无入选股');
+    return { periods: periods, sourceSerial: sourceSerial, total: 0, pending: 0, changed: 0, added: 0, corrected: 0, suspended: 0, failed: 0 };
+  }
+
+  function barReady(target) {
+    if (!target) return false;
+    if (!isTradingDay(new Date(target + 'T00:00:00'))) return false;
+    if (target < todayStr) return true;
+    return target === todayStr && allowToday;
+  }
+  const todo = items.filter(function (x) { return barReady(x.target); });
+  // 幂等判据与 v6 相同：只有 by==='hist' 且 at===target 的记录才跳过；
+  // v7：停牌标记（note 含「停牌」）复核重试 —— 数据源补出该日 bar 时自动纠正（同 applyRebuild）。
+  const stale = todo.filter(function (x) {
+    const v = x.p.verify;
+    if (!(v && v.at === x.target && v.by === 'hist')) return true;
+    return !!(v.note && v.note.indexOf('停牌') >= 0);
+  });
+  console.log('   量价扫描：入选 ' + items.length + ' 条｜应验日未到 ' + (items.length - todo.length) +
+    ' 条｜已标 ' + (todo.length - stale.length) + ' 条｜待标 ' + stale.length + ' 条');
+  if (!stale.length) {
+    return { periods: periods, sourceSerial: sourceSerial, total: items.length, pending: items.length - todo.length, changed: 0, added: 0, corrected: 0, suspended: 0, failed: 0 };
+  }
+
+  // 2) 按代码分组拉日线（量价入选股 code 来自行情接口 f12，必有）
+  const byCode = {};
+  stale.forEach(function (x) { (byCode[x.p.code] = byCode[x.p.code] || []).push(x); });
+
+  let changed = 0, added = 0, corrected = 0, suspended = 0, failed = 0;
+  const log = [];
+  const codes = Object.keys(byCode);
+  for (let ci = 0; ci < codes.length; ci++) {
+    const code = codes[ci];
+    const group = byCode[code];
+    const tdates = group.map(function (x) { return x.target; }).sort();
+    const from = shiftTradingDays(tdates[0], 6);
+    const bars = await fetchDayBars(code, from, tdates[tdates.length - 1]);
+    await sleep(400);   // v7：150ms 连续拉 100+ 只会触发腾讯 WAF（HTTP 501），放宽到 400ms
+    if (!bars) {
+      failed += group.length;
+      log.push('   ✗ ' + code + ' 日线拉取失败（量价 ' + group.length + ' 条未标，下轮重试）');
+      continue;
+    }
+    group.forEach(function (x) {
+      const p = x.p, old = p.verify;
+      const q = barAsQuote(bars, code, x.target, p.name);
+      if (!q) {
+        const mark = { gain: null, hit: null, price: null, code: code, at: x.target, by: 'hist', note: '停牌/无数据（该交易日无K线）' };
+        const dup = old && old.at === mark.at && old.note === mark.note && old.by === mark.by;
+        p.verify = mark;
+        if (!dup) {
+          suspended++;
+          log.push('   ⏸ ' + code + ' ' + p.name + ' @' + x.target + ' 无K线 → 标停牌');
+        }
+        return;
+      }
+      p.verify = markVerify(q, x.target, 'hist');
+      const nv = p.verify;
+      if (!old) {
+        added++;
+        log.push('   ＋ 量价补标 @' + x.target + '：' + code + ' ' + p.name +
+          ' 开盘' + nv.openPct + '% → 净' + nv.netRet + '%' + (nv.locked ? '（一字板）' : ''));
+      } else if (old.at !== x.target) {
+        log.push('   ↻ 量价改标 at ' + old.at + ' → ' + x.target + '：' + code + ' ' + p.name);
+      } else if (old.basis !== 'open-to-close') {
+        corrected++;
+        log.push('   ⬆ 量价升级实盘口径 @' + x.target + '：' + code + ' ' + p.name);
+      } else if (Math.abs((old.buyRet || 0) - nv.buyRet) > 0.005) {
+        corrected++;
+        log.push('   ⚠ 量价数据纠正 @' + x.target + '：' + code + ' ' + p.name +
+          '（旧 buyRet=' + old.buyRet + ' → 新 ' + nv.buyRet + '）');
+      }
+      changed++;
+    });
+  }
+
+  if (log.length) { console.log('   量价明细：'); log.forEach(function (l) { console.log(l); }); }
+  return { periods: periods, sourceSerial: sourceSerial, total: items.length, pending: items.length - todo.length, changed: changed, added: added, corrected: corrected, suspended: suspended, failed: failed };
 }
 
 async function main() {
@@ -526,10 +670,46 @@ async function main() {
     console.warn('   ⚠ 有 ' + rb.failed + ' 条因日线拉取失败未处理，下轮会自动重试');
   }
 
+  // ── 量价入选股验证（v7）──
+  // 与 reports 的回补不同：量价没有快照路径，默认模式也用 sessionClosed 判「今天已收盘」。
+  // screener.js 文件损坏（__abort）时记 ALERT 并跳过量价部分，**不拖累**报告标记与 data.js 保存。
+  console.log('   ── 量价入选股验证 ──');
+  let sc = null;
+  try {
+    sc = await applyRebuildScreener({ allowToday: sessionClosed });
+  } catch (e) {
+    if (e && e.__abort) {
+      console.error(e.message);
+      try {
+        ops.appendAlert({ stage: 'verify', result: 'OPEN', script: 'verify.js',
+          detail: 'screener.js 验证中止：' + e.message, fix: 'dashboard/screener.js 疑似损坏，人工检查后再重跑量价验证', link: 'dashboard/screener.js' });
+      } catch (_) { /* 忽略 */ }
+    } else { throw e; }
+  }
+
   if (dry) { console.log('（--dry 模式，未写入文件）'); return; }
 
   const stamp = fmtDate(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
   const touched = changed + ((rb && rb.changed) || 0);
+
+  // 量价标记写回 screener.js（独立于 data.js：即使本轮报告无变化，量价标记也要落盘）。
+  // 守卫：① 期数不得减少 ② 乐观锁 —— 读基线 sourceSerial 与现文件不一致 → 中止。
+  if (sc && sc.changed) {
+    acquireDataLock(SC_FILE);
+    try {
+      const cur = loadScreenerFile();
+      if (JSON.stringify(cur) !== sc.sourceSerial) {
+        abort('✗ dashboard/screener.js 在验证期间被其他任务修改过（很可能是量价选股并发运行），' +
+          '为避免覆盖，量价标记本次中止写回（报告标记已保存）。请重跑本任务自动补齐。');
+      }
+      fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(sc.periods, null, 2) + ';\n');
+      console.log('   ✔ 已写回 dashboard/screener.js（量价标记 ' + sc.changed +
+        ' 条' + (sc.failed ? '，失败 ' + sc.failed + ' 条留待下轮' : '') + '）');
+    } finally {
+      releaseDataLock(SC_FILE);
+    }
+  }
+
   if (!touched) {
     console.log('   · 本轮无新增/无修正标记，不写文件（保持 updatedAt 不变）');
     return;
@@ -566,5 +746,7 @@ if (require.main === module) {
 module.exports = {
   markVerify, findQuote, fetchQuotes, num, main,
   // v6 新增（供审计脚本/测试复用）
-  applyRebuild, fetchDayBars, barAsQuote, txSymbol, isTradingDay, nextTradingDay, shiftTradingDays
+  applyRebuild, fetchDayBars, barAsQuote, txSymbol, isTradingDay, nextTradingDay, shiftTradingDays,
+  // v7 新增（量价入选股验证）
+  applyRebuildScreener
 };

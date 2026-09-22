@@ -719,15 +719,30 @@
     if (e.key === 'Escape') window.closeCalViewer();
   });
 
-  /* ── 量价选股渲染（技术面条件筛选，按涨幅降序） ── */
+  /* ── 量价选股渲染（技术面条件筛选，按涨幅降序） ──
+     v7（2026-09-22）：新增「次日实盘」列 —— verify 由 tools/verify.js 按"次日开盘买入→收盘卖出、
+     扣费净收益"口径写回 screener.js 各期（netRet 为净收益；一字板 locked 无法买入剔除；停牌 ⏸）。
+     老数据（09-22 之前的历史期）也已由 --rebuild 全量回补，每个期都能看到成绩。 */
+  function scVerifyCell(s) {
+    var v = s && s.verify;
+    if (!v) return '<span class="st-verify v-none">未标</span>';
+    if (v.locked) return '<span class="st-verify v-none">一字板</span>';
+    if (v.note && v.note.indexOf('停牌') >= 0) return '<span class="st-verify v-none">⏸ 停牌</span>';
+    if (typeof v.netRet !== 'number' || !isFinite(v.netRet)) return '<span class="st-verify v-none">—</span>';
+    var cls = v.netRet > 0 ? ' v-up' : (v.netRet < 0 ? ' v-down' : ' v-none');
+    return '<span class="st-verify' + cls + '">' + (v.netRet > 0 ? '+' : '') + v.netRet + '%</span>';
+  }
+
   function scRowsHtml(arr) {
-    if (!arr.length) return '<tr><td colspan="9" class="sc-empty">暂无数据</td></tr>';
+    if (!arr.length) return '<tr><td colspan="11" class="sc-empty">暂无数据</td></tr>';
     return arr.map(function (s, i) {
       var to = parseFloat(s.turnover) || 0;
       var vr = parseFloat(s.volRatio) || 0;
       var tag = (s.sector ? '<span class="sc-hot">' + esc(s.sector) + '</span>' : '') +
         ((s.sector && s.industry) ? '<br>' : '') +
         (s.industry ? '<span class="sc-ind">' + esc(s.industry) + '</span>' : '');
+      var g20 = (s.gain20 === 0 || (typeof s.gain20 === 'number' && isFinite(s.gain20)))
+        ? esc(s.gain20) + '%' : '<span class="sc-none">-</span>';
       return '<tr>' +
         '<td class="sc-no">' + (i + 1) + '</td>' +
         '<td class="sc-nm">' + esc(s.name) + '</td>' +
@@ -737,7 +752,9 @@
         '<td class="sc-num">' + esc(s.cap) + '亿</td>' +
         '<td class="sc-num' + (vr >= 2 ? ' sc-hot-val' : '') + '">' + esc(s.volRatio) + '</td>' +
         '<td class="sc-yang">' + esc(s.yang) + '连阳</td>' +
+        '<td class="sc-num">' + g20 + '</td>' +
         '<td class="sc-num">' + esc(s.aboveRate) + '%</td>' +
+        '<td class="sc-ver">' + scVerifyCell(s) + '</td>' +
         '</tr>';
     }).join('');
   }
@@ -758,7 +775,8 @@
     var c = sc.criteria || {};
     var cond = [
       ['涨幅', c.gain], ['换手', c.turnover], ['市值', c.cap],
-      ['量比', c.volRatio], ['K线', c.yang], ['均线', c.aboveAvg], ['排除', c.exclude]
+      ['量比', c.volRatio], ['K线', c.yang], ['20日涨幅', c.gain20],
+      ['均线', c.aboveAvg], ['排除', c.exclude]
     ].filter(function (x) { return x[1]; })
       .map(function (x) { return '<span class="sc-cond"><b>' + esc(x[0]) + '</b>' + esc(x[1]) + '</span>'; })
       .join('');
@@ -777,11 +795,11 @@
 
     return bar + sectionCard('量价选股 · ' + esc(sc.date), 'info',
       head +
-      // 9 列在手机上会溢出屏外，加提示 + 右侧渐隐遮罩，告诉用户"右边还有"
-      '<div class="sc-hint" id="scHint">← 左右滑动查看全部 9 项指标</div>' +
+      // 11 列在手机上会溢出屏外，加提示 + 右侧渐隐遮罩，告诉用户"右边还有"
+      '<div class="sc-hint" id="scHint">← 左右滑动查看全部 11 项指标</div>' +
       '<div class="sc-scroller">' +
       '<div class="sc-wrap" id="scWrap"><table class="sc-table">' +
-      '<thead><tr><th>#</th><th>名称</th><th>板块</th><th>涨幅</th><th>换手</th><th>市值</th><th>量比</th><th>连阳</th><th>均线上</th></tr></thead>' +
+      '<thead><tr><th>#</th><th>名称</th><th>板块</th><th>涨幅</th><th>换手</th><th>市值</th><th>量比</th><th>连阳</th><th>20日</th><th>均线上</th><th>次日实盘</th></tr></thead>' +
       '<tbody>' + scRowsHtml(rows) + '</tbody></table></div>' +
       '<span class="sc-fade" id="scFade"></span></div>') + tip;
   }

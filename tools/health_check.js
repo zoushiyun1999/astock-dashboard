@@ -18,6 +18,7 @@ const path = require('path');
 const vm = require('vm');
 const ops = require('./lib/ops');
 const gapCheck = require('./lib/gap_check');   // 断更检测/交易日判定的可测纯逻辑（可被测试脚本 require）
+const { loadScreenerFile } = require('./screener');   // v7：量价历史源（覆盖度检查用；损坏→__abort，由调用处兜住）
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -254,6 +255,22 @@ function isTradingDay(d) {
       break;
     }
   }
+  // v7（2026-09-22）：量价入选股纳入覆盖度 —— dashboard/screener.js 历史各期的 list，
+  // 口径同晚报（期日的次一交易日应被标）。screener.js 损坏时跳过量价部分，不拖垮整个体检。
+  (function addScreenerCands() {
+    let periods = null;
+    try { periods = loadScreenerFile(); }
+    catch (e) { notes.push('screener.js 读取失败，量价覆盖度跳过：' + e.message); return; }
+    (periods || []).forEach(function (period) {
+      if (!period || !period.date) return;
+      const d = new Date(period.date + 'T00:00:00');
+      do { d.setDate(d.getDate() + 1); } while (!isTradingDay(d));
+      const target = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      if (target !== d0.date) return;
+      (period.list || []).forEach(function (p) { if (p && p.code) cands.push(p); });
+    });
+  })();
+
   if (!cands.length) return;
   const done = cands.filter(function (p) { return p.verify && p.verify.at; }).length;
   const ratio = done / cands.length;

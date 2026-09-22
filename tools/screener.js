@@ -8,8 +8,10 @@
  *   3. 总市值 20亿 ~ 500亿
  *   4. 股价全天运行在分时均线上方（默认 ≥95% 时间 & 收盘在均线上）
  *   5. 非创业板(300/301)、非科创板(688)、非 ST / 退市
- *   6. 量比 > 1
+ *   6. 量比 ≥ 1.5（2026-09-22 由 1 上调：1.0~1.3 属正常水平，不构成"放量"证据）
  *   7. 连续收阳（默认 ≥2 天）
+ *   8. 高位过滤：近 20 日累计涨幅 ≤ 25%（2026-09-22 新增；防追在趋势末端，
+ *      如 7 连阳股第 8 天追入。上市不足 21 根 K 线的新股无法计算 → 跳过该条不拦截）
  *
  * 用法：node tools/screener.js            # 跑筛选并写入 dashboard/data.js 的顶层 screener 字段
  *       node tools/screener.js --dry      # 只打印结果，不写文件
@@ -56,9 +58,10 @@ const CFG = {
   gainMin: 2.5, gainMax: 7,        // 涨幅 %
   turnMin: 2.5, turnMax: 20,       // 换手 %
   capMin: 20, capMax: 500,         // 市值 亿元
-  volRatioMin: 1,                  // 量比
+  volRatioMin: 1.5,                // 量比（09-22 由 1 上调至 1.5）
   yangMin: 2,                      // 最少连续收阳天数
   aboveRateMin: 0.95,              // 分时价格在均线上方的时间占比
+  gain20Max: 25,                   // 近 20 日累计涨幅上限 %（高位过滤，09-22 新增）
   maxHold: 40                      // 最多保留多少只
 };
 
@@ -109,7 +112,7 @@ function passBase(x) {
   return x.f3 >= CFG.gainMin && x.f3 <= CFG.gainMax &&
     x.f8 >= CFG.turnMin && x.f8 <= CFG.turnMax &&
     cap >= CFG.capMin && cap <= CFG.capMax &&
-    x.f10 > CFG.volRatioMin;
+    x.f10 >= CFG.volRatioMin;
 }
 
 /** 并发执行（带并发上限，避免被限流） */
@@ -122,13 +125,14 @@ async function mapLimit(arr, n, fn) {
   return out;
 }
 
-/** 连续收阳天数：主源新浪日K，备用腾讯（腾讯高频会被 WAF 拦截） */
+/** 连续收阳天数 + 近 20 日累计涨幅：主源新浪日K，备用腾讯（腾讯高频会被 WAF 拦截）。
+ *  K 线窗口从 10 根扩到 30 根：连阳只看最近几天，但高位过滤需要 ≥21 根收盘价。 */
 async function fillYang(s) {
   const sym = (s.f12.startsWith('6') ? 'sh' : 'sz') + s.f12;
   let pairs = null;
 
   // 源1：新浪（稳定）
-  const sn = await getJSON(`https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sym}&scale=240&ma=no&datalen=10`,
+  const sn = await getJSON(`https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sym}&scale=240&ma=no&datalen=30`,
     { 'User-Agent': UA, 'Referer': 'https://finance.sina.com.cn/' });
   if (Array.isArray(sn) && sn.length) {
     pairs = sn.map(function (d) { return [parseFloat(d.open), parseFloat(d.close)]; });
@@ -136,22 +140,41 @@ async function fillYang(s) {
 
   // 源2：腾讯（备用）
   if (!pairs) {
-    const tx = await getJSON(`https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${sym},day,,,10,qfq`,
+    const tx = await getJSON(`https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${sym},day,,,30,qfq`,
       { 'User-Agent': UA });
     const k = (tx && tx.data && tx.data[sym] && tx.data[sym].qfqday) || [];
     if (k.length) pairs = k.map(function (r) { return [parseFloat(r[1]), parseFloat(r[2])]; });
   }
 
-  let n = 0;
-  if (pairs) {
-    for (let i = pairs.length - 1; i >= 0; i--) {
-      const o = pairs[i][0], c = pairs[i][1];
-      if (isFinite(o) && isFinite(c) && c > o) n++; else break;
-    }
-  }
-  s.yang = n;
+  const r = computeYangGain20(pairs, CFG);
+  s.yang = r.yang;
+  s.gain20 = r.gain20;          // 近 20 日累计涨幅 %；K 线不足 21 根（新股）为 null
   s.yangOK = !!pairs;
   return s;
+}
+
+/** 纯函数：从 [open, close] 序列计算连阳天数与近 20 日累计涨幅（供 fillYang 与单测共用）。
+ *  · yang：从最新一根往回数「close > open」的连续天数（与旧实现逐字节同语义）；
+ *  · gain20：最新收盘 / 21 根前的收盘 - 1（即 20 个交易日的涨幅，%）；不足 21 根 → null；
+ *  · 数据里含非有限值 → 该根按「非阳线」处理、gain20 视为无法计算（null）。 */
+function computeYangGain20(pairs, cfg) {
+  const out = { yang: 0, gain20: null, histOK: false };
+  if (!Array.isArray(pairs) || !pairs.length) return out;
+  let n = 0;
+  for (let i = pairs.length - 1; i >= 0; i--) {
+    const o = pairs[i][0], c = pairs[i][1];
+    if (isFinite(o) && isFinite(c) && c > o) n++; else break;
+  }
+  out.yang = n;
+  if (pairs.length >= 21) {
+    const last = pairs[pairs.length - 1][1];
+    const prev = pairs[pairs.length - 21][1];
+    if (isFinite(last) && isFinite(prev) && prev > 0) {
+      out.gain20 = +(((last / prev) - 1) * 100).toFixed(2);
+      out.histOK = true;
+    }
+  }
+  return out;
 }
 
 /** 分时均线：价格在均线上方的时间占比 + 收盘是否在均线上 */
@@ -314,13 +337,22 @@ async function main() {
   console.log('  ② 连续收阳 ≥' + CFG.yangMin + ' 天：' + yangPass.length + ' 只' +
     (yangErr ? '（K线获取失败 ' + yangErr + ' 只，已重试）' : ''));
 
-  await mapLimit(yangPass, 4, fillAvg);
-  const avgErr = yangPass.filter(function (s) { return !s.avgOK; }).length;
+  // ③ 高位过滤（09-22 新增）：近 20 日累计涨幅 ≤ gain20Max。
+  //    gain20 === null（上市不足 21 根 K 线的新股）无法计算 → 放行，不拦截。
+  const highPass = yangPass.filter(function (s) {
+    return s.gain20 === null || s.gain20 <= CFG.gain20Max;
+  });
+  const highCut = yangPass.length - highPass.length;
+  console.log('  ③ 近 20 日涨幅 ≤' + CFG.gain20Max + '%：' + highPass.length + ' 只' +
+    (highCut ? '（剔除高位 ' + highCut + ' 只）' : ''));
+
+  await mapLimit(highPass, 4, fillAvg);
+  const avgErr = highPass.filter(function (s) { return !s.avgOK; }).length;
   if (avgErr) console.log('     （分时获取失败 ' + avgErr + ' 只）');
-  let final = yangPass.filter(function (s) {
+  let final = highPass.filter(function (s) {
     return s.aboveRate >= CFG.aboveRateMin && s.closeAbove;
   });
-  console.log('  ③ 全天在均线上方：' + final.length + ' 只');
+  console.log('  ④ 全天在均线上方：' + final.length + ' 只');
 
   final.sort(function (a, b) { return b.f3 - a.f3; });
   final = final.slice(0, CFG.maxHold);
@@ -342,6 +374,7 @@ async function main() {
       volRatio: s.f10,
       cap: +(s.f20 / 1e8).toFixed(0),
       yang: s.yang,
+      gain20: s.gain20,            // 近 20 日累计涨幅 %（新股为 null）
       aboveRate: Math.round(s.aboveRate * 100),
       sector: buildTag(s.f14, s.f100, sectorMap, activeKws)
     };
@@ -355,8 +388,9 @@ async function main() {
       gain: CFG.gainMin + '%-' + CFG.gainMax + '%',
       turnover: CFG.turnMin + '%-' + CFG.turnMax + '%',
       cap: CFG.capMin + '亿-' + CFG.capMax + '亿',
-      volRatio: '>' + CFG.volRatioMin,
+      volRatio: '≥' + CFG.volRatioMin,
       yang: '≥' + CFG.yangMin + '连阳',
+      gain20: '≤' + CFG.gain20Max + '%（近 20 日）',
       aboveAvg: '≥' + Math.round(CFG.aboveRateMin * 100) + '% 时间在分时均线上',
       exclude: '创业板/科创板/北交所/ST/退市'
     },
@@ -370,7 +404,8 @@ async function main() {
   console.log('  ✔ 最终入选 ' + list.length + ' 只');
   list.slice(0, 10).forEach(function (s, i) {
     console.log('    ' + (i + 1) + '. ' + s.name + '(' + s.code + ') 涨' + s.gain + '% 换' +
-      s.turnover + '% 量比' + s.volRatio + ' 市值' + s.cap + '亿 ' + s.yang + '连阳 均线上' + s.aboveRate + '%' +
+      s.turnover + '% 量比' + s.volRatio + ' 市值' + s.cap + '亿 ' + s.yang + '连阳' +
+      (s.gain20 === null ? '' : ' 20日+' + s.gain20 + '%') + ' 均线上' + s.aboveRate + '%' +
       (s.sector ? ' 【' + s.sector + '】' : ''));
   });
 
@@ -457,5 +492,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, saveDataSafe, main };
+module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main };
 

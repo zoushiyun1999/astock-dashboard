@@ -544,6 +544,8 @@ body.scrolled header { padding-top: 8px; padding-bottom: 7px; }
 .st-verify.v-none { color: var(--risk-none); background: var(--risk-none-bg); font-weight: var(--fw-medium); }
 /* 旧口径（收盘涨跌幅，相对昨收）—— 弱化显示，避免被误读为实盘收益 */
 .st-verify .v-old { opacity: .65; font-weight: var(--fw-medium); margin-left: 3px; }
+/* v7 量价表「次日实盘」列：净收益芯片复用 st-verify 配色；未标列淡显示 */
+.sc-ver .st-verify { margin-left: 0; }
 .hot-rep { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 .hot-rep li {
   display: inline-flex; align-items: center; gap: 7px; padding: 5px 6px 5px 11px;
