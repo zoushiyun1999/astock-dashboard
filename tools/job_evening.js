@@ -126,17 +126,36 @@ function hasEvening(date) {
   return !!(rec && rec.evening);
 }
 
+/** 归一化文字字段，并把「占位符」清空。
+ *
+ *  为什么需要（2026-09-22 实证）：模型在 picks 里输出了**字面的 "..."** 和空字符串，
+ *  而 merge_report 只校验「非空」——占位符能过校验、然后原样进看板展示给读者。
+ *  这里统一清空，让它**走已被证实有效的路径**：校验失败 → 反馈给模型重试一次
+ *  （09-21 实盘：第 1 次校验失败、第 2 次通过）。
+ *  不替换成「未提及」之类的文案——那是把"没读到"伪装成"已读到"，会骗过看板读者。
+ *  唯一允许留空的是 picks[].code（由 check_codes.js 按名称回填）。
+ *
+ *  ⚠️ 正则**故意收窄**：只认「纯符号」与几个明确的占位词。
+ *     `暂无`/`未知` 这类**不列入** —— 它们是诚实回答而非占位符，误伤会删掉真内容，
+ *     代价远大于漏判（漏判只是留个占位符，误判是丢数据）。 */
+const PLACEHOLDER = /^(?:\.{2,}|…+|。{2,}|[-—–_~]+|[?？]{2,}|x{2,}|n\/?a|待[补定])$/i;
+
+function clean(v) {
+  const s = String(v == null ? '' : v).trim();
+  return PLACEHOLDER.test(s) ? '' : s;
+}
+
 /** 只保留 merge_report 需要的字段，避免模型多吐的键污染 data.js。 */
 function shapeEvening(c, today, now, sources) {
   const picks = function (a) {
     return (Array.isArray(a) ? a : []).map(function (p) {
       p = p || {};
       return {
-        name: String(p.name || '').trim(),
-        code: String(p.code || '').trim(),
-        role: String(p.role || '').trim(),
-        status: String(p.status || '').trim(),
-        reason: String(p.reason || '').trim(),
+        name: clean(p.name),
+        code: clean(p.code),
+        role: clean(p.role),
+        status: clean(p.status),
+        reason: clean(p.reason),
       };
     });
   };
@@ -149,33 +168,33 @@ function shapeEvening(c, today, now, sources) {
       generatedAt: now,
       '博主观点': (Array.isArray(c['博主观点']) ? c['博主观点'] : []).map(function (b) {
         b = b || {};
-        return { author: String(b.author || '').trim(), view: String(b.view || '').trim() };
+        return { author: clean(b.author), view: clean(b.view) };
       }),
       '大盘概况': {
-        summary: String(m.summary || '').trim(),
+        summary: clean(m.summary),
         metrics: (Array.isArray(m.metrics) ? m.metrics : []).map(function (x) {
           x = x || {};
-          return { k: String(x.k || '').trim(), v: String(x.v || '').trim(), d: String(x.d || '').trim(), up: !!x.up };
+          return { k: clean(x.k), v: clean(x.v), d: clean(x.d), up: !!x.up };
         }),
       },
       '连板梯队': (Array.isArray(c['连板梯队']) ? c['连板梯队'] : []).map(String),
       '明日关注': (Array.isArray(c['明日关注']) ? c['明日关注'] : []).map(function (s) {
         s = s || {};
         return {
-          sector: String(s.sector || '').trim(),
-          stage: String(s.stage || '').trim(),
-          why: String(s.why || '').trim(),
-          chain: String(s.chain || '').trim(),
+          sector: clean(s.sector),
+          stage: clean(s.stage),
+          why: clean(s.why),
+          chain: clean(s.chain),
           picks: picks(s.picks),
         };
       }),
       '板块热点': (Array.isArray(c['板块热点']) ? c['板块热点'] : []).map(function (x) {
         x = x || {};
         return {
-          name: String(x.name || '').trim(),
-          strength: String(x.strength || '').trim(),
-          stocks: String(x.stocks || '').trim(),
-          catalyst: String(x.catalyst || '').trim(),
+          name: clean(x.name),
+          strength: clean(x.strength),
+          stocks: clean(x.stocks),
+          catalyst: clean(x.catalyst),
         };
       }),
     },
