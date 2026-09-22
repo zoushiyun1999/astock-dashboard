@@ -895,6 +895,38 @@
   }
 
   /** 晚报未读红点：最新一期有晚报、且用户没在"最新一期"上打开过晚报时显示 */
+  /** Tab 源状态点：早报/晚报/量价/日历四个 Tab 标题旁的小圆点（替代原 header 状态行）。
+   *  基准 = 各源**最新一期**（与 footer 一致，与当前选中日期无关）：
+   *    ok 绿 = 最新一期已生成；wait 黄 = 今天还没到/刚过计划点未生成；
+   *    miss 红 = 交易日已过点未生成；close = 休市语义不亮灯。
+   *  日历是低频源特殊处理：最新一篇是今天才亮绿，否则灰点（正常，不参与红黄告警）。
+   *  状态词与时间戳细节仍在 title（桌面悬停可见）；异常详情由 healthBar 承接。 */
+  function updateSrcDots() {
+    var newest = list[list.length - 1];
+    var meta = newest ? srcMeta(newest, newest.date) : [];
+    var byName = {};
+    meta.forEach(function (s) { byName[s.name] = s; });
+    var map = { morning: '早报', evening: '晚报', screener: '量价选股', calendar: '投资日历' };
+    Object.keys(map).forEach(function (tab) {
+      var el = document.getElementById('srcDot-' + tab);
+      if (!el) return;
+      var s = byName[map[tab]];
+      var st = s ? s.state : '';
+      if (tab === 'calendar') {
+        var cal = (window.REPORTS && window.REPORTS.calendar) || [];
+        var isToday = !!(cal.length && cal[0].publishedAt &&
+          cal[0].publishedAt.slice(0, 10) === todayYmd());
+        st = isToday ? 'ok' : 'old';
+      }
+      var show = st === 'ok' || st === 'wait' || st === 'miss' || st === 'old';
+      el.className = 'tab-src' + (show ? ' ' + st + ' show' : '');
+      if (s) {
+        el.title = s.name + ' ' + (metaTime(s) ||
+          (st === 'wait' ? '计划中' : (st === 'miss' ? '未更新' : '')));
+      }
+    });
+  }
+
   function updateEveningDot() {
     var dot = document.getElementById('eveningDot');
     if (!dot) return;
@@ -937,19 +969,9 @@
     document.getElementById('hdDate').textContent = d.ymd;
     document.getElementById('hdWeek').textContent = d.week + (isLatest ? ' · 最新一期' : '');
 
-    // 状态（基准是选中日期，与页头日期自洽）
-    // ⚠️ 正常项**不写**"已生成/已收录"：5 项各写一次会把这一行挤成两行，
-    //    而绿点已经说明了结果。只有异常态（待更新/未更新/休市）才补状态词，
-    //    这样"异常才显眼"，正常时一行装得下 5 个数据源。
-    document.getElementById('hdStatus').innerHTML = srcMeta(r).map(function (s) {
-      var label = s.state === 'ok' ? ''
-        : (s.state === 'wait' ? '待更新' : (s.state === 'miss' ? '未更新' : '休市'));
-      var timeHtml = (s.state === 'close') ? '' : (metaTime(s) ? ' ' + metaTime(s) : '');
-      var full = s.name + ' ' + (label ? label : ((timeHtml ? timeHtml.trim() : '') + ' 已生成'));
-      return '<div title="' + esc(full) + '"><i class="st-dot ' + s.state + '"></i>' +
-        esc(SHORT_NAME[s.name] || s.name) + timeHtml +
-        (label ? ' <span class="st-state">' + esc(label) + '</span>' : '') + '</div>';
-    }).join('');
+    // 源状态改用 Tab 标题上的小圆点表达（2026-09-22 移除 header 状态行，用户要求）。
+    // 基准=各源最新一期（与 footer 一致，与当前选中日期无关）。
+    updateSrcDots();
 
     // 内容（每个 Tab 自己渲染顶部的日期条：日期语义各 Tab 不同，见 dateBar / calBar）
     document.getElementById('sec-morning').innerHTML = renderMorning(r ? r.morning : null, curDate);
