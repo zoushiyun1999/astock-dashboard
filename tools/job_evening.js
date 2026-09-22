@@ -347,11 +347,52 @@ async function main() {
 
   const active = fetched.filter(function (x) { return x.found; });
 
-  /* ④ 两源皆无 → 不写空 evening */
+  /* ③·5 投资日历（第三源，独立数据，不进 evening 正文）—— 韭研公社「A股投资日历」最新一篇。
+   *   与湖南人/行鱼解耦：即便今日两源无帖，只要日历博主发了新帖就独立更新日历（不写空 evening）。
+   *   幂等：最新 id 已在 data.js.calendar 则 fetch_jy_calendar 不写 JSON → calEntries 为空。 */
+  const calJsonPath = path.join(ROOT, 'tmp_calendar_' + today + '.json');
+  let calEntries = [];
+  {
+    const calArgs = ['tools/fetch_jy_calendar.js', '--fetch', '--out-json', calJsonPath, '--date', today];
+    if (args.dry) calArgs.push('--dry');
+    const calRun = run('node', calArgs);
+    if (calRun.code === 0 && fs.existsSync(calJsonPath)) {
+      try {
+        const cj = JSON.parse(fs.readFileSync(calJsonPath, 'utf8'));
+        calEntries = (cj.calendar || []).filter(function (c) {
+          return c && Array.isArray(c.images) && c.images.length;
+        });
+      } catch (e) { console.warn('⚠️ 日历 JSON 解析失败（已忽略）：' + e.message); }
+    } else if (calRun.code !== 0) {
+      console.warn('⚠️ 投资日历抓取异常（退出码 ' + calRun.code + '）→ 不影响晚报：' +
+        (calRun.stderr || '').trim().slice(0, 200));
+    }
+  }
+
+  /* ④ 两源皆无 → 不写空 evening；但若日历有新篇则独立更新日历 */
   if (!active.length) {
-    console.log('· ' + today + ' 两个博主均无当日帖子 → 按规则跳过（不写空数据）');
-    appendLog(today, ['## ' + today + ' 晚报 - 未产出（两源均无内容）',
-      '- 湖南人 / 行鱼复盘 当日均无新帖，按规则不写空 evening']);
+    if (calEntries.length) {
+      const mr = run('node', ['tools/merge_report.js', '--kind', 'calendar', '--in', calJsonPath]);
+      if (mr.code === 0) {
+        let pubInfo = '未发布（--no-publish）';
+        if (args.publish) {
+          const pu = run('bash', ['tools/publish.sh', '投资日历 ' + today]);
+          pubInfo = (pu.code === 0) ? '已发布' : '发布失败（' + (pu.stderr || pu.stdout).trim().slice(0, 200) + '）';
+        }
+        appendLog(today, ['## ' + today + ' 投资日历 - 已更新（博客两源无帖，独立更新）',
+          '- 新增 ' + calEntries.length + ' 篇：' + calEntries.map(function (c) { return c.id; }).join(', '),
+          '- 发布：' + pubInfo]);
+        console.log('✔ 投资日历独立更新：' + calEntries.map(function (c) { return c.id; }).join(', ') +
+          '（' + pubInfo + '）');
+      } else {
+        console.error('✗ 日历合并失败（退出码 ' + mr.code + '）：' + (mr.stderr || mr.stdout).trim().slice(0, 300));
+      }
+    } else {
+      console.log('· ' + today + ' 两个博主均无当日帖子且日历无更新 → 跳过（不写空数据）');
+      appendLog(today, ['## ' + today + ' 晚报 - 未产出（两源均无内容）',
+        '- 湖南人 / 行鱼复盘 当日均无新帖，且投资日历无新篇，按规则不写空 evening']);
+    }
+    try { fs.unlinkSync(calJsonPath); } catch (e) { /* 忽略 */ }
     return 0;
   }
 
@@ -433,6 +474,8 @@ async function main() {
     }
     payload = shapeEvening(content, today, ops.stampMin(),
       active.map(function (x) { return x.author; }));
+    // 投资日历并入（即便 evening 自身需要重试，日历条目也一并带过；merge_report 按 id 幂等去重）
+    if (calEntries.length) payload.calendar = calEntries;
 
     const zw = payload.evening['明日关注'].length;
     const bk = payload.evening['板块热点'].length;
@@ -530,6 +573,7 @@ async function main() {
   ]);
   try { fs.rmSync(workDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
   try { fs.unlinkSync(path.join(ROOT, 'tmp_evening_' + today + '.json')); } catch (e) { /* 忽略 */ }
+  try { fs.unlinkSync(path.join(ROOT, 'tmp_calendar_' + today + '.json')); } catch (e) { /* 忽略 */ }
 
   console.log('✔ 晚报完成：' + today + '（' + secs + 's，' + pubInfo + '）');
   return 0;

@@ -75,11 +75,11 @@ function parseArgs(argv) {
     else if (a === '--date') { out.date = argv[++i] || ''; }
     else {
       throw new Error('✗ 未知参数：' + a +
-        '\n用法：node tools/merge_report.js --kind morning|evening --in <tmp_*.json> [--dry] [--date YYYY-MM-DD]');
+        '\n用法：node tools/merge_report.js --kind morning|evening|calendar --in <tmp_*.json> [--dry] [--date YYYY-MM-DD]');
     }
   }
-  if (out.kind !== 'morning' && out.kind !== 'evening') {
-    throw new Error('✗ --kind 必须是 morning 或 evening，实到 "' + out.kind + '"');
+  if (out.kind !== 'morning' && out.kind !== 'evening' && out.kind !== 'calendar') {
+    throw new Error('✗ --kind 必须是 morning / evening / calendar，实到 "' + out.kind + '"');
   }
   if (!out.input) {
     throw new Error('✗ 缺少必填参数 --in <path>（JSON 中间件路径）');
@@ -202,6 +202,34 @@ function validateMorning(json, res, opts) {
   }
 }
 
+/** 投资日历条目校验（独立通道 kind='calendar' 专用，亦被 validateEvening 复用）。
+ *  calendar 数组是**顶层独立数据**，与 reports / evening 解耦：
+ *   · id 必填（幂等去重键）
+ *   · title/author/publishedAt/url 仅 WARN（展示字段，缺失不拦写）
+ *   · images / events 若存在则须为数组（主展示是 images 长图，events 可选） */
+function validateCalendar(json, res) {
+  const E = res.errors, W = res.warnings;
+  const list = json.calendar;
+  if (!isArr(list)) {
+    E.push({ code: 'H3', msg: '✗ [calendar] 期望数组，实到 ' + typeOf(list) + '。' });
+    return;
+  }
+  list.forEach(function (c, i) {
+    const base = 'calendar[' + i + ']';
+    if (!isObj(c)) { E.push({ code: 'H5', msg: '✗ [' + base + '] 必须是对象，实到 ' + typeOf(c) + '。' }); return; }
+    reqStr(E, base + '.id', c.id);
+    ['title', 'author', 'publishedAt', 'url'].forEach(function (f) {
+      if (!nonEmpty(c[f])) W.push({ code: 'W5', msg: '⚠️ [' + base + '.' + f + '] 建议非空（日历条目展示字段）。' });
+    });
+    if (c.images !== undefined && !isArr(c.images)) {
+      E.push({ code: 'H3', msg: '✗ [' + base + '.images] 期望数组，实到 ' + typeOf(c.images) + '。' });
+    }
+    if (c.events !== undefined && !isArr(c.events)) {
+      E.push({ code: 'H3', msg: '✗ [' + base + '.events] 期望数组，实到 ' + typeOf(c.events) + '。' });
+    }
+  });
+}
+
 /** 晚报（形态 B）校验。 */
 function validateEvening(json, res, opts) {
   const E = res.errors, W = res.warnings;
@@ -311,27 +339,8 @@ function validateEvening(json, res, opts) {
     }
   }
 
-  // calendar（可选，仅晚报可带）
-  if (json.calendar !== undefined) {
-    if (!isArr(json.calendar)) {
-      E.push({ code: 'H3', msg: '✗ [calendar] 期望数组，实到 ' + typeOf(json.calendar) + '。' });
-    } else {
-      json.calendar.forEach(function (c, i) {
-        const base = 'calendar[' + i + ']';
-        if (!isObj(c)) { E.push({ code: 'H5', msg: '✗ [' + base + '] 必须是对象，实到 ' + typeOf(c) + '。' }); return; }
-        reqStr(E, base + '.id', c.id);
-        ['title', 'author', 'publishedAt', 'url'].forEach(function (f) {
-          if (!nonEmpty(c[f])) W.push({ code: 'W5', msg: '⚠️ [' + base + '.' + f + '] 建议非空（日历条目展示字段）。' });
-        });
-        if (c.images !== undefined && !isArr(c.images)) {
-          E.push({ code: 'H3', msg: '✗ [' + base + '.images] 期望数组，实到 ' + typeOf(c.images) + '。' });
-        }
-        if (c.events !== undefined && !isArr(c.events)) {
-          E.push({ code: 'H3', msg: '✗ [' + base + '.events] 期望数组，实到 ' + typeOf(c.events) + '。' });
-        }
-      });
-    }
-  }
+  // calendar（可选，仅晚报可带）—— 复用独立校验函数
+  validateCalendar(json, res);
 }
 
 /**
@@ -353,6 +362,7 @@ function validate(kind, json, opts) {
   }
   if (kind === 'morning') validateMorning(json, res, opts);
   else if (kind === 'evening') validateEvening(json, res, opts);
+  else if (kind === 'calendar') validateCalendar(json, res);
 
   // W4 date 非今天
   if (opts.today && isStr(json.date) && DATE_RE.test(json.date) && json.date !== opts.today) {
@@ -362,6 +372,24 @@ function validate(kind, json, opts) {
 }
 
 /* ─────────────────────────── 合并（纯函数：仅依赖传入 data + 时间） ─────────────────────────── */
+
+/** 顶层 calendar 数组合并：幂等去重（按 id）+ 降序（最新在最前）+ 封顶 CAL_MAX。
+ *  被 evening 分支（叠加日历）与 calendar 独立通道（孤立更新）复用。 */
+function mergeCalendar(R, list) {
+  if (!isArr(list) || !list.length) return;
+  list.forEach(function (c) {
+    if (!c || !nonEmpty(c.id)) return;
+    if (!R.calendar.some(function (x) { return x && x.id === c.id; })) R.calendar.push(c);
+  });
+  R.calendar.sort(function (a, b) {
+    const pa = (a && a.publishedAt) || '';
+    const pb = (b && b.publishedAt) || '';
+    return pa < pb ? 1 : pa > pb ? -1 : 0;
+  });
+  if (R.calendar.length > CAL_MAX) R.calendar = R.calendar.slice(0, CAL_MAX);
+}
+
+
 
 /** 建立「code|name → verify」索引（同一 pick 可能两者都在）。 */
 function verifyIndex(items) {
@@ -413,6 +441,14 @@ function applyToData(data, kind, json, nowStamp) {
   if (!isArr(R.reports)) R.reports = [];
   if (!isArr(R.calendar)) R.calendar = [];
 
+  // 🔴 日历独立通道：只刷新顶层 calendar 数组，绝不触碰 reports / evening。
+  //   用于「博客两源无帖、但投资日历博主发了新帖」的孤立更新，避免为更新日历而写空 evening。
+  if (kind === 'calendar') {
+    mergeCalendar(R, json.calendar);
+    R.updatedAt = at;
+    return R;
+  }
+
   const rec = R.reports.find(function (r) { return r && r.date === date; });
 
   if (kind === 'morning') {
@@ -436,18 +472,9 @@ function applyToData(data, kind, json, nowStamp) {
   R.reports.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
   if (R.reports.length > MAX) R.reports = R.reports.slice(-MAX);
 
-  // 🔴 calendar 降序（最新在最前）：与 reports 方向相反。仅晚报携带，且幂等去重 + 保留最近 CAL_MAX 篇。
+  // 🔴 calendar 降序（最新在最前）：与 reports 方向相反。仅 evening 携带时叠加到顶层数组。
   if (kind === 'evening' && isArr(json.calendar) && json.calendar.length) {
-    json.calendar.forEach(function (c) {
-      if (!c || !nonEmpty(c.id)) return;
-      if (!R.calendar.some(function (x) { return x && x.id === c.id; })) R.calendar.push(c);
-    });
-    R.calendar.sort(function (a, b) {
-      const pa = (a && a.publishedAt) || '';
-      const pb = (b && b.publishedAt) || '';
-      return pa < pb ? 1 : pa > pb ? -1 : 0;
-    });
-    if (R.calendar.length > CAL_MAX) R.calendar = R.calendar.slice(0, CAL_MAX);
+    mergeCalendar(R, json.calendar);
   }
 
   // 顶层 updatedAt 必须更新（规则 26）
