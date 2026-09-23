@@ -17,11 +17,12 @@
   var list = ((window.REPORTS && window.REPORTS.reports) || []).slice().sort(function (a, b) {
     return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; // 按日期升序，最新在末尾
   });
-  /* 当前选中的日期（YYYY-MM-DD），默认 = 最新一期。
+  /* 当前选中的日期（YYYY-MM-DD），默认 = **今天**（2026-09-23 用户要求：打开网页直接显示今天，
+     不停留在昨天）。今天还没生成数据时由空态卡说明原因与「几点该有」。
      ⚠️ 用「日期字符串」而不是数组下标：可选范围不止「有数据的那几期」——
         休市日、历史缺口日也要能被选中，并明确告诉用户「当天没有数据」。
         （旧版是 idx 下标 + 前后一天，用户无法直接跳到指定日期。） */
-  var curDate = list.length ? list[list.length - 1].date : todayYmd();
+  var curDate = todayYmd();
   var curTab = 'morning';
 
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -243,7 +244,7 @@
       '<button class="db-arrow" type="button" onclick="stepDay(1)" aria-label="后一天"' +
       (ds >= max ? ' disabled' : '') + '>&#8250;</button>' +
       '<button class="db-latest" type="button" onclick="gotoLatest()"' +
-      (isLatest ? ' disabled' : '') + '>最新</button>' +
+      (ds >= max ? ' disabled' : '') + '>最新</button>' +
       '</div>' +
       // 小字只留「星期 + 状态标签」：日期本身已由上面的选择器显示，
       // 而 header 第一行也写着完整日期 —— 再写一遍就是同一屏内第三次重复。
@@ -876,7 +877,10 @@
   }
   window.stepDay = function (n) { setDate(shiftYmd(curDate, n)); };
   window.pickDay = function (v) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) setDate(v); };
-  window.gotoLatest = function () { setDate(latestDate()); };
+  /* 「最新」＝跳到**今天**（2026-09-23 用户要求）：今天尚无数据时同样可跳，
+     由空态卡说明「今日未生成 / 几点该有」——这比禁用按钮更有信息量。
+     今天已有数据时，今天 == latestDate()，行为不变。 */
+  window.gotoLatest = function () { setDate(todayYmd()); };
 
   function positionGlider() {
     var tabs = document.getElementById('tabs');
