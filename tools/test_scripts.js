@@ -685,6 +685,59 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     const afterAlert = fs.existsSync(alertFile) ? fs.readFileSync(alertFile, 'utf8') : '';
     eq(afterAlert, beforeAlert, '#20.19 未写 ALERT');
   }
+
+  // 20 【回归】晚报缺 calendar 字段时，日历校验必须跳过（2026-09-23 事故 #1）
+  //   事故：validateEvening 曾**无条件**调用 validateCalendar，而 calendar 是可选字段
+  //   （只有日历源当天有新帖才带）→ json.calendar 为 undefined → H3「期望数组，实到 undefined」
+  //   → 09-22 晚报连续 3 次合并全部失败，看门狗开 issue。
+  //   ⚠️ 旧测试为什么没抓到：eveningJson() 夹具**总是带 calendar**，从未覆盖「字段缺失」路径。
+  //   新增可选字段的校验时，必须同时断言「字段缺失」这条分支。
+  {
+    const j = eveningJson(); delete j.calendar;
+    ok(!mr.validate('evening', j, {}).errors.some((e) => e.code === 'H3'),
+      '#20.20 晚报缺 calendar 字段 → 不再 H3 硬拦（回归）');
+    const f = tmpFile(dataSrc(0));
+    run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+    const d = readData(f);
+    ok(!!d.reports[0].evening, '#20.20 整体可写入：evening 落盘');
+    eq(d.calendar.length, 0, '#20.20 无 calendar 字段 → 日历数组保持空');
+
+    // 显式传 [] 也应放行（语义=「本期确实没有日历更新」）
+    ok(!mr.validate('evening', eveningJson({ calendar: [] }), {}).errors.some((e) => e.code === 'H3'),
+      '#20.20 calendar 显式传 [] → 放行');
+    // guard 不能把真错也放过：非数组仍须硬拦
+    ok(mr.validate('evening', eveningJson({ calendar: 'oops' }), {}).errors.some((e) => e.code === 'H3'),
+      '#20.20 calendar 传成字符串 → 仍 H3 硬拦');
+    // calendar 渠道下该字段是必填，缺失必须 H3
+    ok(mr.validate('calendar', { date: '2026-09-15' }, {}).errors.some((e) => e.code === 'H3'),
+      '#20.20 kind=calendar 缺 calendar → 仍 H3（该渠道必填）');
+  }
+
+  // 21 【回归】H8 风险口径词必须认「炸板」（2026-09-23 事故 #2）
+  //   事故：LLM 写「8天6板+炸板」被 H8 判违规 → 整份晚报拒写。
+  //   而「炸板」在**同文件 POS_WORDS** 里本就被当作合法位置词，属内部自相矛盾。
+  {
+    const noH8 = (t) => {
+      const j = eveningJson();
+      j.evening['明日关注'][0].picks[0].status = t;
+      return !mr.validate('evening', j, {}).errors.some((e) => e.code === 'H8');
+    };
+    ok(noH8('8天6板+炸板'), '#20.21 「8天6板+炸板」→ 不再 H8（回归）');
+    ok(noH8('5板+炸板'), '#20.21 「5板+炸板」→ 不再 H8（回归）');
+    ok(noH8('5板 高位 断板'), '#20.21 「5板 高位 断板」→ 放行');
+    ok(noH8('5板+退潮'), '#20.21 「5板+退潮」→ 放行');
+    // 闸门不得失效：完全没提风险仍须硬拦
+    ok(!noH8('5板+传媒+华字辈'), '#20.21 「5板+传媒+华字辈」无风险词 → 仍 H8 硬拦');
+    ok(!noH8('6板 中位 换手板'), '#20.21 「6板 中位 换手板」无风险词 → 仍 H8 硬拦');
+
+    // 09-22 真实事故形态：**同时**缺 calendar 字段 + 高板股写「炸板」→ 必须 0 错误
+    {
+      const j = eveningJson(); delete j.calendar;
+      j.evening['明日关注'][0].picks[0].status = '8天6板+炸板';
+      const errs = mr.validate('evening', j, {}).errors;
+      eq(errs.length, 0, '#20.21 09-22 事故形态（缺 calendar + 高板炸板）→ 0 错误（端到端回归）');
+    }
+  }
 }
 
 // 清理
