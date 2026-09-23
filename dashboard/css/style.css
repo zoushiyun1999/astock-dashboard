@@ -101,7 +101,7 @@
   --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
 
   /* ── 形状 ── */
-  --radius: 16px;         /* 卡片圆角 */
+  --radius: 18px;         /* 卡片圆角 */
   --radius-sm: 8px;       /* 小组件 */
   --radius-md: 12px;      /* 嵌内容块 */
   --radius-pill: 999px;   /* 胶囊 */
@@ -139,15 +139,16 @@ body {
      ① 品牌 + 当前日期（同行）
      ② 各数据源状态（一行放完 5 项）
    健康条只在异常/休市时出现，正常时 display:none 不占位。 */
-/* ── 顶部 Header（iOS 风 · 淡蓝色渐变底板，2026-09-22 三次迭代） ──
-   用户反馈纯白太素且顶部太紧凑 → 底板换成淡蓝渐变（与蓝色强调色呼应），
-   标题/日期字号与留白整体升一档（logo 30 / 标题 21 / 日期 16）。
-   主看板与热点板块页共用同一底板与字阶。 */
+/* ── 顶部 Header（2026-09-23 高端化：底板改「纯白平面」） ──
+   参考 Linear / Apple / Robinhood 的共同做法：**不用渐变**。
+   渐变是最典型的廉价感来源——它把注意力引向装饰而不是内容。
+   改为纯白平面 + 发丝线，层级全部交给留白与字阶；分区由页面底色 --bg 承担。
+   主看板与热点板块页共用。 */
 header {
-  background: linear-gradient(180deg, #DBEAFC 0%, #E9F0FA 60%, #F2F4F8 100%);
+  background: #FFFFFF;
   color: var(--ink);
-  padding: 18px 16px 14px;
-  border-bottom: 0.5px solid rgba(0,0,0,.10);
+  padding: 16px 16px 13px;
+  border-bottom: 0.5px solid var(--line-2);
   position: relative;
 }
 /* header 内容与正文列对齐（桌面端不再一个贴左一个贴右，视线跨度 1100px → 0） */
@@ -155,15 +156,30 @@ header {
 /* 第一行：品牌在左，日期靠右（用 margin-left:auto，不再让日期独占一行） */
 .h-top { display: flex; align-items: center; gap: 10px; }
 .brand { display: flex; align-items: center; gap: 9px; flex: none; }
-/* App 图标式 logo：蓝色渐变方块（iOS 图标语言） */
+/* 品牌标识：**纯色 monogram 方块**（去掉渐变与彩色投影）。
+   彩色投影会让方块看起来像「发光的按钮」，是廉价感的第二大来源。
+   改用结构层藏青 --brand，与全站标题 / Tab 选中 / 排名同色系。 */
 .brand .logo {
-  width: 32px; height: 32px; border-radius: 9px;
-  background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
-  box-shadow: 0 2px 6px rgba(0,105,255,.35);
-  display: flex; align-items: center; justify-content: center; font-size: var(--fs-base); font-weight: var(--fw-bold);
+  width: 30px; height: 30px; border-radius: 9px;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-md); font-weight: var(--fw-semibold);
   color: #fff; flex: none;
 }
-.brand .name { font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: .2px; color: var(--ink); }
+.brand .name { font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: 0; color: var(--ink); }
+
+/* 页面互跳胶囊（头部右上）：主看板「板块」↔ 热点页「主页」**同坐标同款式**，只有文字与箭头方向不同，
+   来回切换视线零跳动。2026-09-23 高端化：去掉 emoji（彩色 emoji 与系统化图标语言冲突，
+   是全站唯一「非受控色彩」），改纯文字 + SVG 指示箭头，与 iOS disclosure 语言一致。 */
+.nav-pill {
+  flex: none; display: inline-flex; align-items: center; gap: 3px;
+  font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--accent-deep);
+  text-decoration: none; border: 1px solid var(--accent-line); background: var(--accent-soft);
+  border-radius: var(--radius-pill); padding: 3px 9px; white-space: nowrap;
+  transition: transform var(--t-fast), background var(--t-fast);
+}
+.nav-pill:active { transform: scale(.97); }
+.nav-pill svg { opacity: .6; }
 /* 日期：头部**右下角**独立一行（2026-09-23 用户要求），不显示年份 */
 .h-date {
   display: flex; justify-content: flex-end; align-items: baseline; gap: 6px;
@@ -177,13 +193,14 @@ header {
    ✓ 绿=已生成，● 黄=今日待更新（未到计划点），✕ 红=缺失（过点未生成）；休市日不显示。
    五个 Tab 全配（短线跟随晚报状态）；符号由 app.js 的 updateSrcDots() 写入。 */
 .tab-src {
-  display: none; margin-left: 4px; font-size: var(--fs-sm); font-weight: var(--fw-bold);
+  display: none; margin-left: 4px; font-size: 11px; font-weight: var(--fw-semibold);
   vertical-align: 1px; line-height: 1;
 }
 .tab-src.show { display: inline-block; }
-.tab-src.ok { color: #22c55e; }
-.tab-src.wait { color: #f59e0b; }
-.tab-src.miss { color: #ef4444; }
+/* 状态色取深一档：原 #22c55e / #f59e0b / #ef4444 偏荧光，浅底上显廉价 */
+.tab-src.ok { color: #16A34A; }
+.tab-src.wait { color: #D97706; }
+.tab-src.miss { color: #DC2626; }
 
 /* ── Tab 切换 ── */
 /* 粘在顶部：页面最长 7.5 屏（日历 Tab），切 Tab 不必滑回顶部。
@@ -195,7 +212,7 @@ header {
 .tabs {
   display: flex; position: relative;
   margin: 0 14px 14px; padding: 3px;
-  background: #E9E9EB; border-radius: 12px;
+  background: rgba(118,118,128,.10); border-radius: 12px;
 }
 /* 滚动后 header 收缩（靠 body.scrolled 切换，见 app.js）：
    品牌行保留（收缩 padding），源状态已改到 Tab 点上，无需再靠状态行。 */
@@ -221,12 +238,12 @@ body.scrolled .h-date { display: none; }
 .tab-dot.show { display: inline-block; }
 .tab-glider {
   position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 10px;
-  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.12), 0 0 0 0.5px rgba(0,0,0,.03);
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.04);
   transition: left var(--t-base), width var(--t-base);
 }
 /* 二级分段（选股 Tab 内部：短线 | 量价）——同一控件语言，尺寸小一档 */
 .tabs-sub {
-  margin: 0 0 12px; padding: 2px; border-radius: 10px; background: #E9E9EB;
+  margin: 0 0 12px; padding: 2px; border-radius: 10px; background: rgba(118,118,128,.10);
 }
 .tabs-sub .tab {
   min-height: 30px; padding: 5px 0 6px; font-size: var(--fs-md); border-radius: 8px;
@@ -239,13 +256,17 @@ body.scrolled .h-date { display: none; }
 .card {
   background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--line);
   box-shadow: var(--shadow);
-  padding: var(--sp-4) var(--sp-4) 14px; margin-bottom: 14px;
+  padding: 18px 18px 16px; margin-bottom: 16px;
 }
+/* 卡片标题改「弱化小标签」（Notion / Apple 分组标题语言）：
+   标题比正文弱一档，让**数据**成为视觉主体——这是数据类产品显高级的关键。
+   同时去掉整条分隔线，改由留白分区（列表项之间的发丝线已提供结构）。 */
 .card h3 {
-  font-size: var(--fs-base); font-weight: var(--fw-bold); display: flex; align-items: center; gap: 7px;
-  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line);
+  font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--ink-2);
+  display: flex; align-items: center; gap: 7px; letter-spacing: .02em;
+  padding-bottom: 0; margin-bottom: 12px; border-bottom: none;
 }
-.card h3 .dot { width: 7px; height: 7px; border-radius: 3px; flex: none; }
+.card h3 .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
 
 /* 卡片标题点：语义名 → 颜色。JS 只传名字（如 data-dot="violet"），
    色值统一在这里定义，换配色不必改 app.js。 */
@@ -279,7 +300,7 @@ body.scrolled .h-date { display: none; }
 }
 .news .hl-tag {
   flex: none; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: #fff;
-  background: linear-gradient(135deg, #0A84FF, #0062CC);
+  background: var(--accent);
   padding: 2px 8px; border-radius: var(--radius-pill); margin-top: 1px; line-height: var(--lh-tight);
 }
 
@@ -426,7 +447,7 @@ body.scrolled .h-date { display: none; }
 
 /* ── 投资日历专版（A股投资日历博主） ── */
 .cal-head {
-  background: linear-gradient(135deg, #fff8e8 0%, #ffffff 60%, #fdf1d7 100%);
+  background: #FFFDF6;
   border: 1px solid #f7e3b5;
 }
 .cal-author { font-size: var(--fs-sm); color: var(--ink-2); }
@@ -602,7 +623,7 @@ body.scrolled .h-date { display: none; }
 /* ── 新数据提示条 ── */
 #updateBar { display: none; position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 50;
   background: var(--accent); color: #fff; font-size: var(--fs-md); padding: 9px var(--sp-4); border-radius: var(--radius-pill);
-  box-shadow: 0 6px 20px rgba(0,105,255,.35); }
+  box-shadow: 0 6px 20px rgba(20,24,40,.22); }
 #updateBar a { color: #fff; text-decoration: underline; font-weight: var(--fw-bold); }
 
 /* ── 空状态 ── */
@@ -626,21 +647,25 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
    「前一天 / 后一天」两个按钮 —— 那两个按钮既到不了指定日期，
    也永远点不到休市日（于是也就看不到"当天没有数据"的说明）。 */
 .date-bar {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--card); border-radius: var(--radius-md);
-  box-shadow: var(--shadow); padding: 6px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 2px;
+  background: var(--card); border: 0.5px solid var(--line); border-radius: var(--radius-md);
+  box-shadow: var(--shadow); padding: 4px; margin-bottom: 8px;
 }
+/* 箭头与日期都做**无边框**处理：整条读成一个控件，而不是三个并排的盒子。
+   触控高度仍保持 --tap-min，只去掉描边与底色。 */
 .date-bar .db-arrow {
   flex: none; width: var(--tap-min); min-height: var(--tap-min);
-  border: 1px solid var(--line-2); background: #fff; border-radius: var(--radius-btn);
+  border: none; background: transparent; border-radius: var(--radius-btn);
   color: var(--ink-2); font-size: var(--fs-lg); line-height: 1; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--t-fast);
 }
-.date-bar .db-arrow:disabled { opacity: .3; }
+.date-bar .db-arrow:active { background: var(--brand-soft); }
+.date-bar .db-arrow:disabled { opacity: .28; }
 /* 原生日期选择器：手机上唤起系统日期面板，零依赖、可访问性最好 */
 .date-bar .db-input {
   flex: 1 1 0; min-width: 0; min-height: var(--tap-min);
-  border: 1px solid var(--line-2); border-radius: var(--radius-btn); background: #fff;
+  border: none; border-radius: var(--radius-btn); background: transparent;
   color: var(--ink); font-family: inherit; font-size: var(--fs-base); font-weight: var(--fw-semibold);
   text-align: center; padding: 0 var(--sp-2);
   -webkit-appearance: none; appearance: none;
@@ -651,7 +676,7 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
   border: none; border-radius: var(--radius-btn); background: var(--accent); color: #fff;
   font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-semibold); cursor: pointer;
 }
-.date-bar .db-latest:disabled { background: #E9E9EB; color: #aeaeb2; }
+.date-bar .db-latest:disabled { background: rgba(118,118,128,.12); color: #aeaeb2; }
 .db-sub {
   display: flex; align-items: center; gap: 8px;
   font-size: var(--fs-xs); color: var(--ink-3); margin: 0 2px 10px;
@@ -722,12 +747,12 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
 /* ── 交互反馈（皮肤 2 · 2026-09-23）─────────────────────────────
    手机上"按得动"的手感全靠这两条：可点元素按压缩放 + 统一的过渡节奏。
    不参与缩放的（.tab 分段按钮）用透明度表达按下，避免与滑块错位。 */
-.db-arrow, .db-latest, .cal-m, .bv-toggle, .cal-open, .sp-home,
+.db-arrow, .db-latest, .cal-m, .bv-toggle, .cal-open, .nav-pill,
 .cal-viewer-bar button, .hot-rep li, .sc-hot, .btn {
   transition: transform var(--t-fast), background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
 .db-arrow:active, .db-latest:active, .cal-m:active, .bv-toggle:active,
-.cal-open:active, .sp-home:active, .cal-viewer-bar button:active { transform: scale(.97); }
+.cal-open:active, .nav-pill:active, .cal-viewer-bar button:active { transform: scale(.97); }
 .tab:active, .link-row a:active, .blogger-head:active { opacity: .62; }
 /* 可点卡片/行的轻按下底：不改变布局，只给一点点反馈 */
 .blogger-head { transition: background var(--t-fast), opacity var(--t-fast); border-radius: 6px; }

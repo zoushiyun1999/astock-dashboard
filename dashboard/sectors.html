@@ -24,16 +24,16 @@ body { padding-bottom: 24px; }
   gap: 10px; padding: 2px 0 6px; min-height: 46px;
 }
 .sp-brand { display: flex; align-items: center; gap: 8px; }
-.sp-logo { font-size: 24px; line-height: 1; }
-.sp-title { font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); letter-spacing: .2px; }
-/* 返回主看板：与主看板头部的「🔥板块」入口**同坐标同款式**（标题右侧、日期左侧，
-   iOS 蓝色调胶囊），只有文字不同 —— 来回切换视线零跳动。 */
-.sp-home {
-  flex: none; font-size: 12px; font-weight: 600; color: #0062CC;
-  text-decoration: none; border: 1px solid rgba(0,122,255,.22); background: rgba(0,122,255,.10);
-  border-radius: 99px; padding: 3px 9px; white-space: nowrap;
-  transition: transform var(--t-fast);
+/* 品牌标识：与主看板同款**纯色 monogram 方块**（主看板是「A」，这里是「板」）。
+   2026-09-23：原来用 🔥 emoji，与主看板的 monogram 语言不一致，且 emoji 不可控色。 */
+.sp-logo {
+  width: 30px; height: 30px; border-radius: 9px; background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-md); font-weight: var(--fw-semibold); color: #fff; flex: none;
 }
+.sp-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); color: var(--ink); letter-spacing: 0; }
+/* 返回主看板：复用全局 .nav-pill（见 style.css），与主看板「板块」入口同坐标同款式。
+   箭头方向相反（‹ 往回），语义自明。 */
 /* 日期：头部右下角独立一行（与主看板同构），不显示年份 */
 .sp-date { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; margin-top: 3px; }
 .sp-date b { font-size: var(--fs-lg); color: var(--ink); line-height: 1.2; }
@@ -41,16 +41,15 @@ body { padding-bottom: 24px; }
 .sp-controls { display: flex; gap: 8px; padding: 2px 0 10px; align-items: center; }
 .sp-select {
   flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink);
-  background: #fff; border: 1px solid var(--line-2);
-  border-radius: var(--radius-md, 8px); padding: 8px 10px;
+  background: var(--card); border: 0.5px solid var(--line);
+  border-radius: var(--radius-md, 8px); padding: 10px 12px;
   appearance: none; -webkit-appearance: none;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
 }
 .sp-summary { max-width: 560px; margin: 0 auto; padding: 0 14px 10px; font-size: var(--fs-sm); color: var(--ink-2); }
 .sp-main { padding: 0 14px; max-width: 560px; margin: 0 auto; }
 
-/* ── 板块卡：白底 + 清晰描边 + 更松的行距（阅读性优先） ── */
-.card { box-shadow: 0 1px 4px rgba(15, 23, 42, .05); }
+/* ── 板块卡：白底 + 发丝描边 + 更松的行距（阅读性优先）。
+       不再覆写 .card 的阴影 —— 两页必须共用同一条极浅阴影，否则并排看会「不和谐」。 ── */
 .sector {
   background: #fff;
   border-color: var(--line-2);
@@ -59,20 +58,20 @@ body { padding-bottom: 24px; }
 .sector .stocks { margin-top: 8px; line-height: 1.7; letter-spacing: .2px; }
 .sector .cat { margin-top: 7px; line-height: 1.65; }
 
-/* 强度行：style.css 的 .st 作用域在 .sc-head 下拿不到，用自有块级胶囊 */
+/* 强度行：它是一整句话，**不该装进胶囊**（长文本 + 彩色底 + 描边 = 噪音最重的元素）。
+   改「左侧琥珀细规 + 常规文字」，既保留语义色的提示，又让数据行回到视觉主体。 */
 .sp-st {
-  display: inline-block; margin-top: 5px; font-size: var(--fs-xs); font-weight: var(--fw-semibold);
-  color: #7a4d00; background: #fdf3df; padding: 3px 9px;
-  border-radius: var(--radius-md, 8px); line-height: 1.55;
-  border: 1px solid #f3e3bd;
+  display: block; margin-top: 7px; font-size: var(--fs-xs); font-weight: var(--fw-medium);
+  color: var(--ink-2); line-height: 1.6;
+  padding-left: 9px; border-left: 2px solid var(--amber-raw);
 }
-/* 连续上榜徽章 */
+/* 连续上榜徽章：去掉描边（小徽章加边框只会显脏），只留浅底 + 语义文字色 */
 .sp-streak {
-  font-size: var(--fs-xs); font-weight: var(--fw-bold); color: #7a4d00;
-  background: #fdf3df; padding: 2px 9px; border-radius: var(--radius-pill, 99px);
-  white-space: nowrap; border: 1px solid #f3e3bd;
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: #8A5300;
+  background: #FDF6E7; padding: 2px 8px; border-radius: var(--radius-pill, 99px);
+  white-space: nowrap;
 }
-.sp-streak.cold { color: var(--ink-2); background: var(--brand-soft); border-color: var(--line-2); }
+.sp-streak.cold { color: var(--ink-2); background: var(--brand-soft); }
 /* 板块卡内近5期统计 */
 .sp-heat5 { font-size: var(--fs-xs); color: var(--ink-2); padding: 3px 0 0; }
 .sp-empty {
@@ -90,10 +89,10 @@ body { padding-bottom: 24px; }
   <div class="h-inner">
     <div class="sp-headbar">
       <div class="sp-brand">
-        <span class="sp-logo">🔥</span>
+        <span class="sp-logo">板</span>
         <span class="sp-title">热点板块</span>
       </div>
-      <a class="sp-home" href="index.html">🏠 主页</a>
+      <a class="nav-pill" href="index.html"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>主页</a>
     </div>
     <div class="sp-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     <div class="sp-controls">
@@ -207,7 +206,7 @@ body { padding-bottom: 24px; }
       list.map(function (x, i) {
         var st = (p >= 0 && x.name) ? streakStats(x.name, p) : { streak: 1, last5: 1 };
         var badge = st.streak >= 2
-          ? '<span class="sp-streak">🔥 连续 ' + st.streak + ' 期</span>'
+          ? '<span class="sp-streak">连续 ' + st.streak + ' 期</span>'
           : '<span class="sp-streak cold">新上榜</span>';
         return '<div class="sector">' +
           '<div class="sc-head"><span class="rank">' + (i + 1) + '</span>' +
