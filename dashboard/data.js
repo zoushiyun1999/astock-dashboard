@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-09-23 21:05",
+  "updatedAt": "2026-09-23 21:30",
   "calendar": [
     {
       "id": "4ep5unl7h92",
@@ -4737,49 +4737,147 @@ window.REPORTS = {
             "code": "001216",
             "sector": "小家电/消费电子",
             "status": "5板 高位 一字板",
-            "reason": "上市首日涨幅达683.29%，显著偏离行业估值水平，股价存在大幅回调风险"
+            "reason": "上市首日涨幅达683.29%，显著偏离行业估值水平，股价存在大幅回调风险",
+            "verify": {
+              "gain": 6.95,
+              "hit": true,
+              "price": 28.31,
+              "code": "001216",
+              "at": "2026-09-23",
+              "open": 27.66,
+              "openPct": 4.5,
+              "buyRet": 2.35,
+              "netRet": 2.15,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中金公司",
             "code": "601995",
             "sector": "券商",
             "status": "复牌",
-            "reason": "重组完成（吸收合并东兴证券、信达证券），临停复牌"
+            "reason": "重组完成（吸收合并东兴证券、信达证券），临停复牌",
+            "verify": {
+              "gain": 2.67,
+              "hit": true,
+              "price": 32.65,
+              "code": "601995",
+              "at": "2026-09-23",
+              "open": 32.18,
+              "openPct": 1.19,
+              "buyRet": 1.46,
+              "netRet": 1.26,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "和远气体",
             "code": "002971",
             "sector": "电子特气",
             "status": "2板 中位",
-            "reason": "子公司六氟化钨500吨/年等产品取得安全生产许可，且拟收购子公司股权"
+            "reason": "子公司六氟化钨500吨/年等产品取得安全生产许可，且拟收购子公司股权",
+            "verify": {
+              "gain": 3.57,
+              "hit": true,
+              "price": 41.78,
+              "code": "002971",
+              "at": "2026-09-23",
+              "open": 42.56,
+              "openPct": 5.5,
+              "buyRet": -1.83,
+              "netRet": -2.03,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "麦格米特",
             "code": "002851",
             "sector": "工业自动化",
             "status": "未连板 中位",
-            "reason": "拟6.64亿元收购控股子公司深圳焊接剩余46.3%股权"
+            "reason": "拟6.64亿元收购控股子公司深圳焊接剩余46.3%股权",
+            "verify": {
+              "gain": -0.12,
+              "hit": false,
+              "price": 122.85,
+              "code": "002851",
+              "at": "2026-09-23",
+              "open": 124.38,
+              "openPct": 1.12,
+              "buyRet": -1.23,
+              "netRet": -1.43,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "佰维存储",
             "code": "688525",
             "sector": "存储芯片",
             "status": "未连板 中位",
-            "reason": "拟45亿元投建晶圆级先进封测制造项目三期"
+            "reason": "拟45亿元投建晶圆级先进封测制造项目三期",
+            "verify": {
+              "gain": 2.52,
+              "hit": true,
+              "price": 222.69,
+              "code": "688525",
+              "at": "2026-09-23",
+              "open": 221.98,
+              "openPct": 2.19,
+              "buyRet": 0.32,
+              "netRet": 0.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "鲁抗医药",
             "code": "600789",
             "sector": "医药",
             "status": "未连板 中位",
-            "reason": "甲磺酸伊马替尼片及原料药（慢性白血病）注册及上市获批"
+            "reason": "甲磺酸伊马替尼片及原料药（慢性白血病）注册及上市获批",
+            "verify": {
+              "gain": -1.15,
+              "hit": false,
+              "price": 7.76,
+              "code": "600789",
+              "at": "2026-09-23",
+              "open": 7.89,
+              "openPct": 0.51,
+              "buyRet": -1.65,
+              "netRet": -1.84,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "内蒙新华",
             "code": "603230",
             "sector": "传媒/教育",
             "status": "5连板 高位",
-            "reason": "股价存在市场情绪过热、非理性炒作风险"
+            "reason": "股价存在市场情绪过热、非理性炒作风险",
+            "verify": {
+              "gain": 2.94,
+              "hit": true,
+              "price": 16.79,
+              "code": "603230",
+              "at": "2026-09-23",
+              "open": 15.51,
+              "openPct": -4.9,
+              "buyRet": 8.25,
+              "netRet": 8.04,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },

@@ -24,7 +24,21 @@ window.SCREENER = [
         "cap": 389,
         "yang": 3,
         "aboveRate": 100,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 0,
+          "hit": false,
+          "price": 9.61,
+          "code": "002129",
+          "at": "2026-09-23",
+          "open": 9.6,
+          "openPct": -0.1,
+          "buyRet": 0.1,
+          "netRet": -0.1,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603978",
@@ -37,7 +51,21 @@ window.SCREENER = [
         "cap": 55,
         "yang": 7,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -1.83,
+          "hit": false,
+          "price": 25.72,
+          "code": "603978",
+          "at": "2026-09-23",
+          "open": 26.21,
+          "openPct": 0.04,
+          "buyRet": -1.87,
+          "netRet": -2.07,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002338",
@@ -50,7 +78,21 @@ window.SCREENER = [
         "cap": 108,
         "yang": 3,
         "aboveRate": 95,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 3.43,
+          "hit": true,
+          "price": 46.7,
+          "code": "002338",
+          "at": "2026-09-23",
+          "open": 44.71,
+          "openPct": -0.97,
+          "buyRet": 4.45,
+          "netRet": 4.24,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600605",
@@ -63,7 +105,21 @@ window.SCREENER = [
         "cap": 59,
         "yang": 5,
         "aboveRate": 98,
-        "sector": "消费"
+        "sector": "消费",
+        "verify": {
+          "gain": 9.99,
+          "hit": true,
+          "price": 31.61,
+          "code": "600605",
+          "at": "2026-09-23",
+          "open": 28.93,
+          "openPct": 0.66,
+          "buyRet": 9.26,
+          "netRet": 9.05,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600792",
@@ -76,7 +132,21 @@ window.SCREENER = [
         "cap": 64,
         "yang": 4,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -9.91,
+          "hit": false,
+          "price": 5.18,
+          "code": "600792",
+          "at": "2026-09-23",
+          "open": 5.58,
+          "openPct": -2.96,
+          "buyRet": -7.17,
+          "netRet": -7.35,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603073",
@@ -89,7 +159,21 @@ window.SCREENER = [
         "cap": 20,
         "yang": 5,
         "aboveRate": 100,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 4.26,
+          "hit": true,
+          "price": 18.1,
+          "code": "603073",
+          "at": "2026-09-23",
+          "open": 17.4,
+          "openPct": 0.23,
+          "buyRet": 4.02,
+          "netRet": 3.82,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600121",
@@ -102,7 +186,21 @@ window.SCREENER = [
         "cap": 64,
         "yang": 5,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -8.73,
+          "hit": false,
+          "price": 4.81,
+          "code": "600121",
+          "at": "2026-09-23",
+          "open": 5.15,
+          "openPct": -2.28,
+          "buyRet": -6.6,
+          "netRet": -6.79,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "003033",
@@ -115,7 +213,21 @@ window.SCREENER = [
         "cap": 73,
         "yang": 5,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 6.81,
+          "hit": true,
+          "price": 95.38,
+          "code": "003033",
+          "at": "2026-09-23",
+          "open": 89.32,
+          "openPct": 0.02,
+          "buyRet": 6.78,
+          "netRet": 6.57,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "001368",
@@ -128,7 +240,21 @@ window.SCREENER = [
         "cap": 39,
         "yang": 5,
         "aboveRate": 99,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 8.97,
+          "hit": true,
+          "price": 37.53,
+          "code": "001368",
+          "at": "2026-09-23",
+          "open": 34.48,
+          "openPct": 0.12,
+          "buyRet": 8.85,
+          "netRet": 8.63,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600828",
@@ -141,7 +267,21 @@ window.SCREENER = [
         "cap": 80,
         "yang": 5,
         "aboveRate": 95,
-        "sector": "消费"
+        "sector": "消费",
+        "verify": {
+          "gain": -4.76,
+          "hit": false,
+          "price": 4.4,
+          "code": "600828",
+          "at": "2026-09-23",
+          "open": 4.56,
+          "openPct": -1.3,
+          "buyRet": -3.51,
+          "netRet": -3.7,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "000002",
@@ -154,7 +294,21 @@ window.SCREENER = [
         "cap": 455,
         "yang": 5,
         "aboveRate": 95,
-        "sector": "地产"
+        "sector": "地产",
+        "verify": {
+          "gain": 2.89,
+          "hit": true,
+          "price": 3.92,
+          "code": "000002",
+          "at": "2026-09-23",
+          "open": 3.81,
+          "openPct": 0,
+          "buyRet": 2.89,
+          "netRet": 2.68,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603105",
@@ -167,7 +321,21 @@ window.SCREENER = [
         "cap": 43,
         "yang": 3,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -3.99,
+          "hit": false,
+          "price": 8.19,
+          "code": "603105",
+          "at": "2026-09-23",
+          "open": 8.45,
+          "openPct": -0.94,
+          "buyRet": -3.08,
+          "netRet": -3.27,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002333",
@@ -180,7 +348,21 @@ window.SCREENER = [
         "cap": 38,
         "yang": 2,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 3.02,
+          "hit": true,
+          "price": 5.79,
+          "code": "002333",
+          "at": "2026-09-23",
+          "open": 5.63,
+          "openPct": 0.18,
+          "buyRet": 2.84,
+          "netRet": 2.64,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600610",
@@ -193,7 +375,21 @@ window.SCREENER = [
         "cap": 87,
         "yang": 4,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -6.29,
+          "hit": false,
+          "price": 7.6,
+          "code": "600610",
+          "at": "2026-09-23",
+          "open": 8.06,
+          "openPct": -0.62,
+          "buyRet": -5.71,
+          "netRet": -5.9,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603271",
@@ -206,7 +402,21 @@ window.SCREENER = [
         "cap": 80,
         "yang": 3,
         "aboveRate": 99,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -1.96,
+          "hit": false,
+          "price": 39.59,
+          "code": "603271",
+          "at": "2026-09-23",
+          "open": 40.3,
+          "openPct": -0.2,
+          "buyRet": -1.76,
+          "netRet": -1.96,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002253",
@@ -219,7 +429,22 @@ window.SCREENER = [
         "cap": 23,
         "yang": 2,
         "aboveRate": 98,
-        "sector": "算力/AI"
+        "sector": "算力/AI",
+        "verify": {
+          "gain": -10.03,
+          "hit": false,
+          "price": 9.24,
+          "code": "002253",
+          "at": "2026-09-23",
+          "open": 9.24,
+          "openPct": -10.03,
+          "buyRet": 0,
+          "netRet": null,
+          "locked": true,
+          "basis": "open-to-close",
+          "by": "hist",
+          "note": "一字板·无法买入（剔除）"
+        }
       },
       {
         "code": "000757",
@@ -232,7 +457,21 @@ window.SCREENER = [
         "cap": 24,
         "yang": 2,
         "aboveRate": 97,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -1.81,
+          "hit": false,
+          "price": 4.34,
+          "code": "000757",
+          "at": "2026-09-23",
+          "open": 4.38,
+          "openPct": -0.9,
+          "buyRet": -0.91,
+          "netRet": -1.11,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
