@@ -598,14 +598,21 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     ok(threw && threw.__validation, '#20.14 exit 3');
   }
 
-  // 15 H8 高板股缺口径词
+  // 15 【2026-09-23 方案 A 后】H8 高板股缺风险词 → **自动补「高位」+ WARN，不拦写**
+  //   原语义（硬拦）已废弃：见 #20.22。此处保留断言以防「悄悄又退回硬拦」。
   {
     const bad = morningJson();
     bad.morning['今日关注'][0].status = '5连板·核心';
-    ok(mr.validate('morning', bad, {}).errors.some((e) => e.code === 'H8'), '#20.15 validate 命中 H8');
+    const v = mr.validate('morning', bad, {});
+    ok(!v.errors.some((e) => e.code === 'H8'), '#20.15 5 板缺口径词 → 不再 H8（方案 A）');
+    ok(v.warnings.some((w) => w.code === 'W7'), '#20.15 5 板缺口径词 → 改报 W7 警告');
+    eq(v.autoTagKeys.length, 1, '#20.15 autoTagKeys 收集到 1 个待修补键');
+
     const f = tmpFile(dataSrc(0));
-    let threw = null; try { run('morning', jsonFile(bad), f, {}); } catch (e) { threw = e; }
-    ok(threw && threw.__validation, '#20.15 exit 3');
+    run('morning', jsonFile(bad), f, { now: '2026-09-15 09:00' });
+    const p = readData(f).reports[0].morning['今日关注'][0];
+    ok(/高位/.test(p.status), '#20.15 落盘 status 已自动补「高位」：' + p.status);
+    ok(p.statusAutoTagged === true, '#20.15 落盘 pick 带 statusAutoTagged 标记');
   }
 
   // 16 verify 保留（早报 + 晚报）
@@ -726,9 +733,9 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     ok(noH8('5板+炸板'), '#20.21 「5板+炸板」→ 不再 H8（回归）');
     ok(noH8('5板 高位 断板'), '#20.21 「5板 高位 断板」→ 放行');
     ok(noH8('5板+退潮'), '#20.21 「5板+退潮」→ 放行');
-    // 闸门不得失效：完全没提风险仍须硬拦
-    ok(!noH8('5板+传媒+华字辈'), '#20.21 「5板+传媒+华字辈」无风险词 → 仍 H8 硬拦');
-    ok(!noH8('6板 中位 换手板'), '#20.21 「6板 中位 换手板」无风险词 → 仍 H8 硬拦');
+    // 方案 A 后：无风险词也不再硬拦（改为自动补词 + W7），但 noH8 的语义仍成立
+    ok(noH8('5板+传媒+华字辈'), '#20.21 「5板+传媒+华字辈」→ 方案 A 后不再 H8（改自动补词）');
+    ok(noH8('6板 中位 换手板'), '#20.21 「6板 中位 换手板」→ 方案 A 后不再 H8（改自动补词）');
 
     // 09-22 真实事故形态：**同时**缺 calendar 字段 + 高板股写「炸板」→ 必须 0 错误
     {
@@ -736,6 +743,99 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
       j.evening['明日关注'][0].picks[0].status = '8天6板+炸板';
       const errs = mr.validate('evening', j, {}).errors;
       eq(errs.length, 0, '#20.21 09-22 事故形态（缺 calendar + 高板炸板）→ 0 错误（端到端回归）');
+    }
+  }
+
+  // 22 【方案 A 端到端】≥5 板缺风险词 → 自动补「高位」+ statusAutoTagged，**绝不拒写**
+  //   决策背景（2026-09-23）：H8 硬门槛在两次真实停摆里都是元凶 ——
+  //     ① 09-22「8天6板+炸板」（词表不含「炸板」）；
+  //     ② 「5板+传媒+华字辈」（纯描述、无表态）。
+  //   "该不该劝退" 是内容判断，不该由正则决定一份晚报的生死。故降级为标注 + 自动补词。
+  //   ⚠️ 关键边界：「字段缺失」类分支必须单独断言（见 MEMORY 教训）——
+  //     这里是「<5 板 / 已含风险词」两条不修补分支，以及晚报缺 calendar 的组合态。
+  {
+    // A1 晚报 picks：5 板无风险词 → 补词 + 标记 + 落盘成功
+    {
+      const j = eveningJson(); delete j.calendar;
+      j.evening['明日关注'][0].picks[0].status = '5板+传媒+华字辈';
+      const f = tmpFile(dataSrc(0));
+      run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+      const p = readData(f).reports[0].evening['明日关注'][0].picks[0];
+      eq(p.status, '5板+传媒+华字辈+高位', '#20.22 晚报 picks 自动补「高位」');
+      ok(p.statusAutoTagged === true, '#20.22 晚报 picks 带 statusAutoTagged');
+    }
+
+    // A2 不修补分支①：<5 板 → 一个字节都不动，且不带标记
+    {
+      const j = eveningJson();
+      j.evening['明日关注'][0].picks[0].status = '3板+传媒+华字辈';
+      const v = mr.validate('evening', j, {});
+      eq(v.autoTagKeys.length, 0, '#20.22 <5 板 → autoTagKeys 为空');
+      const f = tmpFile(dataSrc(0));
+      run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+      const p = readData(f).reports[0].evening['明日关注'][0].picks[0];
+      eq(p.status, '3板+传媒+华字辈', '#20.22 <5 板 → status 原样不动');
+      ok(p.statusAutoTagged === undefined, '#20.22 <5 板 → 无 statusAutoTagged 标记（不误标）');
+    }
+
+    // A3 不修补分支②：≥5 板但已含风险词 → 不重复追加（幂等）
+    {
+      const j = eveningJson();
+      j.evening['明日关注'][0].picks[0].status = '6板+高位分歧';
+      const v = mr.validate('evening', j, {});
+      eq(v.autoTagKeys.length, 0, '#20.22 已含风险词 → autoTagKeys 为空（不重复修补）');
+      const f = tmpFile(dataSrc(0));
+      run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+      const p = readData(f).reports[0].evening['明日关注'][0].picks[0];
+      eq(p.status, '6板+高位分歧', '#20.22 已含风险词 → status 不被二次追加');
+    }
+
+    // A4 幂等：同一份 JSON 连跑两次，第二次不得再追加（autoTagged 已是「已修补」事实）
+    {
+      const j = eveningJson();
+      j.evening['明日关注'][0].picks[0].status = '7板+算力';
+      const f = tmpFile(dataSrc(0));
+      run('evening', jsonFile(j), f, { now: '2026-09-15 21:05' });
+      const s1 = readData(f).reports[0].evening['明日关注'][0].picks[0].status;
+      // 第二次喂入的是**已修补过的原文**（模拟 job_evening 原地重跑）
+      const j2 = eveningJson();
+      j2.evening['明日关注'][0].picks[0].status = s1;
+      run('evening', jsonFile(j2), f, { now: '2026-09-15 21:06' });
+      const s2 = readData(f).reports[0].evening['明日关注'][0].picks[0].status;
+      eq(s2, s1, '#20.22 重跑幂等：status 不再重复追加「高位」');
+      ok((s2.match(/高位/g) || []).length === 1, '#20.22 「高位」恰出现 1 次');
+    }
+
+    // A5 早报「今日关注」同样生效（两条通道都覆盖）
+    {
+      const j = morningJson();
+      j.morning['今日关注'][1].status = '5连板+机器人';
+      const f = tmpFile(dataSrc(0));
+      run('morning', jsonFile(j), f, { now: '2026-09-15 09:00' });
+      const p = readData(f).reports[0].morning['今日关注'][1];
+      eq(p.status, '5连板+机器人+高位', '#20.22 早报今日关注同样自动补词');
+    }
+
+    // A6 键不匹配 / 结构缺失分支
+    {
+      const j = eveningJson();
+      // 用「夹具里绝对不存在的键」→ 必须不误伤任何 pick。
+      // ⚠️ 早先这里误传 '000823'（fixture 里真实存在）导致断言假失败 —— 夹具键必须先核对。
+      eq(mr.autoTagHighBoards(j, ['999999']).length, 0,
+        '#20.22 autoTagHighBoards 对「键不匹配」返回空（不误伤）');
+      eq(mr.autoTagHighBoards(j, []).length, 0,
+        '#20.22 autoTagHighBoards 传入空 keys → 直接返回空');
+      eq(mr.autoTagHighBoards({}, ['999999']).length, 0,
+        '#20.22 autoTagHighBoards 对空对象返回空（无 {morning,evening} 守卫）');
+      eq(mr.autoTagHighBoards(null, ['x']).length, 0,
+        '#20.22 autoTagHighBoards(null) 不抛异常');
+    }
+
+    // A7 源码守卫：确保 H8 不再回到 errors 通道
+    {
+      const src = fs.readFileSync(path.join(ROOT, 'tools', 'merge_report.js'), 'utf8');
+      ok(!/code: 'H8'/.test(src), '#20.22 源码已无 H8 errors.push（杜绝退回硬拦）');
+      ok(/statusAutoTagged/.test(src), '#20.22 源码含 statusAutoTagged 标记');
     }
   }
 }

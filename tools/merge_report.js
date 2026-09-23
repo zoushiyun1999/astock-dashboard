@@ -119,6 +119,41 @@ function reqStr(errors, p, val) {
   return true;
 }
 
+/** ⑤ 自动修补（方案 A）：≥5 板缺风险词的 picks/关注股 → status 追加「高位」并打标记。
+ *  幂等：先按键（code 优先，否则 name）收集，再按同一键在两个列表中回填 —— 因为
+ * 校验（validate）与落盘（applyToData）之间没有共享对象，keys 是唯一的桥梁。
+ *  @returns {Array<{key:string, from:string, to:string}>} 修补明细（供日志）
+ */
+function autoTagHighBoards(json, keys) {
+  const applied = [];
+  if (!isArr(keys) || !keys.length) return applied;
+  const keySet = new Set(keys);
+  const lists = [];
+  // morning（形态 A）：扁平今日关注
+  if (json && isObj(json.morning) && isArr(json.morning['今日关注'])) {
+    lists.push(json.morning['今日关注']);
+  }
+  // evening（形态 B）：明日关注[].picks
+  if (json && isObj(json.evening) && isArr(json.evening['明日关注'])) {
+    json.evening['明日关注'].forEach(function (g) {
+      if (g && isArr(g.picks)) lists.push(g.picks);
+    });
+  }
+  lists.forEach(function (list) {
+    list.forEach(function (p) {
+      if (!isObj(p)) return;
+      const k = nonEmpty(p.code) ? p.code : (nonEmpty(p.name) ? p.name : '');
+      if (!k || !keySet.has(k)) return;
+      if (RISK_WORDS.test(String(p.status || ''))) return;   // 手工已补（或本轮回填过）→ 跳过
+      const from = String(p.status == null ? '' : p.status);
+      p.status = autoTagHighBoard(from);
+      p.statusAutoTagged = true;
+      applied.push({ key: k, from: from, to: p.status });
+    });
+  });
+  return applied;
+}
+
 /** 必填非空数组（H4）。返回是否为「非空数组」。 */
 function reqArr(errors, p, val, hint) {
   if (!isArr(val) || val.length === 0) {
@@ -140,14 +175,40 @@ function checkCode(errors, warnings, p, code) {
   }
 }
 
-/** status 规则：H8 高板股口径词（硬失败）+ W1 三段式（警告）。 */
+/** ⑤ 候选标记：给 5 板缺风险词的 status 追加「高位」，返回新串。
+ *  幂等 —— 已含风险词则原样返回（调用方应先判 RISK_WORDS）。 */
+function autoTagHighBoard(status) {
+  const s = String(status == null ? '' : status);
+  const tag = '高位';
+  // 已有感叹号/分隔结尾就直接接「高位」，否则补一个「+」保持可读
+  if (/[+·、,，/]$/.test(s) || s === '') return s + tag;
+  return s + '+' + tag;
+}
+
+/**
+ * status 规则：H8 高板股口径词（**自动修补 + WARN**，不再硬失败）+ W1 三段式（警告）。
+ *
+ * 🔴 2026-09-23 决策（方案 A）：`n >= 5` 缺风险词时，**只告警不拦写**，由 applyToData 落盘前
+ *    自动补「高位」。理由（两次真实停摆都源于此条硬门槛）：
+ *      · 09-22：LLM 写「8天6板+炸板」，风险词表不含「炸板」→ 整份晚报被拒；
+ *      · 更早：5 板股写「5板+传媒+华字辈」（纯描述、无表态）→ 同样整份被拒。
+ *    事实是：**"该不该劝退" 是内容判断，不该由正则决定一份晚报的生死**。校验层该守的是
+ *    「结构与安全」（H1~H7），而不是替模型做措辞取舍。故这里降级为「标注 + 自动补词」：
+ *      · 保留信号 —— WARN 会落 logs/<date>.md，且 status 里被显式加上「高位」，
+ *        前端与人工复盘都能一眼看出这是机器补的（见 `statusAutoTagged` 标记）；
+ *      · 保留威慑 —— prompts.js 仍要求模型自己写风险词，WARN 是提示它下一期写好。
+ *    ⚠️ 守卫：只在 n>=5 触发；`n<5` 的普通票不受任何影响。
+ * @returns {boolean} 是否发生了自动修补（调用方据此打 `statusAutoTagged`）
+ */
 function checkStatus(errors, warnings, p, status, ctx) {
-  if (!nonEmpty(status)) return;   // 必填检查已覆盖
+  if (!nonEmpty(status)) return false;   // 必填检查已覆盖
   const n = boardCount(status);
+  let tagged = false;
   if (n >= 5 && !RISK_WORDS.test(status)) {
-    errors.push({ code: 'H8', msg: '✗ [' + p + '] ' + n + ' 板以上个股必须写明风险口径：\n' +
-      '     期望含「高位」「断板」「不参与」之一；实到："' + status + '"' +
-      (ctx ? '（' + ctx + '）' : '') + '。' });
+    warnings.push({ code: 'W7', msg: '⚠️ [' + p + '] ' + n + ' 板以上个股未写风险口径（实到 "' + status +
+      '"）。**已放行并自动补「高位」**，不拦写；下期请在 status 里自行写明（高位/断板/不参与/炸板…）。' +
+      (ctx ? '（' + ctx + '）' : '') });
+    tagged = true;
   }
   const hasBoard = BOARD_WORDS.test(status);
   const hasPos = POS_WORDS.test(status);
@@ -155,6 +216,7 @@ function checkStatus(errors, warnings, p, status, ctx) {
     warnings.push({ code: 'W1', msg: '⚠️ [' + p + '] status 建议同时体现「板数 / 位置 / 特征」（实到 "' +
       status + '"）——仅提示，不拦写。' });
   }
+  return tagged;
 }
 
 /** W3 条数超出建议区间（仅提示）。 */
@@ -202,7 +264,9 @@ function validateMorning(json, res, opts) {
       reqStr(E, base + '.status', p.status);
       reqStr(E, base + '.reason', p.reason);
       checkCode(E, W, base + '.code', p.code);
-      checkStatus(E, W, base + '.status', p.status, 'name=' + (p.name || '?') + ' code=' + (p.code || '?'));
+      if (checkStatus(E, W, base + '.status', p.status, 'name=' + (p.name || '?') + ' code=' + (p.code || '?'))) {
+        res.autoTagKeys.push(nonEmpty(p.code) ? p.code : (nonEmpty(p.name) ? p.name : ''));
+      }
     });
   }
 }
@@ -316,7 +380,9 @@ function validateEvening(json, res, opts) {
           reqStr(E, pb + '.status', p.status);
           reqStr(E, pb + '.reason', p.reason);
           checkCode(E, W, pb + '.code', p.code);
-          checkStatus(E, W, pb + '.status', p.status, 'name=' + (p.name || '?') + ' code=' + (p.code || '?'));
+          if (checkStatus(E, W, pb + '.status', p.status, 'name=' + (p.name || '?') + ' code=' + (p.code || '?'))) {
+            res.autoTagKeys.push(nonEmpty(p.code) ? p.code : (nonEmpty(p.name) ? p.name : ''));
+          }
         });
       }
     });
@@ -362,7 +428,7 @@ function validateEvening(json, res, opts) {
  */
 function validate(kind, json, opts) {
   opts = opts || {};
-  const res = { errors: [], warnings: [] };
+  const res = { errors: [], warnings: [], autoTagKeys: [] };
   if (!isObj(json)) {
     res.errors.push({ code: 'H2', msg: '✗ JSON 顶层必须是对象，实到 ' + typeOf(json) + '。' });
     return res;
@@ -536,8 +602,19 @@ function mergeReport(kind, jsonPath, file, opts) {
   // --date 覆盖（默认以 JSON 内 date 为准）
   if (opts.date) json.date = opts.date;
 
-  // 2) 内容校验 → 失败即 exit 3（__validation）
+  // 2) 内容校验（不拦写，只收集 WARN + 自动修补键）→ 真有 H 级错误才 exit 3
   const v = validate(kind, json, { today: todayStamp() });
+
+  // 2.1) 🔧 方案 A 自动修补：≥5 板缺风险词 → status 追加「高位」+ `statusAutoTagged` 标记。
+  //      必须在「校验之后、applyToData 之前」执行：此刻 json 尚未进 data，
+  //      改的是中间件本身，落盘的就是修补后的内容，不需要回写 tmp_*.json。
+  //      注意 autoTagKeys 收集的是**键**（code 优先 / name 兜底），因为 validate 与
+  //      applyToData 不共享对象引用 —— 键是二者之间唯一的桥梁。
+  const tagged = autoTagHighBoards(json, v.autoTagKeys);
+  tagged.forEach(function (t) {
+    console.warn('🔧 自动修补 [' + t.key + '] status：' + t.from + '  →  ' + t.to + '（已标 statusAutoTagged）');
+  });
+
   if (v.errors.length) {
     const e = new Error(v.errors.map(function (x) { return x.msg; }).join('\n'));
     e.__validation = true;
@@ -568,6 +645,7 @@ function mergeReport(kind, jsonPath, file, opts) {
     'merge_report[' + kind + '] ' + json.date +
     ' | reports ' + prevN + '→' + afterN + '（dates: ' + dateList + '）' +
     ' | calendar ' + prevC + '→' + afterC +
+    ' | 自动修补:' + tagged.length +
     ' | warnings:' + v.warnings.length;
 
   if (opts.dry) {
@@ -586,10 +664,14 @@ function mergeReport(kind, jsonPath, file, opts) {
   console.log('✔ ' + summary);
   emitWarnings(v.warnings);
   // WARN 只落当日 logs/<date>.md，绝不写 ALERT（设计 §4.5 定稿）
-  if (v.warnings.length) {
+  if (v.warnings.length || tagged.length) {
     const logDir = opts.logDir || path.join(ROOT, 'logs');
     const lines = ['', '## ' + ops.stampMin() + ' | merge_report[' + kind + '] WARN',
       '- 文件：' + path.basename(abs)].concat(v.warnings.map(function (w) { return '- ' + w.msg; }));
+    if (tagged.length) {
+      lines.push('- 🔧 自动修补 ' + tagged.length + ' 处（statusAutoTagged：机器补的「高位」，非模型原话）：');
+      tagged.forEach(function (t) { lines.push('  · ' + t.key + '：' + t.from + ' → ' + t.to); });
+    }
     appendDailyLog(logDir, json.date, lines);
   }
   return next;
@@ -642,4 +724,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { parseArgs, validate, applyToData, mergeReport, MAX, CAL_MAX, DATA };
+module.exports = { parseArgs, validate, applyToData, mergeReport, autoTagHighBoards, autoTagHighBoard, boardCount, MAX, CAL_MAX, DATA, RISK_WORDS };
