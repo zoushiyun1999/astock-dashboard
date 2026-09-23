@@ -12,24 +12,28 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="A股速览">
-<link rel="stylesheet" href="css/style.css?v=202609232130">
+<link rel="stylesheet" href="css/style.css?v=202609232202">
 </head>
 <body>
 
 <header>
   <div class="h-inner">
-    <!-- 第一行：品牌 + 独立页入口 -->
+    <!-- 第一行：品牌靠左 + 日期靠右（2026-09-23 三行归位）
+         原来日期独占一行且右对齐，而品牌行只占左半 → 一行右边距 16px、另一行空 286px，
+         两行视觉重心完全不在一处。现在两端对齐用满整行，顶部从 96px 压到约 62px。 -->
     <div class="h-top">
-      <div class="brand">
-        <div class="logo">A</div>
-        <div class="name">股速览</div>
+      <div class="h-left">
+        <div class="brand">
+          <div class="logo">A</div>
+          <div class="name">股速览</div>
+        </div>
+        <!-- 独立热点板块页入口（手机可单独收藏 asx.79zl.cn/sectors.html）。
+             样式统一走 .nav-pill（与热点页「主页」同坐标同款式），去掉 emoji。 -->
+        <a class="nav-pill" href="sectors.html">板块<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
       </div>
-      <!-- 独立热点板块页入口（手机可单独收藏 asx.79zl.cn/sectors.html）。
-           样式统一走 .nav-pill（与热点页「主页」同坐标同款式），去掉 emoji。 -->
-      <a class="nav-pill" href="sectors.html">板块<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <!-- 日期：不再显示年份（用户要求）；与品牌行共享 --ctl-h 高度，垂直居中对齐 -->
+      <div class="h-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     </div>
-    <!-- 第二行：日期靠右下角（不显示年份，2026-09-23 用户要求） -->
-    <div class="h-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     <!-- 源健康状态已全部上 Tab（✓/✕ 符号）；原告警条 element 移除（2026-09-22 用户要求）。
          renderHealth() 保留（测试依赖），bar 不存在时自动 no-op。 -->
   </div>
@@ -84,13 +88,13 @@
 </div>
 
 <!-- 数据（定时任务自动写入，勿手改） -->
-<script src="data.js?v=202609232130"></script>
+<script src="data.js?v=202609232202"></script>
 <!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
-<script src="screener.js?v=202609232130"></script>
+<script src="screener.js?v=202609232202"></script>
 <!-- 休市日（节假日，用于前端显示「休市」） -->
-<script src="holidays.js?v=202609232130"></script>
+<script src="holidays.js?v=202609232202"></script>
 <!-- 渲染逻辑 -->
-<script src="js/app.js?v=202609232130"></script>
+<script src="js/app.js?v=202609232202"></script>
 
 <!-- 破缓存自检：服务端无 Cache-Control，手机会缓存旧 HTML 导致更新看不见。
      这里比对「当前页面引用的版本号」与「服务端最新 HTML 的版本号」，

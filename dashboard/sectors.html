@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="热点板块">
-<link rel="stylesheet" href="css/style.css?v=202609222018">
+<link rel="stylesheet" href="css/style.css?v=202609232202">
 <style>
 /* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ──
    配色：浅色阅读主题 —— 主看板头部是深色渐变+白字，本页标题曾误用深色变量导致看不清。
@@ -19,37 +19,44 @@ body { padding-bottom: 24px; }
 
 /* ── 头部：直接继承 style.css 的 iOS 磨砂浅头部（2026-09-22 双页统一），不再覆写 ── */
 .sp-header { position: sticky; top: 0; z-index: 30; }
+/* 三行归位（与主看板同构）：品牌行两端对齐（品牌靠左 / 日期靠右）+ 控制行。
+   边距统一走 --gutter，与主看板共用同一条左右轴。 */
 .sp-headbar {
-  display: flex; align-items: center; justify-content: flex-start;
-  gap: 10px; padding: 2px 0 6px; min-height: 46px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; min-height: var(--ctl-h);
 }
 .sp-brand { display: flex; align-items: center; gap: 8px; }
-/* 品牌标识：与主看板同款**纯色 monogram 方块**（主看板是「A」，这里是「板」）。
-   2026-09-23：原来用 🔥 emoji，与主看板的 monogram 语言不一致，且 emoji 不可控色。 */
+/* 品牌标识：与主看板同款**纯色 monogram 方块**（主看板是「A」，这里是「热」）+ 新拟态微凸。 */
 .sp-logo {
   width: 30px; height: 30px; border-radius: 9px; background: var(--brand);
   display: flex; align-items: center; justify-content: center;
   font-size: var(--fs-md); font-weight: var(--fw-semibold); color: #fff; flex: none;
+  box-shadow: -1px -1px 3px var(--nm-light), 2px 2px 5px var(--nm-dark);
 }
 .sp-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); color: var(--ink); letter-spacing: 0; }
 /* 返回主看板：复用全局 .nav-pill（见 style.css），与主看板「板块」入口同坐标同款式。
    箭头方向相反（‹ 往回），语义自明。 */
-/* 日期：头部右下角独立一行（与主看板同构），不显示年份 */
-.sp-date { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; margin-top: 3px; }
+/* 日期：**并入品牌行右端**（原来独占一行且右对齐，与品牌行错位） */
+.sp-date { display: flex; align-items: baseline; gap: 6px; flex: none; }
 .sp-date b { font-size: var(--fs-lg); color: var(--ink); line-height: 1.2; }
 .sp-date span { font-size: var(--fs-sm); color: var(--ink-2); }
-.sp-controls { display: flex; gap: 8px; padding: 2px 0 10px; align-items: center; }
+/* 日期选择：与主看板日期条**同款内凹胶囊**（新拟态语言统一），
+   不再是一个描边 select —— 两页的控件语言必须一致，否则互跳时「不和谐」。 */
+.sp-controls { display: flex; gap: 8px; align-items: center; padding: 0 0 var(--row-gap); }
 .sp-select {
-  flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink);
-  background: var(--card); border: 0.5px solid var(--line);
-  border-radius: var(--radius-md, 8px); padding: 10px 12px;
+  flex: 1; min-width: 0; height: var(--ctl-h);
+  font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--ink);
+  background: var(--bg); border: none;
+  border-radius: var(--radius-md); padding: 0 var(--sp-3);
+  box-shadow: var(--nm-inset-sm);
   appearance: none; -webkit-appearance: none;
+  font-variant-numeric: tabular-nums;
 }
 .sp-summary { max-width: 560px; margin: 0 auto; padding: 0 14px 10px; font-size: var(--fs-sm); color: var(--ink-2); }
 .sp-main { padding: 0 14px; max-width: 560px; margin: 0 auto; }
 
-/* ── 板块卡：白底 + 发丝描边 + 更松的行距（阅读性优先）。
-       不再覆写 .card 的阴影 —— 两页必须共用同一条极浅阴影，否则并排看会「不和谐」。 ── */
+/* ── 板块卡：白底 + 发丝描边 + 新拟态双向柔光（与主看板 .card 同款，两页共用一条光照）。
+       不覆写 box-shadow —— 两页必须共用同一个 --nm-raise-sm，否则并排看会「不和谐」。 ── */
 .sector {
   background: #fff;
   border-color: var(--line-2);
@@ -94,10 +101,12 @@ body { padding-bottom: 24px; }
         <span class="sp-logo">热</span>
         <span class="sp-title">点板块</span>
       </div>
-      <a class="nav-pill" href="index.html"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>主页</a>
+      <!-- 日期并入品牌行右端（三行归位，与主看板同构） -->
+      <div class="sp-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
     </div>
-    <div class="sp-date"><b id="hdDate">—</b><span id="hdWeek">—</span></div>
+    <!-- 第二行：返回主看板（与主看板「板块」入口同坐标同款式） -->
     <div class="sp-controls">
+      <a class="nav-pill" href="index.html"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>主页</a>
       <select class="sp-select" id="dateSel" aria-label="选择日期"></select>
     </div>
   </div>
@@ -154,8 +163,11 @@ body { padding-bottom: 24px; }
   var hasData = {};
   secDates.forEach(function (x) { hasData[x.ds] = true; });
   sel.innerHTML = options.map(function (ds) {
+    // 显示去年份（与主看板日期条同口径：09/21 而非 2026-09-21）——
+    // 两页互跳时日期写法必须一致，否则并排看「不和谐」。年份在 value 里保留。
+    var md = String(ds).slice(5).replace('-', '/');
     return '<option value="' + ds + '"' + (hasData[ds] ? '' : ' disabled') + '>' +
-      ds + ' ' + weekOf(ds) + (hasData[ds] ? '' : ' · 无晚报') + '</option>';
+      md + ' ' + weekOf(ds) + (hasData[ds] ? '' : ' · 无晚报') + '</option>';
   }).join('');
   // 默认选中：最新一期有板块数据的日期；一个都没有 → 全部禁用
   var def = secDates.length ? secDates[secDates.length - 1].ds : null;

@@ -64,6 +64,13 @@ const weekMatch = SRC.match(/var WEEK = \[[^\]]*\];/);
 if (!weekMatch) throw new Error('在 app.js 里找不到 WEEK 常量定义，测试无法运行');
 PARTS.WEEK = weekMatch[0];
 
+// 空态图标表（2026-09-23 由 emoji 改单色 SVG 后新增）—— emptyCard 依赖它。
+// ⚠️ 它是 var 对象字面量、不是 function，extractFn 抽不到，必须像 DUE/WEEK 一样单独抓。
+//    抓取用「var EMPTY_ICO = { … };」到第一个行首 `};` 为止（对象内含箭头/引号，不能用 [^}]*）。
+const icoMatch = SRC.match(/var EMPTY_ICO = \{[\s\S]*?\n  \};/);
+if (!icoMatch) throw new Error('在 app.js 里找不到 EMPTY_ICO 常量定义，测试无法运行');
+PARTS.EMPTY_ICO = icoMatch[0];
+
 const HOLIDAYS = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years;
 
 /** 时间戳 → 本地日期串（给"没有 list 数据"的 harness 兜底一个合理的 curDate） */
@@ -126,7 +133,7 @@ function makeHarness(nowTs, opts) {
     curTab: opts.curTab || 'morning'
   };
   vm.createContext(ctx);
-  vm.runInContext([PARTS.DUE, PARTS.WEEK].concat(FN_NAMES.map(n => PARTS[n])).join('\n\n'), ctx);
+  vm.runInContext([PARTS.DUE, PARTS.WEEK, PARTS.EMPTY_ICO].concat(FN_NAMES.map(n => PARTS[n])).join('\n\n'), ctx);
   return { ctx: ctx, els: els, store: store };
 }
 

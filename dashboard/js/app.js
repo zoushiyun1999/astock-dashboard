@@ -248,18 +248,29 @@
     var tags = [];
     if (isLatest) tags.push('最新一期');
     if (!trading) tags.push('休市');
+    // 只显示 月/日（去年份，用户要求）：原生 input[type=date] 的显示文本由浏览器决定、
+    // 无法只去年份，故用「可见文本 + 隐藏 input」：点文本区唤起 picker。
+    var md = String(ds).slice(5).replace('-', '/');
     return '<div class="date-bar">' +
+      // ① 切日期组：‹ 日期 › 收进一个内凹胶囊（新拟态：凹陷 = 可拨动）
+      '<div class="db-group">' +
       '<button class="db-arrow" type="button" onclick="stepDay(-1)" aria-label="前一天"' +
       (ds <= min ? ' disabled' : '') + '>&#8249;</button>' +
-      '<input class="db-input" type="date" id="datePick" value="' + esc(ds) + '"' +
-      ' min="' + esc(min) + '" max="' + esc(max) + '" onchange="pickDay(this.value)" aria-label="选择日期">' +
+      '<label class="db-input" for="datePick" role="button" tabindex="0" ' +
+      'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();document.getElementById(\'datePick\').showPicker&&document.getElementById(\'datePick\').showPicker();}" ' +
+      'aria-label="选择日期">' + esc(md) + '</label>' +
+      '<input class="db-native" type="date" id="datePick" value="' + esc(ds) + '"' +
+      ' min="' + esc(min) + '" max="' + esc(max) + '" onchange="pickDay(this.value)" tabindex="-1" aria-hidden="true">' +
       '<button class="db-arrow" type="button" onclick="stepDay(1)" aria-label="后一天"' +
       (ds >= max ? ' disabled' : '') + '>&#8250;</button>' +
+      '</div>' +
+      // ② 跳最新组：独立凸起按钮，宽度按内容给足（原只分到 48px，四字变两字才塞得下）。
+      //    禁用态（已停在最新一期）文案改「已最新」—— 光降透明度看起来像按钮坏了。
       '<button class="db-latest" type="button" onclick="gotoLatest()"' +
-      (ds >= max ? ' disabled' : '') + '>最新</button>' +
+      (ds >= max ? ' disabled' : '') + '>' + (ds >= max ? '已最新' : '最新') + '</button>' +
       '</div>' +
       // 小字只留「星期 + 状态标签」：日期本身已由上面的选择器显示，
-      // 而 header 第一行也写着完整日期 —— 再写一遍就是同一屏内第三次重复。
+      // 而 header 也写着完整日期 —— 再写一遍就是同一屏内第三次重复。
       '<div class="db-sub"><span>' + esc(d.week) + '</span>' +
       (tags.length ? '<span class="db-tag' + (trading ? '' : ' off') + '">' + esc(tags.join(' · ')) + '</span>' : '') +
       '</div>';
@@ -289,7 +300,7 @@
     }
     if (!isTradingDay(ds)) {
       return emptyCard(head + ' · 休市 · 无数据',
-        '非交易日没有任何行情与简报，也就不会有' + what + '。点「最新」回到最近一期，或用日期选择器换一天。', '🔵');
+        '非交易日没有任何行情与简报，也就不会有' + what + '。点「最新」回到最近一期，或用日期选择器换一天。', 'closed');
     }
     if (ds === today) {
       var due = todayDue(what);
@@ -298,13 +309,13 @@
       // 只有「还没到计划时间」才叫待更新；过了点仍没有就是真没生成
       if (due && hm < due.m) {
         return emptyCard(head + ' · ' + what + '待更新',
-          '今天的数据还没生成，计划 ' + due.label + ' 左右。也可以先回看「最新一期」。', '⏳');
+          '今天的数据还没生成，计划 ' + due.label + ' 左右。也可以先回看「最新一期」。', 'wait');
       }
       return emptyCard(head + ' · 今日' + what + '未生成',
-        '已过计划时间（' + (due ? due.label : '—') + '）仍没有数据，可能任务没跑 —— 见 Tab 标题上的状态符号。', '⚠️');
+        '已过计划时间（' + (due ? due.label : '—') + '）仍没有数据，可能任务没跑 —— 见 Tab 标题上的状态符号。', 'warn');
     }
     return emptyCard(head + ' · 当日无数据',
-      '该交易日没有收录' + what + '（历史缺口或当时未运行）。可翻到相邻日期，或点「最新」。', '📭');
+      '该交易日没有收录' + what + '（历史缺口或当时未运行）。可翻到相邻日期，或点「最新」。', 'empty');
   }
 
   /* ── 早报渲染 ── */
@@ -443,8 +454,18 @@
     return html;
   }
 
+  /** 空态卡（2026-09-23：图标由彩色 emoji 改单色 SVG —— emoji 不可控色，
+   *  且与全站系统化图标语言冲突。ico 传语义名，色值由 CSS 按 class 给。 */
+  var EMPTY_ICO = {
+    warn:   { cls: 'warn',   svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>' },
+    wait:   { cls: 'wait',   svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' },
+    closed: { cls: 'closed', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/></svg>' },
+    empty:  { cls: '',       svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v12H4z"/><path d="M4 7l2-3h12l2 3"/><path d="M9 12h6"/></svg>' }
+  };
   function emptyCard(t, s, ico) {
-    return '<div class="card empty"><div class="ico">' + (ico || '📭') + '</div><div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div></div>';
+    var m = EMPTY_ICO[ico] || EMPTY_ICO.empty;
+    return '<div class="card empty ' + m.cls + '"><div class="ico">' + m.svg + '</div>' +
+      '<div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div></div>';
   }
 
   /* ── 短线关注渲染：博主看好的股（今日 / 明日 两段） ── */
@@ -989,6 +1010,10 @@
     //    这里 section 刚变可见，量到的才是真实尺寸（2026-09-23 修）。
     positionSubGlider();
     updateEveningDot();
+    // 切 Tab 会重置滚动位置（新 Tab 内容可能很短、scrollY 直接归 0）。
+    // 不在这里同步的话，body.scrolled 会残留 → header 永久保持收起态
+    // （日期淡出、上下留白变窄），且只在下次滚动时才恢复。
+    requestAnimationFrame(syncScrolled);
   }
 
   /* 选股 Tab 内部：短线 / 量价 两个子视图切换。各自记住自己的日期。 */
@@ -1123,13 +1148,24 @@
     }
     var sy = parseInt(localStorage.getItem('scroll_' + savedTab) || '0', 10);
     window.scrollTo(0, sy);
+    syncScrolled();
   } catch (e) {}
+
+  /* 滚动后收起 header 的品牌/日期区，把屏幕让给内容（Tab 栏本身是 sticky，会留在顶部）。
+     ⚠️ 必须抽成函数、不能只写在 scroll 监听里（2026-09-23 修）：
+       ① 页面恢复滚动位置走 localStorage + window.scrollTo()，**不触发 scroll 事件**
+          → 重新打开页面时停在半空，header 却仍是全高、日期还亮着；
+       ② switchTab() 会把滚动位置重置，若新 Tab 内容短则 scrollY 归 0，
+          残留的 scrolled 类不会自己消失 → header 永久收起。
+     两处都靠显式调用来兜底。 */
+  function syncScrolled() {
+    document.body.classList.toggle('scrolled', (window.scrollY || window.pageYOffset || 0) > 60);
+  }
 
   // 滚动位置按 Tab 持久化
   window.addEventListener('scroll', function () {
     try { localStorage.setItem('scroll_' + curTab, String(window.scrollY)); } catch (e) {}
-    // 滚动后收起 header 的品牌/日期区，把屏幕让给内容（Tab 栏本身是 sticky，会留在顶部）
-    document.body.classList.toggle('scrolled', window.scrollY > 60);
+    syncScrolled();
   }, { passive: true });
 
   // 窗口尺寸变化时重新定位滑动下划线
