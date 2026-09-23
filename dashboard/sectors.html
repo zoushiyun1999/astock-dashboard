@@ -25,16 +25,17 @@ body { padding-bottom: 24px; }
 }
 .sp-brand { display: flex; align-items: center; gap: 8px; }
 .sp-logo { font-size: 24px; line-height: 1; }
-.sp-title { font-size: 21px; font-weight: var(--fw-bold); color: var(--ink); letter-spacing: .2px; }
+.sp-title { font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); letter-spacing: .2px; }
 /* 返回主看板：与主看板头部的「🔥板块」入口**同坐标同款式**（标题右侧、日期左侧，
    iOS 蓝色调胶囊），只有文字不同 —— 来回切换视线零跳动。 */
 .sp-home {
   flex: none; font-size: 12px; font-weight: 600; color: #0062CC;
   text-decoration: none; border: 1px solid rgba(0,122,255,.22); background: rgba(0,122,255,.10);
   border-radius: 99px; padding: 3px 9px; white-space: nowrap;
+  transition: transform var(--t-fast);
 }
 .sp-date { text-align: right; margin-left: auto; }
-.sp-date b { font-size: 16px; color: var(--ink); display: block; line-height: 1.2; }
+.sp-date b { font-size: var(--fs-lg); color: var(--ink); display: block; line-height: 1.2; }
 .sp-date span { font-size: var(--fs-sm); color: var(--ink-2); }
 .sp-controls { display: flex; gap: 8px; padding: 2px 0 10px; align-items: center; }
 .sp-select {
