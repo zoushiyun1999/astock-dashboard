@@ -892,10 +892,12 @@
     }
   }
 
-  /** Tab 源状态符号（2026-09-22 二次迭代：圆点 → ✓/✕，用户要求）。
+  /** Tab 源状态符号（2026-09-23 三态版，用户要求补「待更新」标识）。
    *  基准 = 各源**最新一期**（与 footer 一致，与当前选中日期无关）：
-   *    ✓ 绿 = 无异常（已生成 / 还没到计划点 / 休市 / 低频源非今日）；
-   *    ✕ 红 = 缺失（交易日已过计划点仍未生成）。
+   *    ✓ 绿 = 已生成（最新一期正常）；
+   *    ● 黄 = 今日待更新（还没到计划点 / 任务未跑但未过期）；
+   *    ✕ 红 = 缺失（交易日已过计划点仍未生成）；
+   *    休市日（close）不显示符号。
    *  短线 Tab 的数据来自晚报「明日关注」，符号跟随晚报状态。
    *  原 header 告警条已撤（用户要求），异常只在 Tab 符号上表达。 */
   function updateSrcDots() {
@@ -909,10 +911,16 @@
       if (!el) return;
       var s = byName[map[tab]];
       var st = s ? s.state : '';
-      var miss = st === 'miss';
-      el.className = 'tab-src show ' + (miss ? 'miss' : 'ok');
-      el.textContent = miss ? '✕' : '✓';
-      if (s) el.title = s.name + (miss ? ' 缺失（今日未生成）' : ' 无异常');
+      var spec = { ok: ['✓', 'ok'], wait: ['●', 'wait'], miss: ['✕', 'miss'] }[st];
+      if (spec) {
+        el.className = 'tab-src show ' + spec[1];
+        el.textContent = spec[0];
+        if (s) el.title = s.name + (st === 'ok' ? ' 已更新' : st === 'wait' ? ' 今日待更新' : ' 缺失（今日未生成）');
+      } else {
+        el.className = 'tab-src';   // close：休市日不显示
+        el.textContent = '';
+        el.title = '';
+      }
     });
   }
 

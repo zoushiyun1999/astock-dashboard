@@ -169,15 +169,16 @@ header {
 .h-date span { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
 /* 第二行（原 5 源状态行）已移除（2026-09-22）：更新状态改用 Tab 标题上的
    「源状态点」表达（.tab-src），header 只留品牌行，不再拥挤。 */
-/* Tab 源状态符号（2026-09-22 二次迭代：圆点 → ✓/✕ 文本符号，用户要求）：
-   ✓ 绿=无异常（已生成/未到计划点/休市/低频正常），✕ 红=缺失（交易日过点未生成）。
-   五个 Tab 全配（短线跟随晚报状态）；文本由 app.js 的 updateSrcDots() 写入。 */
+/* Tab 源状态符号（2026-09-23 三态版，用户要求）：
+   ✓ 绿=已生成，● 黄=今日待更新（未到计划点），✕ 红=缺失（过点未生成）；休市日不显示。
+   五个 Tab 全配（短线跟随晚报状态）；符号由 app.js 的 updateSrcDots() 写入。 */
 .tab-src {
   display: none; margin-left: 4px; font-size: 12px; font-weight: var(--fw-bold);
   vertical-align: 1px; line-height: 1;
 }
 .tab-src.show { display: inline-block; }
 .tab-src.ok { color: #22c55e; }
+.tab-src.wait { color: #f59e0b; }
 .tab-src.miss { color: #ef4444; }
 
 /* ── Tab 切换 ── */
