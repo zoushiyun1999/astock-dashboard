@@ -1038,24 +1038,23 @@
   }
 
   /* 选股 Tab：二级分段控件 + 当前子视图内容。
-     子视图的日期条由各自渲染函数负责（短线 dateBar 用简报日期，量价用选股期日期）。 */
+     ⚠️ 滑块的定位**不量尺寸**（2026-09-23 修）：两个按钮等宽（flex:1），位置可以用百分比直接算，
+        而量 offsetWidth 在「区块隐藏」时恒为 0 —— 那正是"第一次进入没高亮"的根因。 */
   function renderPicks(r, ds) {
+    var gliderStyle = 'left:' + (curSub === 'screener' ? 'calc(50% + 2px)' : '2px') + ';width:calc(50% - 4px)';
     var sub = '<div class="tabs tabs-sub" id="subTabs">' +
       '<button class="tab' + (curSub === 'watch' ? ' on' : '') + '" data-sub="watch" onclick="switchSub(\'watch\')">短线</button>' +
       '<button class="tab' + (curSub === 'screener' ? ' on' : '') + '" data-sub="screener" onclick="switchSub(\'screener\')">量价</button>' +
-      '<span class="tab-glider" id="subGlider"></span></div>';
+      '<span class="tab-glider" id="subGlider" style="' + gliderStyle + '"></span></div>';
     return sub + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
   }
 
-  /* 二级分段的滑块定位（与主 Tab 同一套机制，独立元素） */
+  /* 二级分段滑块定位：纯按 curSub 算百分比，任何时候（含隐藏态）都能算对 */
   function positionSubGlider() {
-    var tabs = document.getElementById('subTabs');
     var glider = document.getElementById('subGlider');
-    var active = tabs ? tabs.querySelector('.tab.on') : null;
-    if (tabs && glider && active) {
-      glider.style.left = active.offsetLeft + 'px';
-      glider.style.width = active.offsetWidth + 'px';
-    }
+    if (!glider) return;
+    glider.style.left = curSub === 'screener' ? 'calc(50% + 2px)' : '2px';
+    glider.style.width = 'calc(50% - 4px)';
   }
 
   /** 数据健康条：基于各源最后更新时间，提示是否异常 */

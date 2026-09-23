@@ -226,6 +226,8 @@ body.scrolled header { padding-top: 11px; padding-bottom: 9px; }
 .tabs-sub .tab {
   min-height: 30px; padding: 5px 0 6px; font-size: var(--fs-md); border-radius: 8px;
 }
+/* 选中态自带白底（保险层）：滑块走百分比定位、不量尺寸，即便滑块异常也能看出选中 */
+.tabs-sub .tab.on { background: #fff; }
 .tabs-sub .tab-glider { top: 2px; bottom: 2px; border-radius: 8px; }
 
 /* ── 通用卡片 ── */
