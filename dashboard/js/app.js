@@ -984,6 +984,10 @@
     document.getElementById('sec-picks').classList.toggle('hide', tab !== 'picks');
     document.getElementById('sec-calendar').classList.toggle('hide', tab !== 'calendar');
     positionGlider();
+    // ⚠️ 二级分段的滑块必须在这里也定位一次：render() 是在 sec-picks **隐藏状态**下跑的，
+    //    那时 offsetWidth 量到 0（display:none）→ 滑块宽度 0，切过去就看不到选中态。
+    //    这里 section 刚变可见，量到的才是真实尺寸（2026-09-23 修）。
+    positionSubGlider();
     updateEveningDot();
   }
 
