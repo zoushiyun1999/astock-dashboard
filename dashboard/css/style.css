@@ -164,9 +164,10 @@ header {
   color: #fff; flex: none;
 }
 .brand .name { font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: .2px; color: var(--ink); }
+/* 日期：头部**右下角**独立一行（2026-09-23 用户要求），不显示年份 */
 .h-date {
-  margin-left: auto; display: flex; align-items: baseline; gap: 6px;
-  font-size: var(--fs-sm); min-width: 0;
+  display: flex; justify-content: flex-end; align-items: baseline; gap: 6px;
+  margin-top: 3px; font-size: var(--fs-sm); min-width: 0;
 }
 .h-date b { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--ink); }
 .h-date span { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
@@ -205,6 +206,7 @@ header { transition: padding var(--t-base); }
   opacity: 1;
 }
 body.scrolled header { padding-top: 11px; padding-bottom: 9px; }
+body.scrolled .h-date { display: none; }
 .tab {
   flex: 1; text-align: center; padding: 8px 0 9px; font-size: var(--fs-base); font-weight: var(--fw-medium);
   color: var(--ink-2); cursor: pointer; transition: color var(--t-fast); user-select: none;

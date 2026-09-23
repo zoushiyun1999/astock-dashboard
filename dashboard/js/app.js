@@ -1009,7 +1009,10 @@
 
     // header：显示「当前选中的日期」（可能是休市日 / 无数据的交易日，不再只显示有数据的那天）
     var d = fmtDate(curDate);
-    document.getElementById('hdDate').textContent = d.ymd;
+    // 头部只显示「月日」不显示年份（2026-09-23 用户要求）；完整日期留在 title 里备查
+    var hdEl = document.getElementById('hdDate');
+    hdEl.textContent = d.ymd.replace(/^\d+年/, '');
+    hdEl.title = d.ymd;
     document.getElementById('hdWeek').textContent = d.week + (isLatest ? ' · 最新一期' : '');
 
     // 源状态改用 Tab 标题上的符号表达（2026-09-22 移除 header 状态行，用户要求）。
