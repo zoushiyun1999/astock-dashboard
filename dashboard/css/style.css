@@ -219,6 +219,14 @@ body.scrolled header { padding-top: 11px; padding-bottom: 9px; }
   background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.12), 0 0 0 0.5px rgba(0,0,0,.03);
   transition: left var(--t-base), width var(--t-base);
 }
+/* 二级分段（选股 Tab 内部：短线 | 量价）——同一控件语言，尺寸小一档 */
+.tabs-sub {
+  margin: 0 0 12px; padding: 2px; border-radius: 10px; background: #E9E9EB;
+}
+.tabs-sub .tab {
+  min-height: 30px; padding: 5px 0 6px; font-size: var(--fs-md); border-radius: 8px;
+}
+.tabs-sub .tab-glider { top: 2px; bottom: 2px; border-radius: 8px; }
 
 /* ── 通用卡片 ── */
 .card {

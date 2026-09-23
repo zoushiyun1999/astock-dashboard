@@ -25,6 +25,18 @@
   var curDate = todayYmd();
   var curTab = 'morning';
 
+  /* 选股 Tab 的二级分段（2026-09-23：短线 + 量价 合并为一个 Tab，避免 Tab 栏拥挤）。
+     两个子视图的**日期源不同**（短线跟简报按天、量价跟选股期次），因此各自记忆所选日期：
+     curDate 始终代表"当前正在看的这个子视图的日期"，切子视图时先存后取。 */
+  var curSub = 'watch';
+  var subDates = { watch: todayYmd(), screener: todayYmd() };
+  function saveSubState() {
+    try {
+      localStorage.setItem('curSub', curSub);
+      localStorage.setItem('subDates', JSON.stringify(subDates));
+    } catch (e) {}
+  }
+
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
   /* 数据源「到期时间」（当天分钟数）= 任务开始时间 + 约 10 分钟运行余量。
@@ -856,7 +868,7 @@
     window.__scHintRefresh = upd;
   }
 
-  var TABS = ['morning', 'evening', 'watchlist', 'calendar', 'screener'];
+  var TABS = ['morning', 'evening', 'picks', 'calendar'];
 
   /* header 状态行里用的**短名**（与 Tab 名一致）：
      「量价选股 / 投资日历」这两个全称会让状态行在 430px 手机上折成两行，白白多占 18px。
@@ -873,6 +885,8 @@
   }
   function setDate(ds) {
     curDate = clampDate(String(ds));
+    subDates[curSub] = curDate;   // 记到当前子视图名下（短线/量价各记各的日期）
+    saveSubState();
     render();
   }
   window.stepDay = function (n) { setDate(shiftYmd(curDate, n)); };
@@ -905,17 +919,28 @@
     var meta = newest ? srcMeta(newest, newest.date) : [];
     var byName = {};
     meta.forEach(function (s) { byName[s.name] = s; });
-    var map = { morning: '早报', evening: '晚报', watchlist: '晚报', screener: '量价选股', calendar: '投资日历' };
+    // 选股 Tab 内含两个数据源（短线跟晚报、量价跟选股），符号取**更严重**的那个：
+    // miss ✕ > wait ● > ok ✓ —— 一眼就能看出这一格有没有问题。
+    var SEV = { miss: 3, wait: 2, ok: 1, close: 0 };
+    function worse(a, b) { return (SEV[b] || 0) > (SEV[a] || 0) ? b : a; }
+    var eveningSt = byName['晚报'] ? byName['晚报'].state : '';
+    var screenerSt = byName['量价选股'] ? byName['量价选股'].state : '';
+    var pickSt = worse(eveningSt, screenerSt);
+    var map = {
+      morning: { st: byName['早报'] ? byName['早报'].state : '', name: '早报' },
+      evening: { st: eveningSt, name: '晚报' },
+      picks: { st: pickSt, name: '短线/量价' },
+      calendar: { st: byName['投资日历'] ? byName['投资日历'].state : '', name: '投资日历' }
+    };
     Object.keys(map).forEach(function (tab) {
       var el = document.getElementById('srcDot-' + tab);
       if (!el) return;
-      var s = byName[map[tab]];
-      var st = s ? s.state : '';
+      var st = map[tab].st;
       var spec = { ok: ['✓', 'ok'], wait: ['●', 'wait'], miss: ['✕', 'miss'] }[st];
       if (spec) {
         el.className = 'tab-src show ' + spec[1];
         el.textContent = spec[0];
-        if (s) el.title = s.name + (st === 'ok' ? ' 已更新' : st === 'wait' ? ' 今日待更新' : ' 缺失（今日未生成）');
+        el.title = map[tab].name + (st === 'ok' ? ' 已更新' : st === 'wait' ? ' 今日待更新' : ' 缺失（今日未生成）');
       } else {
         el.className = 'tab-src';   // close：休市日不显示
         el.textContent = '';
@@ -944,39 +969,54 @@
   }
 
   function switchTab(tab) {
+    // 旧值迁移：watchlist（短线）/ screener（量价）已合并为 picks
+    if (tab === 'watchlist') { curSub = 'watch'; tab = 'picks'; }
+    else if (tab === 'screener') { curSub = 'screener'; tab = 'picks'; }
     if (TABS.indexOf(tab) < 0) tab = 'morning';
     curTab = tab;
+    saveSubState();
     try { localStorage.setItem('curTab', tab); } catch (e) {}
-    // 「晚报已读」的记账放在 updateEveningDot() 里统一处理（它知道当前在看哪一天）
-    document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+    // ⚠️ 只选主 Tab 栏内的 .tab：选股页内部的二级分段控件也用 .tab 类名，
+    //    不限定范围会把它的选中态一并清掉。
+    document.querySelectorAll('#tabs .tab').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
     document.getElementById('sec-morning').classList.toggle('hide', tab !== 'morning');
     document.getElementById('sec-evening').classList.toggle('hide', tab !== 'evening');
-    document.getElementById('sec-watchlist').classList.toggle('hide', tab !== 'watchlist');
+    document.getElementById('sec-picks').classList.toggle('hide', tab !== 'picks');
     document.getElementById('sec-calendar').classList.toggle('hide', tab !== 'calendar');
-    document.getElementById('sec-screener').classList.toggle('hide', tab !== 'screener');
     positionGlider();
     updateEveningDot();
   }
 
+  /* 选股 Tab 内部：短线 / 量价 两个子视图切换。各自记住自己的日期。 */
+  window.switchSub = function (sub) {
+    if (sub !== 'watch' && sub !== 'screener') return;
+    if (sub === curSub) return;
+    subDates[curSub] = curDate;          // 存下旧子视图的日期
+    curSub = sub;
+    curDate = clampDate(subDates[sub]);  // 取回新子视图的日期
+    saveSubState();
+    render();
+  };
+
   function render() {
     var r = findReport(curDate);
-    var isLatest = curDate === latestDate();
+    // 「最新一期」的判据随子视图走：短线看简报最新日，量价看最新选股期
+    var isLatest = curDate === ((curTab === 'picks' && curSub === 'screener') ? latestScDate() : latestDate());
 
     // header：显示「当前选中的日期」（可能是休市日 / 无数据的交易日，不再只显示有数据的那天）
     var d = fmtDate(curDate);
     document.getElementById('hdDate').textContent = d.ymd;
     document.getElementById('hdWeek').textContent = d.week + (isLatest ? ' · 最新一期' : '');
 
-    // 源状态改用 Tab 标题上的小圆点表达（2026-09-22 移除 header 状态行，用户要求）。
+    // 源状态改用 Tab 标题上的符号表达（2026-09-22 移除 header 状态行，用户要求）。
     // 基准=各源最新一期（与 footer 一致，与当前选中日期无关）。
     updateSrcDots();
 
     // 内容（每个 Tab 自己渲染顶部的日期条：日期语义各 Tab 不同，见 dateBar / calBar）
     document.getElementById('sec-morning').innerHTML = renderMorning(r ? r.morning : null, curDate);
     document.getElementById('sec-evening').innerHTML = renderEvening(r ? r.evening : null, curDate);
-    document.getElementById('sec-watchlist').innerHTML = renderWatchlist(r, curDate);
+    document.getElementById('sec-picks').innerHTML = renderPicks(r, curDate);
     document.getElementById('sec-calendar').innerHTML = renderCalendar();
-    document.getElementById('sec-screener').innerHTML = renderScreener(curDate);
 
     // footer（各数据源**最新一期**的更新时间，与当前选中的日期无关）
     var upd = document.getElementById('ftUpd');
@@ -986,10 +1026,32 @@
     }).join(' · ') : '—';
     renderHealth();
     positionGlider();
+    positionSubGlider();
     updateEveningDot();
     bindScHint();
     // section 由 hide 变可见后，量价表的真实宽度才存在，此时刷新遮罩判定
     if (typeof window.__scHintRefresh === 'function') window.__scHintRefresh();
+  }
+
+  /* 选股 Tab：二级分段控件 + 当前子视图内容。
+     子视图的日期条由各自渲染函数负责（短线 dateBar 用简报日期，量价用选股期日期）。 */
+  function renderPicks(r, ds) {
+    var sub = '<div class="tabs tabs-sub" id="subTabs">' +
+      '<button class="tab' + (curSub === 'watch' ? ' on' : '') + '" data-sub="watch" onclick="switchSub(\'watch\')">短线</button>' +
+      '<button class="tab' + (curSub === 'screener' ? ' on' : '') + '" data-sub="screener" onclick="switchSub(\'screener\')">量价</button>' +
+      '<span class="tab-glider" id="subGlider"></span></div>';
+    return sub + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
+  }
+
+  /* 二级分段的滑块定位（与主 Tab 同一套机制，独立元素） */
+  function positionSubGlider() {
+    var tabs = document.getElementById('subTabs');
+    var glider = document.getElementById('subGlider');
+    var active = tabs ? tabs.querySelector('.tab.on') : null;
+    if (tabs && glider && active) {
+      glider.style.left = active.offsetLeft + 'px';
+      glider.style.width = active.offsetWidth + 'px';
+    }
   }
 
   /** 数据健康条：基于各源最后更新时间，提示是否异常 */
@@ -1034,10 +1096,25 @@
   window.switchTab = switchTab;
 
   render();
-  // 刷新后保留上次浏览的 Tab（localStorage 持久化）
+  // 刷新后保留上次浏览的 Tab（localStorage 持久化）；选股 Tab 另恢复子视图与各自日期
   try {
+    var savedSub = localStorage.getItem('curSub');
+    if (savedSub === 'watch' || savedSub === 'screener') curSub = savedSub;
+    var sd = JSON.parse(localStorage.getItem('subDates') || 'null');
+    if (sd && typeof sd === 'object') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.watch))) subDates.watch = sd.watch;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.screener))) subDates.screener = sd.screener;
+    }
     var savedTab = localStorage.getItem('curTab');
-    if (savedTab && TABS.indexOf(savedTab) >= 0) switchTab(savedTab);
+    if (savedTab === 'watchlist' || savedTab === 'screener') {   // 旧值迁移
+      curSub = savedTab === 'screener' ? 'screener' : 'watch';
+      savedTab = 'picks';
+    }
+    if (savedTab && TABS.indexOf(savedTab) >= 0) {
+      if (savedTab === 'picks') curDate = clampDate(subDates[curSub]);
+      switchTab(savedTab);
+      if (savedTab === 'picks') render();   // 用子视图自己的日期重渲染一次
+    }
     var sy = parseInt(localStorage.getItem('scroll_' + savedTab) || '0', 10);
     window.scrollTo(0, sy);
   } catch (e) {}
@@ -1050,7 +1127,7 @@
   }, { passive: true });
 
   // 窗口尺寸变化时重新定位滑动下划线
-  window.addEventListener('resize', positionGlider);
+  window.addEventListener("resize", function () { positionGlider(); positionSubGlider(); });
 
   // 博主正文里有 emoji / 长段落，字体回流会让 scrollHeight 变化，展开态重新校准高度
   if (document.fonts && document.fonts.ready) {
