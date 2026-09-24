@@ -1,5 +1,65 @@
 window.SCREENER = [
   {
+    "date": "2026-09-24",
+    "runAt": "2026-09-24 15:10",
+    "count": 3,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "600661",
+        "name": "昂立教育",
+        "industry": "教育",
+        "price": 9.56,
+        "gain": 5.87,
+        "turnover": 8.24,
+        "volRatio": 2.88,
+        "cap": 27,
+        "yang": 3,
+        "gain20": 5.37,
+        "aboveRate": 97,
+        "sector": ""
+      },
+      {
+        "code": "603073",
+        "name": "彩蝶实业",
+        "industry": "化学纤维",
+        "price": 18.88,
+        "gain": 4.31,
+        "turnover": 4.71,
+        "volRatio": 2,
+        "cap": 22,
+        "yang": 6,
+        "gain20": 7.74,
+        "aboveRate": 99,
+        "sector": ""
+      },
+      {
+        "code": "002638",
+        "name": "勤上股份",
+        "industry": "照明设备Ⅱ",
+        "price": 4.93,
+        "gain": 4.01,
+        "turnover": 8.4,
+        "volRatio": 3.67,
+        "cap": 71,
+        "yang": 6,
+        "gain20": 5.33,
+        "aboveRate": 98,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-09-22",
     "runAt": "2026-09-22 18:45",
     "count": 17,
