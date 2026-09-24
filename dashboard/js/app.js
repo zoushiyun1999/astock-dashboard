@@ -932,15 +932,26 @@
       '<div class="cal-title">' + esc(c.title) + '</div>' +
       '<div class="cal-meta">发布于 ' + esc(c.publishedAt) + (c.url ? ' · <a href="' + esc(c.url) + '" target="_blank">查看原文 ↗</a>' : '') + '</div></div>';
 
-    // 原图展示 —— 2008×17040 的长图直接铺开会占 2800px 高、且压缩到 1/6 完全不可读。
-    // 改为默认折叠：只留一个入口，点击后全屏看，可双指缩放。
+    // 日历全图内嵌（2026-09-24）：默认折叠（190px 只露图头），展开直接阅读。
+    // 🔴 展开加载的是 _prev.webp 预览（720 宽 / 598~830KB，管线 optimize_calendar.py 生成），
+    //    不是 2MB 原图；原图只进「查看原图」全屏查看器（放大/双指缩放才需要）。
+    //    预览缺失（旧数据/生成失败）时 onerror 回退原图。
     if (c.images && c.images.length) {
       var total = c.images.length;
-      html += sectionCard('日历原图', 'up',
-        '<div class="wl-desc">博主原始长图，共 ' + total + ' 张 · 点击放大查看</div>' +
+      var figs = c.images.map(function (p, i) {
+        var pv = p.replace(/\.png$/i, '_prev.webp');
+        return '<figure class="cal-fold" id="calFold' + i + '">' +
+          '<img class="cal-prev-img" loading="lazy" decoding="async" alt="日历全图 ' + (i + 1) + '/' + total + '" ' +
+          'data-full="' + esc(p) + '" src="' + esc(pv) + '" ' +
+          'onerror="this.onerror=null;this.src=this.getAttribute(\'data-full\')">' +
+          '<button class="cal-fold-btn" type="button" onclick="toggleCalFold(' + i + ')">展开全图</button>' +
+          '</figure>';
+      }).join('');
+      html += sectionCard('日历全图', 'up',
+        '<div class="wl-desc">共 ' + total + ' 张 · 默认折叠，点「展开全图」直接阅读 · 小字要放大用底部原图</div>' + figs +
         '<button class="cal-open" onclick="openCalViewer()">' +
-        '<span>🖼</span><span>查看日历原图</span>' +
-        '<span class="cal-open-meta">（长图 · ' + total + ' 张）</span>' +
+        '<span>查看日历原图</span>' +
+        '<span class="cal-open-meta">（高清 · 可双指缩放）</span>' +
         '</button>');
     }
 
@@ -959,6 +970,15 @@
   };
 
   /* ── 日历原图全屏查看器 ── */
+  /** 折叠/展开单张日历全图。展开不重新下载（预览图已在折叠态加载），只改高度与按钮文案 */
+  window.toggleCalFold = function (i) {
+    var el = document.getElementById('calFold' + i);
+    if (!el) return;
+    var open = el.classList.toggle('open');
+    var b = el.querySelector('.cal-fold-btn');
+    if (b) b.textContent = open ? '收起' : '展开全图';
+  };
+
   window.openCalViewer = function () {
     var cal = (window.REPORTS && window.REPORTS.calendar) || [];
     var c = cal[calIdx];

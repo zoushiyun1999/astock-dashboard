@@ -17,3 +17,4 @@
 | 09-24 | test 夹具假失败 4 项，报错误导排查方向 | 夹具把 reports 写成"最新在前"（契约是 newest-at-bottom） | 修夹具 | 夹具处注释 + AGENTS 硬性规则 4 |
 | 09-24 | selfcheck 首版对 cv 假报警 | 漂移检查重新实现哈希而非复用 computeHash，归一化细节不同 | 改为 require 复用导出 | AGENTS 37：能 import 绝不复制 |
 | 09-24 | selfcheck 线上检查全部记失败 | check() 不 await async 函数 | 新增 acheck | AGENTS 37：检查器也要负样本测 |
+| 09-24 | CDP 真实点击偶发落空（查看原图/收起按钮，同页时好时坏） | `html{scroll-behavior:smooth}` 使 scrollIntoView 成为动画，测试在滚动前取坐标点到空地 | clickAt 改为「滚完等 900ms 再取坐标」 | DETAILS §4.2 记录姿势 |

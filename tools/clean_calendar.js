@@ -48,14 +48,19 @@ function loadReports() {
   }
 }
 
-/** 收集 calendar 里引用的所有图片相对路径（统一成小写、正斜杠、不带 ./） */
+/** 收集 calendar 里引用的所有图片相对路径（统一成小写、正斜杠、不带 ./）
+ *  2026-09-24：每个原图同时保留它的 `_prev.webp` 折叠预览（前端渲染时推导文件名，
+ *  data.js 不写这个字段）—— 预览也要登记为"被引用"，否则回收步骤会把它当孤儿删掉
+ *  （实测：第一次跑 bump_version 就把 10 张预览全清了）。 */
 function collectReferenced(reports) {
   const set = new Set();
   const list = (reports && reports.calendar) || [];
   for (const c of list) {
     for (const img of (c && c.images) || []) {
       if (typeof img !== 'string') continue;
-      set.add(img.replace(/\\/g, '/').replace(/^\.?\//, '').toLowerCase());
+      const norm = img.replace(/\\/g, '/').replace(/^\.?\//, '').toLowerCase();
+      set.add(norm);
+      set.add(norm.replace(/\.png$/, '_prev.webp'));
     }
   }
   return set;

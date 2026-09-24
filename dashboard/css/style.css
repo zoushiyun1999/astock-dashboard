@@ -950,6 +950,19 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
 
 /* ── 日历原图 ── */
 /* 2008×17040 的原图直接铺开会占 2800px 高且完全不可读 —— 默认折叠，点击全屏看 */
+/* 日历内嵌折叠全图（2026-09-24）：加载 _prev.webp 预览（~600KB/张，管线生成），
+   原图只在「查看原图」查看器里才拉。展开/收起不重新下载。 */
+.cal-fold { position: relative; margin: 0 0 12px; border-radius: 12px; overflow: hidden;
+  border: 0.5px solid var(--line); background: var(--card); }
+.cal-fold .cal-prev-img { display: block; width: 100%; }
+.cal-fold:not(.open) .cal-prev-img { height: 190px; object-fit: cover; object-position: top; }
+.cal-fold .cal-fold-btn { height: 30px; padding: 0 14px; border: 0.5px solid var(--line);
+  border-radius: var(--radius-pill); background: var(--card); color: var(--ink);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); cursor: pointer; white-space: nowrap;
+  box-shadow: var(--nm-raise-sm); }
+.cal-fold:not(.open) .cal-fold-btn { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); }
+.cal-fold.open .cal-fold-btn { display: block; margin: 8px auto 2px; }
+
 .cal-open {
   width: 100%; min-height: var(--tap-min); border: none; background: var(--accent-soft);
   border-radius: var(--radius-md); color: var(--accent-deep); font-size: var(--fs-md); cursor: pointer;

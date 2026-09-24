@@ -62,6 +62,18 @@ MAX_COLORS = 256
 SKIP_BELOW_BYTES = 300 * 1024   # 小于 300KB 的图不值得优化
 SAMPLE_STRIDE = 3               # PSNR 抽样步长（全图算太慢，抽样足够代表）
 
+# ── 预览图（2026-09-24）：内嵌「折叠全图」用，点开即读不进全屏查看器 ──
+# 原图 2008 宽对手机太重（1.5~2.2MB + 48MP 解码 ≈184MB 位图）。
+# 实测（img1 主图，2008x23960）：
+#   PNG 900宽量化160色 = 1115KB（长图上 PNG 量化不划算）
+#   WebP 900/q80       =  904KB
+#   WebP 720/q72       =  598KB  ← 采用：体积 1/3.7，解码 6.2MP≈25MB（1/7.5）
+#   720/q60 只再省 8% 但文字明显糊，不值。
+# 小字要细看时仍走「查看原图」（原分辨率 + 双指缩放）。
+PREVIEW_WIDTH = 720
+PREVIEW_KW = dict(quality=72, method=6)
+PREVIEW_SUFFIX = '_prev.webp'
+
 
 def sample_rgb(im, stride=SAMPLE_STRIDE):
     """抽样取 RGB 数组。调色板图按索引查色，避免为对比再造一张全尺寸 RGB（省内存）。"""
@@ -88,8 +100,45 @@ def encode_png(im):
     return buf.getvalue()
 
 
+def encode_webp(im):
+    buf = io.BytesIO()
+    im.save(buf, 'WEBP', **PREVIEW_KW)
+    return buf.getvalue()
+
+
 def human(n):
     return '%.2fMB' % (n / 1048576.0)
+
+
+def generate_previews(files, say):
+    """为每张日历原图生成/刷新 _prev.webp（宽 PREVIEW_WIDTH，WebP 有损）。
+
+    幂等：预览已存在且比源图新 → 跳过。失败只告警不抛（预览缺失时前端自动回退原图）。
+    """
+    made = 0
+    for name in files:
+        if '_prev.' in name or not name.lower().endswith('.png'):
+            continue
+        src = os.path.join(CAL_DIR, name)
+        dst = os.path.join(CAL_DIR, name.rsplit('.', 1)[0] + PREVIEW_SUFFIX)
+        if os.path.exists(dst) and os.path.getmtime(dst) >= os.path.getmtime(src):
+            continue
+        try:
+            with Image.open(src) as im:
+                w, h = im.size
+                if w <= PREVIEW_WIDTH:
+                    continue                      # 本来就小，无需预览
+                nh = round(h * PREVIEW_WIDTH / float(w))
+                prev = im.convert('RGB').resize((PREVIEW_WIDTH, nh), Image.LANCZOS)
+                data = encode_webp(prev)
+            with open(dst, 'wb') as f:
+                f.write(data)
+            made += 1
+            say('[preview] %s → %s（%dx%d，%s）' % (name, os.path.basename(dst), PREVIEW_WIDTH, nh, human(len(data))))
+        except Exception as e:    # noqa: BLE001 —— 预览是增强，失败不阻塞发布
+            print('⚠️ [preview] %s 生成失败：%s（前端将回退原图）' % (name, e))
+    if made:
+        say('✓ 预览图：新生成 %d 张' % made)
 
 
 def main():
@@ -188,6 +237,8 @@ def main():
                 % (name[:32], human(b), human(a), 100 - a * 100.0 / b, sc,
                    note + (' [已缩放]' if rs else '')))
 
+    say('')
+    generate_previews(files, say)
     say('')
     if scanned == 0 and optimized == 0 and warned == 0:
         say('✓ calendar/ 无需优化（%d 个文件，%s，全部已是最优状态）' % (len(files), human(total_before)))

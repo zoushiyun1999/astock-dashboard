@@ -130,10 +130,19 @@ function staticChecks() {
 
   // G. 关键 CSS 类：JS 用到的必须在 style.css 有定义（改版遗留守卫）
   check(G, 'CSS 类守卫：JS 使用的 tk/sub/st-verify 类都有定义', () => {
-    const need = ['tk-link', 'tk-btn', 'tk-days', 'tk-tbl', 'sub-row', 'st-verify', 'v-up', 'v-down', 'v-warn', 'date-bar', 'db-group', 'db-latest'];
+    const need = ['tk-link', 'tk-btn', 'tk-days', 'tk-tbl', 'sub-row', 'st-verify', 'v-up', 'v-down', 'v-warn', 'date-bar', 'db-group', 'db-latest', 'cal-fold', 'cal-prev-img', 'cal-fold-btn'];
     const missing = need.filter(c => !new RegExp('\\.' + c + '[\\s,{.:]').test(css));
     const orphan = /\.tk-cta[\s,{.:]/.test(css);
     return { ok: !missing.length && !orphan, detail: missing.length ? '缺定义: ' + missing.join(',') : (orphan ? '.tk-cta 已废弃但 CSS 残留' : need.length + ' 个类全部有定义，无废弃残留') };
+  });
+
+  // I. 日历折叠预览：前端必须引用 _prev.webp 且有切换函数（防回退成"点开才看 2MB 原图"）
+  check(G, '日历折叠全图：_prev.webp 引用 + toggleCalFold 存在', () => {
+    const hasPrev = /_prev\.webp/.test(app) && /toggleCalFold/.test(app);
+    const hasFallback = /onerror="this\.onerror=null;this\.src=this\.getAttribute\('data-full'\)"/.test(app);
+    const hasWebpFiles = fs.readdirSync(path.join(ROOT, 'dashboard', 'calendar'))
+      .filter(f => f.endsWith('_prev.webp')).length > 0;
+    return { ok: hasPrev && hasWebpFiles, detail: `前端引用=${hasPrev} 回退=${hasFallback} 预览文件=${hasWebpFiles}` };
   });
 
   // H. index.html 引用的本地资源都存在
