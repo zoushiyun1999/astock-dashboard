@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="A股速览">
-<link rel="stylesheet" href="css/style.css?v=202609242132">
+<link rel="stylesheet" href="css/style.css?v=202609242236">
 <meta name="cv" content="f968e5a41b32">
 </head>
 <body>
@@ -89,16 +89,16 @@
 </div>
 
 <!-- 数据（定时任务自动写入，勿手改） -->
-<script src="data.js?v=202609242132"></script>
+<script src="data.js?v=202609242236"></script>
 <!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
-<script src="screener.js?v=202609242132"></script>
+<script src="screener.js?v=202609242236"></script>
 <!-- 休市日（节假日，用于前端显示「休市」） -->
-<script src="holidays.js?v=202609242132"></script>
+<script src="holidays.js?v=202609242236"></script>
 <!-- 渲染逻辑 -->
-<script src="js/app.js?v=202609242132"></script>
+<script src="js/app.js?v=202609242236"></script>
 
 <!-- 破缓存自检（2026-09-24 改为「只在代码变化时重载」）。
-     🔴 原来比对的是资源版本号 ?v=202609242132<时间戳>，但它**每次 publish 都会 bump**（3~5 次/天），
+     🔴 原来比对的是资源版本号 ?v=202609242236<时间戳>，但它**每次 publish 都会 bump**（3~5 次/天），
         且同时挂在 CSS 和 4 个 JS 上 → 纯数据更新也会整页重载一次。
         观感就是"进去加载比较慢"：页面刚出来、正准备读，它闪一下又从头加载。
      现在改比对 version.json 的 code 字段（= 前端代码内容的短哈希，由 tools/code_version.js
