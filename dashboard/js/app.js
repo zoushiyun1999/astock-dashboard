@@ -291,16 +291,36 @@
   /** 该日期在本数据源下没有内容时的空态卡 —— 必须区分四种情况。
    *  ⚠️ 绝不能一律写「待更新」：休市日说"待更新"是错的（那天根本不会有数据），
    *     历史交易日说"待更新"也是错的（早就该有，是没生成）。 */
+  /* 某个视图「最近一期有数据」的日期。空态卡靠它给一个真能按的出口。 */
+  function latestFor(what) {
+    return what === '量价选股' ? latestScDate() : latestDate();
+  }
+  /* 空态卡里的「回看有数据那一期」按钮。
+     🔴 为什么要它（2026-09-24）：文案一直写着「也可以先回看最新一期」，
+        但界面上**根本没有对应的控件** —— 而日期条的「最新」按设计是跳**今天**
+        （09-23 用户要求），今天恰恰可能就是没数据的那天，且此时按钮处于禁用态。
+        结果：用户进到量价 Tab 看到的是一张空卡 + 一排全灰的按钮，观感就是"点不了"。
+        承诺了动作就必须给按钮，否则不如别写。 */
+  function emptyAction(ds, what) {
+    var target = latestFor(what);
+    if (!target || target === ds) return '';
+    var md = String(target).slice(5).replace('-', '/');
+    // 措辞用方向中性的「查看有数据的一期」：停在比它更早的日期时，这个按钮是**往后**跳，
+    // 写「回看」就反了。也不叫「最新一期」——那是日期条「最新」的语义（跳今天），两者必须区分开。
+    return '<button class="act" type="button" onclick="pickDay(\'' + esc(target) + '\')">' +
+      '查看有数据的一期 · ' + esc(md) + '</button>';
+  }
   function emptyFor(ds, what) {
     var d = fmtDate(ds);
     var head = d.ymd + ' ' + d.week;
     var today = todayYmd();
+    var act = emptyAction(ds, what);
     if (ds > today) {
-      return emptyCard(head + ' · 还没到', '未来日期不会有数据，最多只能选到今天（' + today + '）', '⏭');
+      return emptyCard(head + ' · 还没到', '未来日期不会有数据，最多只能选到今天（' + today + '）。', 'empty');
     }
     if (!isTradingDay(ds)) {
       return emptyCard(head + ' · 休市 · 无数据',
-        '非交易日没有任何行情与简报，也就不会有' + what + '。点「最新」回到最近一期，或用日期选择器换一天。', 'closed');
+        '非交易日没有任何行情与简报，也就不会有' + what + '。', 'closed', act);
     }
     if (ds === today) {
       var due = todayDue(what);
@@ -309,13 +329,13 @@
       // 只有「还没到计划时间」才叫待更新；过了点仍没有就是真没生成
       if (due && hm < due.m) {
         return emptyCard(head + ' · ' + what + '待更新',
-          '今天的数据还没生成，计划 ' + due.label + ' 左右。也可以先回看「最新一期」。', 'wait');
+          '今天的数据还没生成，计划 ' + due.label + ' 左右。', 'wait', act);
       }
       return emptyCard(head + ' · 今日' + what + '未生成',
-        '已过计划时间（' + (due ? due.label : '—') + '）仍没有数据，可能任务没跑 —— 见 Tab 标题上的状态符号。', 'warn');
+        '已过计划时间（' + (due ? due.label : '—') + '）仍没有数据，可能任务没跑 —— 见 Tab 标题上的状态符号。', 'warn', act);
     }
     return emptyCard(head + ' · 当日无数据',
-      '该交易日没有收录' + what + '（历史缺口或当时未运行）。可翻到相邻日期，或点「最新」。', 'empty');
+      '该交易日没有收录' + what + '（历史缺口或当时未运行）。', 'empty', act);
   }
 
   /* ── 早报渲染 ── */
@@ -462,10 +482,11 @@
     closed: { cls: 'closed', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/></svg>' },
     empty:  { cls: '',       svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v12H4z"/><path d="M4 7l2-3h12l2 3"/><path d="M9 12h6"/></svg>' }
   };
-  function emptyCard(t, s, ico) {
+  function emptyCard(t, s, ico, action) {
     var m = EMPTY_ICO[ico] || EMPTY_ICO.empty;
     return '<div class="card empty ' + m.cls + '"><div class="ico">' + m.svg + '</div>' +
-      '<div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div></div>';
+      '<div class="t">' + esc(t) + '</div><div class="s">' + esc(s) + '</div>' +
+      (action || '') + '</div>';
   }
 
   /* ── 短线关注渲染：博主看好的股（今日 / 明日 两段） ── */

@@ -136,6 +136,17 @@
   /* 轨道底：比 --nm-inset 浅半点，避免大块轨道发灰显脏 */
   --nm-inset-flat: inset 2px 2px 4px rgba(163,177,198,.42), inset -2px -2px 3px var(--nm-inset-light);
 
+  /* ── 分段控件轨道专用（2026-09-24）────────────────────────────
+     🔴 实测事故：轨道底色曾用 --bg（= 页面底色 #F2F2F7），于是
+        ① 选中 #FFF 与未选中 #F2F2F7 亮度只差 5%，手机上分不出选没选；
+        ② 更要命的是 --nm-inset-flat 的右下高光是 rgba(255,255,255,.95)，
+           把轨道**右端**（正是「量价」所在位置）照成近白 → 两个都像选中。
+        用户反馈「短线和量价两个一起亮」就是这么来的。
+     解法：轨道底色比页面**深一档**（凹槽本来就该比表面暗），
+        并把内发光的白边从 .95 收敛到 .55 —— 保留"凹"的知觉，但不再冒充白色平面。 */
+  --nm-track: #E4E4EA;
+  --nm-inset-track: inset 2px 2px 5px rgba(163,177,198,.50), inset -1px -1px 2px rgba(255,255,255,.55);
+
   /* ── 统一栏距（2026-09-23 顶部重排）──────────────────────────
      🔴 顶部所有元素必须共用这三个值，否则右边界一行一个数（原来 414/402/411/416）。
      原来水平栏距 14 与 16 混用、控件高度有 44/38/28 三种、行距有 3/4/6 三种。 */
@@ -266,9 +277,9 @@ header {
 .tabs {
   display: flex; position: relative;
   margin: 0 0 var(--row-gap); padding: 3px;
-  background: var(--bg);
+  background: var(--nm-track);
   border-radius: var(--radius-md);
-  box-shadow: var(--nm-inset-flat);
+  box-shadow: var(--nm-inset-track);
 }
 /* 滚动后 header 收缩（靠 body.scrolled 切换，见 app.js） */
 header { transition: padding var(--t-base); }
@@ -292,17 +303,23 @@ body.scrolled .h-date { opacity: 0; }
   margin-left: 3px; vertical-align: middle;
 }
 .tab-dot.show { display: inline-block; }
-/* 滑块：新拟态「浮起的实体」—— 白底 + 双向柔光，压在凹陷轨道上 */
+/* 滑块：新拟态「浮起的实体」—— 白底 + 双向柔光，压在凹陷轨道上。
+   🔴 pointer-events:none 是硬要求（2026-09-24）：它是**纯装饰**，绝对定位在按钮之上，
+   一旦被当成命中目标就会吞掉点击；目前靠 .tab 的 z-index:1 压住它，属于双重保险。
+   🔴 白底必须比轨道明显亮 —— 轨道若是浅色，选中态就分不出来（详见 --nm-track 注释）。 */
 .tab-glider {
   position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 9px;
   background: #FFFFFF;
   box-shadow: var(--nm-raise-sm);
+  pointer-events: none;
   transition: left var(--t-base), width var(--t-base);
 }
-/* 二级分段（选股 Tab 内部：短线 | 量价）——同一控件语言，尺寸小一档 */
+/* 二级分段（选股 Tab 内部：短线 | 量价）——同一控件语言，尺寸小一档。
+   轨道底色与主 Tab 同源（--nm-track），两处分段控件必须长得一模一样，
+   否则互跳时「控件语言不一致」。 */
 .tabs-sub {
   margin: 0 0 12px; padding: 2px; border-radius: 10px;
-  background: var(--bg); box-shadow: var(--nm-inset-flat);
+  background: var(--nm-track); box-shadow: var(--nm-inset-track);
 }
 .tabs-sub .tab {
   height: 30px; font-size: var(--fs-md); border-radius: 8px;
@@ -709,6 +726,17 @@ body.scrolled .h-date { opacity: 0; }
   color: var(--ink-2);
 }
 .empty .ico svg { width: 24px; height: 24px; display: block; }
+/* 空态里的出口按钮（2026-09-24）：文案承诺了「回看有数据的一期」，就必须有实物可点。
+   凸起 = 可点击，与全站一致。 */
+.empty .act {
+  margin-top: 16px; height: var(--ctl-h); padding: 0 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--accent-deep);
+  background: #fff; border: none; border-radius: var(--radius-md); cursor: pointer;
+  box-shadow: var(--nm-raise-sm);
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+.empty .act:active { transform: scale(.97); box-shadow: var(--nm-inset-sm); }
 .empty.warn .ico { color: var(--warn); }
 .empty.wait .ico { color: var(--ink-2); }
 .empty.closed .ico { color: var(--info); }

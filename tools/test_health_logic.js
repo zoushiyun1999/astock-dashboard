@@ -52,7 +52,12 @@ const FN_NAMES = ['parseYmd', 'ymdOf', 'isTradingDay', 'isTradingToday', 'todayY
   'screenerList', 'screenerOn', 'verifyOn', 'scRanToday', 'verifyRanToday',
   'srcMeta', 'metaTime', 'renderHealth', 'updateEveningDot',
   // 空态文案（休市 / 历史缺口 / 今日待更新 三者的区分）—— 是用户直接看到的字，必须测
-  'esc', 'fmtDate', 'emptyCard', 'todayDue', 'emptyFor'];
+  'esc', 'fmtDate', 'emptyCard', 'todayDue', 'emptyFor',
+  // 空态出口按钮的依赖链（2026-09-24 新增 emptyAction 后必须补齐，否则 vm 里 ReferenceError）：
+  //   emptyAction → latestFor → latestDate / latestScDate
+  //   latestDate → earliestDate → dataDates → list + screenerList
+  //   漏一个都会在「调 emptyFor 的那几条断言」上炸，且报错指向不了真因。
+  'dataDates', 'earliestDate', 'latestDate', 'latestScDate', 'latestFor', 'emptyAction'];
 const PARTS = {};
 FN_NAMES.forEach(n => { PARTS[n] = extractFn(SRC, n); });
 
@@ -437,6 +442,75 @@ console.log('\n场景 15 · 没有数据时的文案必须区分 休市 / 历史
   h = mk(T(2026, 9, 15, 10, 0), '2026-09-20');
   s = h.ctx.emptyFor('2026-09-20', '早报');
   ok(/还没到/.test(s), '未来日期 → 明确说明"还没到"');
+  // 这一支原来传的是 emoji '⏭'（EMPTY_ICO 里没这个键 → 静默降级成 empty）。
+  // 彩色 emoji 是「不可控色」，全站已改用单色 SVG，这里守住别再漏回去。
+  ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s), '未来日期 → 空态图标不得是 emoji');
+}
+
+/* ════════════════ 场景 16 · 空态必须给真出口（2026-09-24）════════════════
+   事故背景：文案一直写着「也可以先回看最新一期」，但界面上没有任何对应控件；
+   而日期条的「最新」按设计跳**今天**（09-23 用户要求），今天恰恰可能就是没数据那天，
+   且此时它处于禁用态 → 用户看到空卡 + 一排灰按钮，观感就是"点不了"。
+   规则：**承诺了动作就必须给按钮**，否则不如别写这句话。 */
+console.log('\n场景 16 · 空态卡必须给一个真能按的出口（禁止只承诺不兑现）');
+{
+  const now = T(2026, 9, 24, 12, 20);            // 周四 12:20（交易时段内、早报已过点）
+  // ⚠️ reports 的契约是 **newest-at-bottom**（AGENTS 硬性规则 4），latestDate() 取 list[length-1]。
+  //    夹具必须照契约写升序 —— 写成"最新在前"会得到上一期，是**夹具的错**、不是代码的错。
+  //    （2026-09-24 本人踩过：4 条断言假失败，全因夹具顺序。）
+  const reports = [{ date: '2026-09-21' }, { date: '2026-09-22' }];
+  const screener = [{ date: '2026-09-18' }, { date: '2026-09-16' }];
+  const h = makeHarness(now, { list: reports, screener: screener, curDate: '2026-09-24' });
+  const dateOf = str => { const m = String(str).match(/pickDay\('(\d{4}-\d{2}-\d{2})'\)/); return m ? m[1] : null; };
+
+  // ① 今天没数据、历史有 → 必须给按钮，且指向「有数据的最新一期」
+  let s = h.ctx.emptyFor('2026-09-24', '早报');
+  ok(/class="act"/.test(s), '今日无数据 → 空态卡含出口按钮');
+  ok(dateOf(s) === '2026-09-22', '出口指向 reports 最新一期 2026-09-22', dateOf(s));
+  ok(/09\/22/.test(s), '按钮文案带月/日（忽略年份）');
+
+  // ② 🔴 量价必须走 screener 的日期，不能拿 reports 的日期糊弄
+  //    两套数据源日期不重合，这里是最容易写错的地方。
+  let sc = h.ctx.emptyFor('2026-09-24', '量价选股');
+  ok(dateOf(sc) === '2026-09-18', '量价空态 → 指向 screener 最新一期 2026-09-18', dateOf(sc));
+  ok(dateOf(sc) !== dateOf(s), '量价与早报的出口日期必须不同（证明按视图取源）');
+
+  // ③ 已经停在有数据的那期 → 不该再出现出口（否则按钮点了没反应）
+  ok(!/class="act"/.test(h.ctx.emptyFor('2026-09-22', '早报')), '已停在最新一期 → 不给出口按钮');
+  ok(!/class="act"/.test(h.ctx.emptyFor('2026-09-18', '量价选股')), '量价已停在最新一期 → 不给出口按钮');
+
+  // ④ 休市日同样要有出口（休市≠没有历史数据可看）
+  const h2 = makeHarness(T(2026, 9, 14, 22, 0), { list: [{ date: '2026-09-11' }], curDate: '2026-09-13' });
+  const s2 = h2.ctx.emptyFor('2026-09-13', '早报');
+  ok(/休市/.test(s2) && /class="act"/.test(s2), '休市日 → 仍给出口按钮');
+  ok(dateOf(s2) === '2026-09-11', '休市日出口指向 2026-09-11', dateOf(s2));
+
+  // ⑤ 兜底不崩：完全没有数据 / 没有 screener → 无按钮、不抛异常
+  const h3 = makeHarness(now, { list: [], screener: null, curDate: '2026-09-24' });
+  ok(!/class="act"/.test(h3.ctx.emptyFor('2026-09-24', '早报')), '无任何数据 → 不给按钮（也无从可给）');
+  ok(!/class="act"/.test(h3.ctx.emptyFor('2026-09-24', '量价选股')), '无 screener → 不给按钮且不抛异常');
+
+  // ⑥ screener 缺失时，量价回退用 reports 日期，而不是崩掉
+  const h4 = makeHarness(now, { list: reports, screener: null, curDate: '2026-09-24' });
+  ok(dateOf(h4.ctx.emptyFor('2026-09-24', '量价选股')) === '2026-09-22',
+    'screener 缺失 → 量价回退到 reports 最新一期，不崩');
+
+  // ⑦ 🔴 核心守卫：文案不得再承诺「界面上不存在的控件」。
+  //    旧文案写着「点「最新」回到最近一期」/「也可以先回看【最新一期】」——
+  //    前者语义已改成跳今天、后者根本没有按钮。任何分支都不许再出现这类措辞。
+  const combos = [['2026-09-24', '早报'], ['2026-09-24', '量价选股'], ['2026-09-13', '早报'],
+                  ['2026-09-08', '早报'], ['2026-09-24', '短线关注'], ['2026-09-24', '晚报']];
+  let promise = 0;
+  combos.forEach(([ds, what]) => {
+    const txt = h.ctx.emptyFor(ds, what);
+    if (/也可以先回看/.test(txt) || /点「最新」/.test(txt)) promise++;
+  });
+  ok(promise === 0, '空态文案不再出现「先回看」「点『最新』」这类无控件承诺', '命中 ' + promise + ' 处');
+
+  // ⑧ 出口日期必须是合法日期串且不指向未来（防 onclick 里塞进空值/脏值）
+  const d = dateOf(h.ctx.emptyFor('2026-09-24', '早报'));
+  ok(/^\d{4}-\d{2}-\d{2}$/.test(d || ''), '出口日期是合法 YYYY-MM-DD', String(d));
+  ok(d !== null && d < '2026-09-24', '出口不指向未来日期', String(d));
 }
 
 console.log('\n' + '─'.repeat(58));
