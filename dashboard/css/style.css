@@ -828,6 +828,12 @@ body.scrolled .h-date { opacity: 0; }
 .tk-btn:active { background: var(--accent-line); }
 /* 量价表格：按钮落在「验证」列下方并右对齐（列已存在，不新增列、不撑宽表格） */
 .sc-ver .tk-btn { display: block; margin: 4px 0 0 auto; }
+/* 加载失败后的重试按钮（抽屉里） */
+.tk-retry { margin-top: 14px; height: var(--ctl-h); padding: 0 18px; border: none;
+  border-radius: var(--radius-md); background: #fff; color: var(--accent-deep);
+  font-size: var(--fs-base); font-weight: var(--fw-semibold); cursor: pointer;
+  box-shadow: var(--nm-raise-sm); }
+.tk-retry:active { box-shadow: var(--nm-inset-sm); }
 
 /* 面板顶部的「这张表在回答什么」+ 动态「一眼看懂」结论：
    表格只给数据不给结论，是用户「没看懂」的根因 —— 结论必须用大白话先说。 */

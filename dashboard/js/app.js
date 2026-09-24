@@ -508,18 +508,36 @@
 
   function loadTrack() {
     if (TRACK) return Promise.resolve(TRACK);
+    // 🔴 TRACK_P 在**失败时必须清空**：否则第一次网络抖动会把一个 rejected Promise
+    //    永久缓存在这个槽位里，之后每次点「走势」都立刻拿到同一个失败 ——
+    //    整个会话按钮再也打不开（2026-09-24 用户反馈「经常点不开」的真实根因之一）。
     if (TRACK_P) return TRACK_P;
-    TRACK_P = new Promise(function (res, rej) {
+    var p = new Promise(function (res, rej) {
+      var done = false;
       var el = document.createElement('script');
+      // 🔴 这一行在上一版被我弄丢了（重写时漏掉）：没有 src 的 <script> 什么都不做 ——
+      //    不触发 onload 也不触发 onerror → Promise 永远挂起 → 12s 后超时。
+      //    用户看到的「走势按钮经常点不开」就是这个。改任何加载逻辑后必须实测一次点击。
       el.src = 'track.js?v=' + assetVer();
-      el.onload = function () {
-        TRACK = window.TRACK || null;
-        if (TRACK) res(TRACK); else rej(new Error('no TRACK'));
-      };
-      el.onerror = function () { rej(new Error('load fail')); };
+      // 必须有超时：移动网络下可能十几秒，一直无反馈比报错更糟
+      var timer = setTimeout(function () { finish(false, '加载超时（网络较慢，稍后再试）'); }, 12000);
+      function finish(ok, why) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        if (ok) {
+          TRACK = window.TRACK || null;
+          if (TRACK) return res(TRACK);
+        }
+        TRACK_P = null;                              // 🔴 允许下一次点击重试
+        rej(new Error(why || '加载失败'));
+      }
+      el.onload = function () { finish(true); };
+      el.onerror = function () { finish(false, '加载失败'); };
       document.body.appendChild(el);
     });
-    return TRACK_P;
+    TRACK_P = p;
+    return p;
   }
 
   function tkFind(k) {
@@ -603,8 +621,14 @@
   }
 
   window.tkOpen = function (k) {
+    // 🔴 必须先给反馈：track.js 有 106KB，移动网络下要几秒 —— 这段时间毫无反应，
+    //    用户就会再点几下然后认为「点不开」（2026-09-24 反馈）。先弹「加载中」再替换内容。
+    tkSheet('加载中…', '', '<div class="tk-note">正在获取走势数据…</div>');
     loadTrack().then(function () { tkDetail(k, tkFind(k)); })
-      .catch(function (e) { tkDetail(k, null, e); });
+      .catch(function (e) {
+        tkSheet('打不开', '', '<div class="tk-note">走势数据没取到：' + esc(e.message) +
+          '。</div><button class="tk-retry" type="button" onclick="tkOpen(\'' + esc(k) + '\')">重试</button>');
+      });
   };
 
     function tkStatsBody() {
@@ -1249,6 +1273,14 @@
     // 不在这里同步的话，body.scrolled 会残留 → header 永久保持收起态
     // （日期淡出、上下留白变窄），且只在下次滚动时才恢复。
     requestAnimationFrame(syncScrolled);
+    // 🔴 选股页全是「走势」按钮 → 提前 2 秒把跟踪数据拉好，点了就是秒开。
+    //    只在选股页预取（其它页没有按钮），且TRACK_P 挂上后条件自然失效、不会重复拉。
+    //    延迟 2s：别和首屏渲染抢带宽。失败静默（点按时会再试并给反馈）。
+    if (tab === 'picks' && !TRACK && !TRACK_P) {
+      setTimeout(function () {
+        if (curTab === 'picks') loadTrack()['catch'](function () {});
+      }, 2000);
+    }
   }
 
   /* 选股 Tab 内部：短线 / 量价 两个子视图切换。各自记住自己的日期。 */
