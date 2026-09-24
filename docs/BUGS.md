@@ -1,0 +1,19 @@
+# Bug 台账（append-only，勿改历史行）
+
+> 规则（AGENTS 37，2026-09-24 用户要求）：**每个 bug 修完必须在这里记一行，并先固化守卫再修** ——
+> 守卫 = `tools/selfcheck.js` 的静态检查或 `tools/test_*.js` 的断言。同类问题不允许第二次。
+> 新行加在表格末尾。列：日期 | 现象 | 根因 | 修复 | 守卫。
+
+| 日期 | 现象 | 根因 | 修复 | 守卫 |
+|---|---|---|---|---|
+| 09-22 | 晚报整份停摆：H8 硬门槛误拦「8天6板+炸板」 | 校验层做内容判断（风险词表收窄） | W7 警告 + 自动补「高位」 | test #20.22（12 项） |
+| 09-23 | calendar 缺失时几乎所有晚报被 H3 拦死 | validateCalendar 被无条件调用（可选字段无守卫） | 加字段缺失守卫 | test 夹具必须含「删可选字段」用例 |
+| 09-24 | 走势按钮「经常点不开」 | loadTrack 重写时丢 `el.src` → Promise 永久挂起 | 补回 + 12s 超时 | selfcheck「el.src 存在」 |
+| 09-24 | 走势按钮一次失败后整个会话打不开 | 失败 Promise 缓存在 TRACK_P 不清空 | 失败清槽允许重试 | selfcheck「失败清 TRACK_P」 |
+| 09-24 | 量价滑块偏 2px（收窄容器后暴露） | 滑块定位公式写两份且都错（百分比按 padding-box 解析） | `50%` / `calc(50%-2px)`，两处同步 | selfcheck「滑块公式两处一致」 |
+| 09-24 | 推送后新访客触发多余整页重载 | 只推 index.html 未同步 version.json.code | 取线上 version.json 只改 code | selfcheck F2 + `--online` |
+| 09-24 | 空态图标静默降级 | emptyCard 传 EMPTY_ICO 不存在的键 `'⏭'` | 改语义键 | selfcheck「EMPTY_ICO 键合法」 |
+| 09-24 | 效果统计首列「早/报」竖排换行 | 5 个数字列挤压首列 | 首列 nowrap | CDP 目检（无自动守卫） |
+| 09-24 | test 夹具假失败 4 项，报错误导排查方向 | 夹具把 reports 写成"最新在前"（契约是 newest-at-bottom） | 修夹具 | 夹具处注释 + AGENTS 硬性规则 4 |
+| 09-24 | selfcheck 首版对 cv 假报警 | 漂移检查重新实现哈希而非复用 computeHash，归一化细节不同 | 改为 require 复用导出 | AGENTS 37：能 import 绝不复制 |
+| 09-24 | selfcheck 线上检查全部记失败 | check() 不 await async 函数 | 新增 acheck | AGENTS 37：检查器也要负样本测 |

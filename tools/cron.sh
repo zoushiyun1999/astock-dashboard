@@ -143,8 +143,17 @@ case "$TASK" in
       node tools/track.js || log "· track.js 失败（不阻塞发布；前端将显示暂无走势数据）"
       bash tools/publish.sh "次日验证 + 走势跟踪 $DAY"
       rc=$?
-      # 自检兜底（2026-09-24）：契约/资源/账本/两套单测，软步骤 —— 失败只记日志不回滚
-      node tools/selfcheck.js || log "· selfcheck 有失败（见上，请人工复核）"
+      # 自检兜底（2026-09-24）：契约/资源/账本/两套单测。🔴 **约 5 天跑一次**（用户 2026-09-24 要求，
+      # 不必每晚）—— 用状态文件 tools/.last_selfcheck 节流；失败不写状态 → 次日重试。
+      LAST_SC=$(cat tools/.last_selfcheck 2>/dev/null || echo 0)
+      NOW_SC=$(date +%s)
+      if [ $((NOW_SC - LAST_SC)) -ge 432000 ]; then
+        if node tools/selfcheck.js; then
+          echo "$NOW_SC" > tools/.last_selfcheck
+        else
+          log "· selfcheck 有失败（见上，不阻塞；未写状态，明天再试）"
+        fi
+      fi
     fi
     ;;
   health)

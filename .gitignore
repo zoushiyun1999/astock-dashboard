@@ -27,3 +27,4 @@ docs/归档/
 # 注意：gh_push_api.js 的 SKIP_DIR 也硬拦了「backups」，两道闸门缺一不可（规则 25）。
 tools/backups/
 
+tools/.last_selfcheck

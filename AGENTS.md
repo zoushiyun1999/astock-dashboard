@@ -317,7 +317,11 @@ docs/              方案与说明文档
     loadTrack 有 el.src 且失败清 TRACK_P、EMPTY_ICO 图标键合法、verifyBadge 调用点带 code+ch、
     cv 章不漂移、CSS 类有定义、数据契约（reports 升序/账本/track.js 结构）、两套单元测试。
     - 每条守卫对应一次真实事故（文件头有「案底」注释），**别删**；新增同类 bug 时**先加守卫再修**。
-    - cron.sh 的 verify 分支在发布后软调用（失败只记 cron.log 不回滚）。
+    - 🔴 **每个 bug 修完必须在 `docs/BUGS.md` 记一行**（日期/现象/根因/修复/守卫），台账 append-only
+      —— 2026-09-24 用户明确要求"每次 bug 都自己记录好不要再犯"。**先记台账、加守卫，再关任务。**
+    - **频率**：cron.sh 在 verify 发布后调用，但内部用状态文件 `tools/.last_selfcheck` 节流
+      —— **约 5 天跑一次**（2026-09-24 用户定调"不用这么频繁"）；失败不写状态、次日重试。
+      状态文件已进 .gitignore（本机与 ECS 各自维护，不推送）。
     - ⚠️ 守卫本身也会出 bug：selfcheck 首版就犯了两类 —— ① 哈希自己重新实现而不是复用
       `code_version.js` 导出的 `computeHash`（两处维护，算出不同值假报警）；② `check()` 不 await
       async 检查函数。**检查器与被检查代码同样要测**（负样本：临时破坏一处，确认会红再恢复）。
