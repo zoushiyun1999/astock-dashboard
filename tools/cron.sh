@@ -135,7 +135,13 @@ case "$TASK" in
     node tools/verify.js --rebuild
     rc=$?
     if [ "$rc" -eq 0 ]; then
-      bash tools/publish.sh "次日验证 $DAY"
+      # 推荐走势跟踪（2026-09-24，方案 B）：抓日K算「买入后逐日走势」+ 聚合渠道级战绩。
+      # 串在这里而不是新增 cron 槽：① 与 verify 同源同参数（都用腾讯日K、都已节流 400ms）
+      # ② 必须在 publish **之前**跑，否则 dashboard/track.js 要等下一轮才上线
+      # 软步骤：失败只记录不阻塞发布 —— 前端拿不到 track.js 时按钮会提示「暂无走势数据」，
+      # 不会白屏，也不会影响 verify 的成果发布。
+      node tools/track.js || log "· track.js 失败（不阻塞发布；前端将显示暂无走势数据）"
+      bash tools/publish.sh "次日验证 + 走势跟踪 $DAY"
       rc=$?
     fi
     ;;

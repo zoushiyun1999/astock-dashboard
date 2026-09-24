@@ -743,6 +743,92 @@ body.scrolled .h-date { opacity: 0; }
 .empty .t { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--ink-2); }
 .empty .s { font-size: var(--fs-sm); margin-top: var(--sp-1); }
 
+/* ── 推荐走势 / 效果统计（2026-09-24，方案 B）────────────────────
+   底部抽屉式弹层。不复用 .cal-viewer 的深色遮罩：那是「看图」用的（深底衬托图片），
+   而这里是**表格与数字**，必须在白底上才读得快。
+   凹凸语义与全站一致：抽屉 = 凸起白卡；条形图的轨道 = 内凹。 */
+.tk-viewer { position: fixed; inset: 0; z-index: 110; display: flex; align-items: flex-end;
+  background: rgba(15,23,42,.38); }
+.tk-viewer[hidden] { display: none; }
+.tk-sheet {
+  width: 100%; max-width: 560px; margin: 0 auto; background: var(--card);
+  border-radius: 18px 18px 0 0; max-height: 86vh; display: flex; flex-direction: column;
+}
+.tk-bar { flex: none; display: flex; align-items: center; gap: var(--sp-2);
+  padding: 14px var(--sp-5) 10px; border-bottom: 0.5px solid var(--line); }
+.tk-bar .tk-ttl { font-size: var(--fs-title); font-weight: var(--fw-semibold); color: var(--ink); }
+.tk-bar .tk-code { font-size: var(--fs-sm); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tk-bar .tk-x { margin-left: auto; flex: none; height: 32px; padding: 0 14px; border: none;
+  border-radius: var(--radius-pill); background: var(--bg); color: var(--ink-2);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); cursor: pointer; }
+.tk-bar .tk-x:active { background: var(--line); }
+.tk-body { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 14px var(--sp-5) 26px; }
+
+/* 元信息四宫格：标签弱化、数值为主体（与全站「卡片标题恒为小标签」同一套语言） */
+.tk-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+.tk-mk { background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+.tk-mk span { display: block; font-size: var(--fs-xs); color: var(--ink-3); margin-bottom: 2px; }
+.tk-mk b { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--ink);
+  font-variant-numeric: tabular-nums; }
+.tk-note { font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.6; margin-bottom: 14px; }
+
+/* 逐日列表：第N日 / 日期 / 条形 / 收盘 / 涨跌 */
+.tk-days { list-style: none; margin: 0; padding: 0; }
+.tk-days li { display: flex; align-items: center; gap: 8px; padding: 7px 0;
+  border-bottom: 0.5px solid var(--line); }
+.tk-days li:last-child { border-bottom: 0; }
+.tk-d { flex: none; width: 42px; font-size: var(--fs-xs); color: var(--ink-3); }
+.tk-date { flex: none; width: 46px; font-size: var(--fs-sm); color: var(--ink-2);
+  font-variant-numeric: tabular-nums; }
+.tk-c { flex: none; width: 52px; text-align: right; font-size: var(--fs-sm); color: var(--ink);
+  font-variant-numeric: tabular-nums; }
+.tk-p { flex: none; width: 62px; text-align: right; font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums; }
+.tk-p.up { color: var(--up-ink); }
+.tk-p.down { color: var(--down-ink); }
+.tk-p.flat { color: var(--ink-3); }
+/* 发散条形：中轴向右=涨、向左=跌（红涨绿跌） */
+.tk-bar { position: relative; flex: 1; min-width: 40px; height: 8px; border-radius: 4px; background: var(--bg); }
+.tk-bar::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px;
+  width: 1px; background: var(--line-2); }
+.tk-bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; display: block; }
+
+/* 效果统计表 */
+.tk-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.tk-tbl th, .tk-tbl td { padding: 8px 3px; text-align: right; }
+.tk-tbl thead th { font-size: var(--fs-xs); color: var(--ink-3); font-weight: var(--fw-medium);
+  border-bottom: 0.5px solid var(--line-2); }
+/* 首列（渠道名）必须 nowrap：5 个数字列会把标签列挤到两行，「早/报」竖排很难看 */
+.tk-tbl tbody th, .tk-tbl thead th:first-child { text-align: left; white-space: nowrap; }
+.tk-tbl tbody th { padding-right: 10px; font-size: var(--fs-base); font-weight: var(--fw-semibold);
+  color: var(--ink); }
+.tk-tbl td b { display: block; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.tk-tbl td b.up { color: var(--up-ink); }
+.tk-tbl td b.down { color: var(--down-ink); }
+.tk-tbl td b.flat { color: var(--ink-3); }
+.tk-tbl td em { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--ink-3);
+  margin-top: 1px; white-space: nowrap; }
+.tk-tbl tbody tr + tr th, .tk-tbl tbody tr + tr td { border-top: 0.5px solid var(--line); }
+
+/* 选股页入口：一行即可，不挤头部、不动二级分段 */
+.tk-cta { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0 0 var(--row-gap);
+  padding: 0 14px; height: var(--ctl-h); border: 0.5px solid var(--line); border-radius: var(--radius-md);
+  background: var(--card); color: var(--ink); font-size: var(--fs-base); font-weight: var(--fw-medium);
+  cursor: pointer; box-shadow: var(--nm-raise-sm); text-align: left;
+  transition: box-shadow var(--t-fast), transform var(--t-fast); }
+.tk-cta:active { transform: scale(.99); box-shadow: var(--nm-inset-sm); }
+.tk-cta svg { flex: none; color: var(--accent-deep); }
+.tk-cta .tk-cta-sub { margin-left: auto; font-size: var(--fs-xs); color: var(--ink-3); font-weight: 400; }
+.tk-cta .tk-cta-arrow { flex: none; color: var(--ink-3); }
+
+/* 单条推荐的「走势」按钮：小、安静，不与主体内容争视觉 */
+.tk-btn { flex: none; margin-left: 2px; height: 24px; padding: 0 9px; border: 0.5px solid var(--accent-line);
+  border-radius: var(--radius-pill); background: var(--accent-soft); color: var(--accent-deep);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); cursor: pointer; white-space: nowrap; }
+.tk-btn:active { background: var(--accent-line); }
+/* 量价表格：按钮落在「验证」列下方并右对齐（列已存在，不新增列、不撑宽表格） */
+.sc-ver .tk-btn { display: block; margin: 4px 0 0 auto; }
+
 /* ── Footer / 链接 ── */
 footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size: var(--fs-sm); line-height: 1.8; }
 .link-row { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }

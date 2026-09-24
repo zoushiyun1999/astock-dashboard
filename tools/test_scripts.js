@@ -935,6 +935,135 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     'code_version@line' + (lCv + 1) + ' export_json@line' + (lEx + 1));
 }
 
+/* ══════════ #22 推荐走势跟踪（track.js）：口径 / 边界 / 聚合 ══════════
+   方案 B 的数据层。最容易错的三处，本组全部锁住：
+     ① 应验日口径必须与 verify.js 一致（早报=当日；晚报/量价=次一交易日）
+     ② key 必须含推荐日 —— 同一只票不同日推荐是**不同样本**，只按 code 会混掉
+     ③ 停牌缺日要按**日线条目顺序**推 T+N，不能按自然日加减（否则把停牌日算成一天） */
+{
+  console.log('\n#22 推荐走势跟踪（应验日口径 / T+N 边界 / 战绩聚合）');
+  const tk = require('./track');
+
+  // — ① 应验日口径：与 verify.js 同源同规则 —
+  const reports = [
+    { date: '2026-09-18',   // 周五
+      morning: { '今日关注': [{ code: '600001', name: 'A股' }] },
+      evening: { '明日关注': [{ sector: 'X', picks: [{ code: '600002', name: 'B股' }] }] } },
+  ];
+  const periods = [{ date: '2026-09-18', list: [{ code: '600003', name: 'C股' }] }];
+  const recs = tk.collectRecs(reports, periods);
+  const byCh = {};
+  recs.forEach(function (r) { byCh[r.ch] = r; });
+  ok(recs.length === 3, '#22.1 三个渠道各收到 1 条', '实得 ' + recs.length);
+  ok(byCh.m && byCh.m.entryDate === '2026-09-18',
+    '#22.1 早报：入场日 = 报告当日', byCh.m && byCh.m.entryDate);
+  ok(byCh.e && byCh.e.entryDate === '2026-09-21',
+    '#22.1 晚报：入场日 = 次一交易日（周五 09-18 → 周一 09-21）', byCh.e && byCh.e.entryDate);
+  ok(byCh.s && byCh.s.entryDate === '2026-09-21',
+    '#22.1 量价：入场日 = 期日的次一交易日', byCh.s && byCh.s.entryDate);
+  // 与 verify.js 的同名函数必须给出**同一个**结果（防止两套口径漂移）
+  ok(byCh.e.entryDate === verify.nextTradingDay('2026-09-18'),
+    '#22.1 应验日 == verify.nextTradingDay()（口径不漂移）');
+
+  // — ② key 含推荐日；同 code 不同日 = 不同样本 —
+  ok(byCh.m.k === 'm|600001|2026-09-18', '#22.2 key = ch|code|推荐日', byCh.m.k);
+  const two = tk.collectRecs([
+    { date: '2026-09-18', morning: { '今日关注': [{ code: '600001' }] } },
+    { date: '2026-09-22', morning: { '今日关注': [{ code: '600001' }] } },
+  ], []);
+  ok(two.length === 2 && two[0].k !== two[1].k,
+    '#22.2 同一只票两日推荐 → 两条不同样本（不能只按 code 去重）');
+  // 报告内重复出现 → 去重
+  const dup = tk.collectRecs([
+    { date: '2026-09-18', morning: { '今日关注': [{ code: '600001' }, { code: '600001' }] } },
+  ], []);
+  ok(dup.length === 1, '#22.2 同 key 重复出现 → 去重', '实得 ' + dup.length);
+  ok(tk.collectRecs([], []).length === 0, '#22.2 空输入 → 空结果，不崩');
+  ok(tk.collectRecs(null, null).length === 0, '#22.2 null 输入 → 空结果，不崩');
+
+  // — ③ T+N：按日线顺序推，停牌日不占位 —
+  //    构造：入场日 09-21，之后 09-22、然后 **跳过 09-23（停牌无 bar）**、09-24 …
+  const bars = [
+    { date: '2026-09-18', open: 10.0, close: 10.2, high: 10.3, low: 9.9 },
+    { date: '2026-09-21', open: 10.5, close: 11.0, high: 11.1, low: 10.4 },  // 入场日
+    { date: '2026-09-22', open: 11.0, close: 10.4, high: 11.2, low: 10.3 },
+    { date: '2026-09-24', open: 10.3, close: 10.6, high: 10.8, low: 10.2 },  // 09-23 停牌，无 bar
+    { date: '2026-09-25', open: 10.6, close: 10.0, high: 10.7, low: 9.9 },
+  ];
+  const days = tk.trackDays(bars, '2026-09-21', 10.5, 10);
+  ok(days && days.length === 4, '#22.3 入场日起共 4 个交易日', days && days.length);
+  ok(days[0].d === '2026-09-21' && days[0].c === 11.0 && days[0].p === 4.76,
+    '#22.3 第0日 = 入场日（收盘 11.00，相对开盘 10.50 = +4.76%）', JSON.stringify(days[0]));
+  ok(days[1].d === '2026-09-22' && days[1].p === -0.95,
+    '#22.3 第1日 = 09-22（10.40 → -0.95%）', JSON.stringify(days[1]));
+  ok(days[2].d === '2026-09-24',
+    '#22.3 第2日 = 09-24 **不是** 09-23（停牌无 bar 不占位，按条目顺序推）', JSON.stringify(days[2]));
+  // 边界：入场日不在日线里 → null（停牌/未上市/未到），绝不能瞎标
+  ok(tk.trackDays(bars, '2026-09-19', 10.5, 10) === null,
+    '#22.3 入场日无 bar（停牌）→ null，不写错数据');
+  ok(tk.trackDays(null, '2026-09-21', 10.5, 10) === null, '#22.3 无日线 → null');
+  ok(tk.trackDays(bars, '2026-09-21', 0, 10) === null, '#22.3 入场价 0/空 → null（防除零）');
+  // 边界：maxT 上限
+  let long = [];
+  for (let i = 0; i < 20; i++) long.push({ date: '2026-10-' + String(i + 1).padStart(2, '0'), open: 10, close: 10 + i * 0.1, high: 11, low: 9 });
+  ok(tk.trackDays(long, '2026-10-01', 10, 10).length === 11,
+    '#22.3 maxT=10 → 最多 11 条（第0日 + T+1..T+10）');
+
+  // — ④ 一字板判定 —
+  ok(tk.isLocked({ open: 10, high: 10, low: 10, close: 10 }) === true, '#22.4 开=高=低=收 → 一字板');
+  ok(tk.isLocked({ open: 10, high: 10.5, low: 9.9, close: 10 }) === false, '#22.4 有振幅 → 非一字板');
+
+  // — ⑤ atT 越界取 null —
+  ok(tk.atT(days, 0) === 4.76 && tk.atT(days, 9) === null,
+    '#22.5 atT：越界返回 null（未成熟不编数）');
+
+  // — ⑥ 战绩聚合：locked 整条剔除、n/sum/win 正确 —
+  const ledger = {
+    'm|A|2026-09-21': { ch: 'm', locked: false, t: { 0: 5, 1: 8, 3: -2, 5: null, 10: null } },
+    'm|B|2026-09-21': { ch: 'm', locked: false, t: { 0: -1, 1: 2, 3: null, 5: null, 10: null } },
+    'm|C|2026-09-21': { ch: 'm', locked: true,  t: { 0: 99, 1: 99, 3: 99, 5: 99, 10: 99 } },
+    'e|D|2026-09-21': { ch: 'e', locked: false, t: { 0: 3, 1: null, 3: null, 5: null, 10: null } },
+  };
+  const st = tk.computeStats(ledger);
+  ok(st.m.total === 3 && st.m.locked === 1, '#22.6 早报 total=3 / locked=1', JSON.stringify({ t: st.m.total, l: st.m.locked }));
+  ok(st.m.at[0].n === 2 && st.m.at[0].avg === 2 && st.m.at[0].win === 50,
+    '#22.6 一字板被剔除（n=2 而非 3；avg=(5-1)/2=2；win=1/2=50%）', JSON.stringify(st.m.at[0]));
+  ok(st.m.at[3].n === 1 && st.m.at[3].avg === -2,
+    '#22.6 未成熟的 T+N 不参与（T+3 只有 1 条有值）', JSON.stringify(st.m.at[3]));
+  ok(st.m.at[10].n === 0 && st.m.at[10].avg === null && st.m.at[10].win === null,
+    '#22.6 无样本 → null（不是 0，避免读成"收益为 0"）', JSON.stringify(st.m.at[10]));
+  ok(st.e.at[0].n === 1 && st.e.at[1].avg === null, '#22.6 渠道互不串台');
+  ok(tk.computeStats({}).m.at[0].n === 0, '#22.6 空账本 → 全 0/null，不崩');
+
+  // — ⑦ 账本裁剪：只删超窗口的老条目，窗口内不动 —
+  const today = '2026-09-24';
+  const led = {
+    'x|OLD|2026-01-01': { ch: 'm', rec: '2026-01-01', t: {} },
+    'x|NEW|2026-09-22': { ch: 'm', rec: '2026-09-22', t: {} },
+  };
+  const dropped = tk.pruneLedger(led, today);
+  ok(dropped === 1 && !led['x|OLD|2026-01-01'] && !!led['x|NEW|2026-09-22'],
+    '#22.7 只裁过期条目，窗口内保留', 'dropped=' + dropped);
+
+  // — ⑧ 源码守卫 —
+  const ts = fs.readFileSync(path.join(ROOT, 'tools', 'track.js'), 'utf8');
+  ok(/window\.TRACK\s*=/.test(ts), '#22.8 产物是 window.TRACK（前端按此读取）');
+  ok(/require\('\.\/verify\.js'\)/.test(ts),
+    '#22.8 复用 verify.js 的日K抓取（不另写第二套实现，避免口径漂移）');
+  ok(/MAX_T\s*=\s*10/.test(ts), '#22.8 MAX_T 显式定义');
+  const cs = fs.readFileSync(path.join(ROOT, 'tools', 'cron.sh'), 'utf8');
+  const csLines = cs.split('\n');
+  const lineOf = (n) => csLines.findIndex((l) => l.indexOf(n) >= 0 && !/^\s*#/.test(l));
+  const lt = lineOf('tools/track.js');
+  const lp = lineOf('tools/publish.sh "次日验证');
+  ok(lt >= 0, '#22.8 cron.sh 真的调用了 track.js', 'line=' + (lt + 1));
+  ok(lt >= 0 && lp >= 0 && lt < lp,
+    '#22.8 track.js 在 publish **之前**跑（否则 track.js 要等下一轮才上线）',
+    'track@' + (lt + 1) + ' publish@' + (lp + 1));
+  ok(/\|\|\s*log/.test(csLines[lt] || ''),
+    '#22.8 track.js 是软步骤（失败不阻塞 verify 的成果发布）');
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 

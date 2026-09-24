@@ -489,6 +489,163 @@
       (action || '') + '</div>';
   }
 
+  /* ══ 推荐走势跟踪 / 效果统计（2026-09-24，方案 B）══════════════════
+     数据源 dashboard/track.js（window.TRACK），**懒加载**：只有用户真的点了「走势」或
+     「推荐效果统计」才注入 <script>。首屏刚优化到 118KB，能不碰就不碰。
+     明细 key = ch|code|推荐日 —— 渠道 + 代码 + 日期三者缺一不可：
+     同一只票在不同日/不同渠道被推荐是**不同条目**（入场点不同），只按 code 查会把样本混掉。 */
+  var TRACK = null, TRACK_P = null;
+
+  /** 取当前资源版本号（懒加载 track.js 时带上，避免手机缓存旧文件） */
+  function assetVer() {
+    var ss = document.querySelectorAll('script[src]');
+    for (var i = 0; i < ss.length; i++) {
+      var m = (ss[i].getAttribute('src') || '').match(/[?&]v=(\d+)/);
+      if (m) return m[1];
+    }
+    return '';
+  }
+
+  function loadTrack() {
+    if (TRACK) return Promise.resolve(TRACK);
+    if (TRACK_P) return TRACK_P;
+    TRACK_P = new Promise(function (res, rej) {
+      var el = document.createElement('script');
+      el.src = 'track.js?v=' + assetVer();
+      el.onload = function () {
+        TRACK = window.TRACK || null;
+        if (TRACK) res(TRACK); else rej(new Error('no TRACK'));
+      };
+      el.onerror = function () { rej(new Error('load fail')); };
+      document.body.appendChild(el);
+    });
+    return TRACK_P;
+  }
+
+  function tkFind(k) {
+    if (!TRACK || !TRACK.series) return null;
+    for (var i = 0; i < TRACK.series.length; i++) if (TRACK.series[i].k === k) return TRACK.series[i];
+    return null;
+  }
+
+  /** 单条推荐的「走势」按钮。渲染时**不依赖 TRACK**（懒加载），数据在点按时才解析、
+   *  解析不到就给出明确原因（未来日期 / 入场日停牌），不假装成功。 */
+  function trackBtn(code, ch) {
+    if (!code) return '';
+    var k = ch + '|' + code + '|' + curDate;
+    return '<button class="tk-btn" type="button" data-tk="' + esc(k) + '" ' +
+      'onclick="tkOpen(this.getAttribute(\'data-tk\'))">走势</button>';
+  }
+
+  var TK_CH = { m: '早报', e: '晚报', s: '量价' };
+  var TK_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M4 19V11M9 19V5M14 19v-6M19 19V8"/></svg>';
+
+  function tkPctCls(p) { return p > 0 ? 'up' : (p < 0 ? 'down' : 'flat'); }
+  function tkPct(p) { return (p > 0 ? '+' : '') + p.toFixed(2) + '%'; }
+
+  /** 发散条形：中轴向右=涨（红）、向左=跌（绿）。10% 涨跌 = 半幅宽 */
+  function tkBar(p) {
+    var w = Math.min(Math.abs(p) / 10 * 50, 50);
+    return '<span class="tk-bar"><i style="' + (p >= 0 ? 'left:50%' : 'right:50%') +
+      ';width:' + w.toFixed(1) + '%;background:var(--' + (p >= 0 ? 'up' : 'down') + ')"></i></span>';
+  }
+
+  function tkSheet(title, sub, bodyHtml) {
+    var old = document.getElementById('tkViewer');
+    if (old) old.parentNode.removeChild(old);
+    var v = document.createElement('div');
+    v.id = 'tkViewer';
+    v.className = 'tk-viewer';
+    v.innerHTML = '<div class="tk-sheet"><div class="tk-bar">' +
+      '<span class="tk-ttl">' + esc(title) + '</span>' +
+      (sub ? '<span class="tk-code">' + esc(sub) + '</span>' : '') +
+      '<button class="tk-x" type="button" onclick="tkClose()">关闭</button></div>' +
+      '<div class="tk-body">' + bodyHtml + '</div></div>';
+    document.body.appendChild(v);
+    document.body.style.overflow = 'hidden';
+  }
+
+  window.tkClose = function () {
+    var v = document.getElementById('tkViewer');
+    if (v) v.parentNode.removeChild(v);
+    document.body.style.overflow = '';
+  };
+
+  function tkDetail(k, s, err) {
+    if (!s) {
+      tkSheet('暂无走势数据', '', '<div class="tk-note">' +
+        (err ? '跟踪数据加载失败（可能尚未生成）。' :
+          '这条推荐还没有走势记录：可能是**未来日期**，或入场日当天停牌。' +
+          '跟踪数据在每个交易日 21:40 后更新。') + '</div>');
+      return;
+    }
+    var days = (s.days || []).map(function (x, i) {
+      return '<li><span class="tk-d">第' + i + '日</span>' +
+        '<span class="tk-date">' + esc(String(x.d).slice(5)) + '</span>' + tkBar(x.p) +
+        '<span class="tk-c">' + (+x.c).toFixed(2) + '</span>' +
+        '<span class="tk-p ' + tkPctCls(x.p) + '">' + tkPct(x.p) + '</span></li>';
+    }).join('');
+    var last = s.days && s.days.length ? s.days[s.days.length - 1] : null;
+    tkSheet(s.name || s.code, s.code,
+      '<div class="tk-meta">' +
+      '<div class="tk-mk"><span>渠道</span><b>' + esc(TK_CH[s.ch] || '') + '</b></div>' +
+      '<div class="tk-mk"><span>推荐日</span><b>' + esc(String(s.rec).slice(5)) + '</b></div>' +
+      '<div class="tk-mk"><span>入场日</span><b>' + esc(String(s.m).slice(5)) + '</b></div>' +
+      '<div class="tk-mk"><span>入场价</span><b>' + (+s.e).toFixed(2) + '</b></div>' +
+      '</div>' +
+      (s.locked ? '<div class="tk-note">⚠️ 入场日是一字板（开=高=低=收），实际买不到 —— ' +
+        '该条保留在明细里备查，但**不计入效果统计**。</div>' : '') +
+      '<div class="tk-note">入场价 = 入场日开盘价；涨跌幅相对入场价，第 0 日即入场日收盘。' +
+      (last ? '已跟踪至 ' + esc(last.d) + '（第 ' + ((s.days || []).length - 1) + ' 日）。' : '') +
+      '</div><ol class="tk-days">' + days + '</ol>');
+  }
+
+  window.tkOpen = function (k) {
+    loadTrack().then(function () { tkDetail(k, tkFind(k)); })
+      .catch(function (e) { tkDetail(k, null, e); });
+  };
+
+  function tkStatsBody() {
+    if (!TRACK || !TRACK.stats) return '<div class="tk-note">暂无统计数据。</div>';
+    var at = TRACK.statAt || [0, 1, 3, 5, 10];
+    var head = '<tr><th>渠道</th>' + at.map(function (t) {
+      return '<th>' + (t === 0 ? '当日' : '+' + t + '日') + '</th>';
+    }).join('') + '</tr>';
+    var rows = ['m', 'e', 's'].map(function (ch) {
+      var c = TRACK.stats[ch];
+      if (!c) return '';
+      return '<tr><th>' + esc(TK_CH[ch] || '') + '</th>' + at.map(function (t) {
+        var a = c.at && c.at[t];
+        if (!a || !a.n) return '<td><b class="flat">—</b></td>';
+        // 胜率取整、不写「条」：5 个数字列把每格挤到 ~60px，多一个字符就换行（实测）
+        return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
+          '<em>' + Math.round(a.win) + '% · ' + a.n + '</em></td>';
+      }).join('') + '</tr>';
+    }).join('');
+    var lk = ['m', 'e', 's'].reduce(function (n, ch) {
+      return n + (((TRACK.stats[ch] || {}).locked) || 0);
+    }, 0);
+    return '<table class="tk-tbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="tk-note" style="margin-top:12px">单元格上行 = 平均涨跌幅，下行 = 胜率 · 样本数。<br>' +
+      '口径：入场日**开盘价** → 该日收盘，与「次日验证」的 buyRet 同口径（不含手续费）。<br>' +
+      '样本为**累计账本**（不被报告 7 期轮换清掉），故时间越久越可信。' +
+      (lk ? '已剔除一字板 ' + lk + ' 条。' : '') + '</div>';
+  }
+
+  window.tkStats = function () {
+    loadTrack().then(function () { tkSheet('推荐效果统计', '累计账本', tkStatsBody()); })
+      .catch(function () { tkSheet('推荐效果统计', '', '<div class="tk-note">统计数据加载失败。</div>'); });
+  };
+
+  /** 选股页入口。一行高度，不挤头部、不动二级分段（顶部三行刚对齐好，别再塞东西）。 */
+  function trackCta() {
+    return '<button class="tk-cta" type="button" onclick="tkStats()">' + TK_ICON +
+      '<span>推荐效果统计</span><span class="tk-cta-sub">按渠道 × 持有天数</span>' +
+      '<span class="tk-cta-arrow">›</span></button>';
+  }
+
   /* ── 短线关注渲染：博主看好的股（今日 / 明日 两段） ── */
   function stBadge(status) {
     if (!status) return '';
@@ -534,7 +691,7 @@
     return '<li><div class="body">' +
       '<div class="nm">' + esc(x.name) +
       (x.sector ? '<span class="sec">' + esc(x.sector) + '</span>' : '') +
-      stBadge(x.status) + verifyBadge(x.verify) + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'm') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
@@ -554,7 +711,7 @@
     return '<li><span class="rank">' + (i + 1) + '</span><div class="body">' +
       '<div class="nm">' + esc(x.name) +
       (x.role ? '<span class="tag">' + esc(x.role) + '</span>' : '') +
-      stBadge(x.status) + verifyBadge(x.verify) + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
@@ -565,7 +722,7 @@
       '<div class="nm">' + esc(x.name) +
       (x.role ? '<span class="tag tag-gray">' + esc(x.role) + '</span>' : '') +
       '<span class="tag tag-gray">不参与</span>' +
-      stBadge(x.status) + verifyBadge(x.verify) + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
@@ -837,7 +994,7 @@
         '<td class="sc-yang">' + esc(s.yang) + '连阳</td>' +
         '<td class="sc-num">' + g20 + '</td>' +
         '<td class="sc-num">' + esc(s.aboveRate) + '%</td>' +
-        '<td class="sc-ver">' + scVerifyCell(s) + '</td>' +
+        '<td class="sc-ver">' + scVerifyCell(s) + trackBtn(s.code, 's') + '</td>' +
         '</tr>';
     }).join('');
   }
@@ -1095,7 +1252,7 @@
       '<button class="tab' + (curSub === 'watch' ? ' on' : '') + '" data-sub="watch" onclick="switchSub(\'watch\')">短线</button>' +
       '<button class="tab' + (curSub === 'screener' ? ' on' : '') + '" data-sub="screener" onclick="switchSub(\'screener\')">量价</button>' +
       '<span class="tab-glider" id="subGlider" style="' + gliderStyle + '"></span></div>';
-    return sub + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
+    return sub + trackCta() + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
   }
 
   /* 二级分段滑块定位：纯按 curSub 算百分比，任何时候（含隐藏态）都能算对 */
