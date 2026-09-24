@@ -318,11 +318,11 @@ body.scrolled .h-date { opacity: 0; }
    轨道底色与主 Tab 同源（--nm-track），两处分段控件必须长得一模一样，
    否则互跳时「控件语言不一致」。 */
 .tabs-sub {
-  margin: 0 0 12px; padding: 2px; border-radius: 10px;
+  flex: none; margin: 0; padding: 2px; border-radius: 10px;
   background: var(--nm-track); box-shadow: var(--nm-inset-track);
 }
 .tabs-sub .tab {
-  height: 30px; font-size: var(--fs-md); border-radius: 8px;
+  height: 30px; min-width: 62px; font-size: var(--fs-md); border-radius: 8px;
 }
 /* 选中态自带白底（保险层）：滑块走百分比定位、不量尺寸，即便滑块异常也能看出选中 */
 .tabs-sub .tab.on { background: #fff; box-shadow: var(--nm-raise-sm); }
@@ -809,15 +809,17 @@ body.scrolled .h-date { opacity: 0; }
 .tk-tbl tbody tr + tr th, .tk-tbl tbody tr + tr td { border-top: 0.5px solid var(--line); }
 
 /* 选股页入口：一行即可，不挤头部、不动二级分段 */
-.tk-cta { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0 0 var(--row-gap);
-  padding: 0 14px; height: var(--ctl-h); border: 0.5px solid var(--line); border-radius: var(--radius-md);
-  background: var(--card); color: var(--ink); font-size: var(--fs-base); font-weight: var(--fw-medium);
-  cursor: pointer; box-shadow: var(--nm-raise-sm); text-align: left;
-  transition: box-shadow var(--t-fast), transform var(--t-fast); }
-.tk-cta:active { transform: scale(.99); box-shadow: var(--nm-inset-sm); }
-.tk-cta svg { flex: none; color: var(--accent-deep); }
-.tk-cta .tk-cta-sub { margin-left: auto; font-size: var(--fs-xs); color: var(--ink-3); font-weight: 400; }
-.tk-cta .tk-cta-arrow { flex: none; color: var(--ink-3); }
+/* 选股页顶部一行（2026-09-24 去堆叠）：二级分段 + 效果统计入口合并，
+   原先入口是独立白卡独占一行 —— 首屏堆了 5 层（头部/主Tab/子Tab/入口卡/日期条） */
+.sub-row { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--row-gap); }
+.tk-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 30px;
+  padding: 0 10px; border: 0.5px solid var(--accent-line); border-radius: var(--radius-pill);
+  background: var(--accent-soft); color: var(--accent-deep); font-size: var(--fs-xs);
+  font-weight: var(--fw-medium); cursor: pointer; white-space: nowrap;
+  transition: background var(--t-fast); }
+.tk-link:active { background: var(--accent-line); }
+.tk-link svg { flex: none; }
+.tk-link .tk-cta-arrow { color: inherit; opacity: .7; }
 
 /* 单条推荐的「走势」按钮：小、安静，不与主体内容争视觉 */
 .tk-btn { flex: none; margin-left: 2px; height: 24px; padding: 0 9px; border: 0.5px solid var(--accent-line);

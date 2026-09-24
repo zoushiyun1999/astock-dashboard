@@ -727,9 +727,10 @@
 
   /** 选股页入口。一行高度，不挤头部、不动二级分段（顶部三行刚对齐好，别再塞东西）。 */
   function trackCta() {
-    return '<button class="tk-cta" type="button" onclick="tkStats()">' + TK_ICON +
-      '<span>推荐效果统计</span><span class="tk-cta-sub">按渠道 × 持有天数</span>' +
-      '<span class="tk-cta-arrow">›</span></button>';
+    // 2026-09-24 去堆叠：原为独立白卡占一整行，与二级分段合并为同一行后降级为紧凑链接
+    return '<button class="tk-link" type="button" onclick="tkStats()" ' +
+      'title="按渠道 × 持有天数：平均收益 / 胜率 / 样本数">' + TK_ICON +
+      '<span>效果统计</span><span class="tk-cta-arrow">›</span></button>';
   }
 
   /* ── 短线关注渲染：博主看好的股（今日 / 明日 两段） ── */
@@ -1345,20 +1346,29 @@
      ⚠️ 滑块的定位**不量尺寸**（2026-09-23 修）：两个按钮等宽（flex:1），位置可以用百分比直接算，
         而量 offsetWidth 在「区块隐藏」时恒为 0 —— 那正是"第一次进入没高亮"的根因。 */
   function renderPicks(r, ds) {
-    var gliderStyle = 'left:' + (curSub === 'screener' ? 'calc(50% + 2px)' : '2px') + ';width:calc(50% - 4px)';
-    var sub = '<div class="tabs tabs-sub" id="subTabs">' +
+    // 滑块定位（相对 padding-box）：短线=2px（左 padding）；量价=50%（恰好 = 2px + 内容宽/2，
+    // 因容器含 2px 左右 padding）。宽度 50%-2px 正好等于单个 tab 宽（内容宽/2）。
+    // ⚠️ 旧值 calc(50% + 2px)/calc(50% - 4px) 在全宽容器下只差 1px 看不出来，
+    //    收窄到 fit-content 后偏差放大到 2px+ —— 实测量出来的，别凭感觉改回去。
+    var gliderStyle = 'left:' + (curSub === 'screener' ? '50%' : '2px') + ';width:calc(50% - 2px)';
+    // 2026-09-24 去堆叠：二级分段与效果统计入口合并为一行（原先入口卡独占一行，首屏堆了 5 层）
+    var sub = '<div class="sub-row">' +
+      '<div class="tabs tabs-sub" id="subTabs">' +
       '<button class="tab' + (curSub === 'watch' ? ' on' : '') + '" data-sub="watch" onclick="switchSub(\'watch\')">短线</button>' +
       '<button class="tab' + (curSub === 'screener' ? ' on' : '') + '" data-sub="screener" onclick="switchSub(\'screener\')">量价</button>' +
-      '<span class="tab-glider" id="subGlider" style="' + gliderStyle + '"></span></div>';
-    return sub + trackCta() + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
+      '<span class="tab-glider" id="subGlider" style="' + gliderStyle + '"></span></div>' +
+      trackCta() + '</div>';
+    return sub + (curSub === 'watch' ? renderWatchlist(r, ds) : renderScreener(ds));
   }
 
   /* 二级分段滑块定位：纯按 curSub 算百分比，任何时候（含隐藏态）都能算对 */
   function positionSubGlider() {
     var glider = document.getElementById('subGlider');
     if (!glider) return;
-    glider.style.left = curSub === 'screener' ? 'calc(50% + 2px)' : '2px';
-    glider.style.width = 'calc(50% - 4px)';
+    // ⚠️ 必须与 renderPicks 里的 gliderStyle 公式一致（render 后这里会再设一次）；
+    //    两处曾不一致导致量价滑块偏 2px（2026-09-24 收窄容器后实测暴露）
+    glider.style.left = curSub === 'screener' ? '50%' : '2px';
+    glider.style.width = 'calc(50% - 2px)';
   }
 
   /** 数据健康条：基于各源最后更新时间，提示是否异常 */
