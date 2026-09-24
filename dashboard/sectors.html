@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="热点板块">
-<link rel="stylesheet" href="css/style.css?v=202609241234">
+<link rel="stylesheet" href="css/style.css?v=202609242100">
 <style>
 /* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ──
    配色：浅色阅读主题 —— 主看板头部是深色渐变+白字，本页标题曾误用深色变量导致看不清。
@@ -79,6 +79,12 @@ body { padding-bottom: 24px; }
   white-space: nowrap;
 }
 .sp-streak.cold { color: var(--ink-2); background: var(--brand-soft); }
+/* 行业/概念 小标（「全部」视图里挂在板块名后；分组视图里不显示） */
+.sp-kind {
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--accent-deep);
+  background: var(--accent-soft); padding: 2px 8px; border-radius: var(--radius-pill, 99px);
+  white-space: nowrap;
+}
 /* 板块卡内近5期统计 */
 .sp-heat5 { font-size: var(--fs-xs); color: var(--ink-2); padding: 3px 0 0; }
 .sp-empty {
@@ -132,6 +138,11 @@ body { padding-bottom: 24px; }
 
   function boot() {
   var reports = (window.REPORTS && window.REPORTS.reports) || [];
+
+  // 行业/概念视图状态（2026-09-24）：默认「全部」；记住上次选择
+  var spKind = 'all';
+  try { spKind = localStorage.getItem('secKind') || 'all'; } catch (e) {}
+  if (['all', 'hy', 'gn'].indexOf(spKind) < 0) spKind = 'all';
 
   // 只关心「有板块热点数据」的期：{ds, list, map}
   var secDates = [];
@@ -214,10 +225,33 @@ body { padding-bottom: 24px; }
     var p = -1;
     for (var i = 0; i < secDates.length; i++) if (secDates[i].ds === ds) { p = i; break; }
 
-    summary.textContent = '共 ' + list.length + ' 个板块 · 数据来自 ' + ds + ' 晚报（博主复盘提炼）';
+    // 行业/概念分组（2026-09-24）：kind 由晚报生成时标注（prompts）。
+    // 历史数据无此字段 → 只出现在「全部」视图；kind 缺省不硬归类。
+    var curKind = spKind;
+    var counts = { all: list.length, hy: 0, gn: 0 };
+    list.forEach(function (x) {
+      if (x.kind === '行业') counts.hy++;
+      else if (x.kind === '概念') counts.gn++;
+    });
+    if (curKind !== 'all' && counts[curKind] === 0) {
+      summary.textContent = '共 ' + list.length + ' 个板块（行业 ' + counts.hy + ' · 概念 ' + counts.gn + '）· 数据来自 ' + ds + ' 晚报（博主复盘提炼）';
+      app.innerHTML = '<div class="card"><h3 data-dot="rank3"><span class="dot"></span>板块热点</h3>' + kindTabs(curKind) +
+        '<div class="sp-empty" style="padding:18px 0"><b>该期没有' + (curKind === 'hy' ? '行业' : '概念') + '板块</b>' +
+        '「行业/概念」标注从 2026-09-24 晚报起才有 —— 历史数据只出现在「全部」。</div></div>';
+      return;
+    }
 
-    app.innerHTML = '<div class="card"><h3 data-dot="rank3"><span class="dot"></span>板块热点（按强度排序）</h3>' +
-      list.map(function (x, i) {
+    summary.textContent = '共 ' + list.length + ' 个板块（行业 ' + counts.hy + ' · 概念 ' + counts.gn + '）· 数据来自 ' + ds + ' 晚报（博主复盘提炼）';
+
+    var shown = list.filter(function (x) {
+      if (curKind === 'all') return true;
+      return x.kind === (curKind === 'hy' ? '行业' : '概念');
+    });
+
+    app.innerHTML = '<div class="card"><h3 data-dot="rank3"><span class="dot"></span>板块热点' +
+      (curKind === 'all' ? '（按强度排序）' : '（' + (curKind === 'hy' ? '行业' : '概念') + '·按强度排序）') + '</h3>' +
+      kindTabs(curKind) +
+      shown.map(function (x, i) {
         var st = (p >= 0 && x.name) ? streakStats(x.name, p) : { streak: 1, last5: 1 };
         var badge = st.streak >= 2
           ? '<span class="sp-streak">连续 ' + st.streak + ' 期</span>'
@@ -225,6 +259,7 @@ body { padding-bottom: 24px; }
         return '<div class="sector">' +
           '<div class="sc-head"><span class="rank">' + (i + 1) + '</span>' +
           '<span class="nm">' + esc(x.name) + '</span>' +
+          (curKind === 'all' && x.kind ? '<span class="sp-kind">' + esc(x.kind) + '</span>' : '') +
           badge +
           '</div>' +
           (x.strength ? '<div><span class="sp-st">' + esc(x.strength) + '</span></div>' : '') +
@@ -234,6 +269,27 @@ body { padding-bottom: 24px; }
           '</div>';
       }).join('') + '</div>';
   }
+
+  /* 行业/概念 三段切换（全部 | 行业 | 概念）。样式复用 style.css 的 .tabs-sub（控件语言同源）。
+     滑块定位：3 等分 + 容器 2px padding，padding-box 百分比解析 →
+     left = i*33.333% + (2 - 1.333*i)px，width = 33.333% - 1.333px（2026-09-24 推导，勿凭感觉改）。 */
+  function kindTabs(kind) {
+    var defs = [['all', '全部'], ['hy', '行业'], ['gn', '概念']];
+    var idx = { all: 0, hy: 1, gn: 2 }[kind] || 0;
+    var glider = 'left:calc(' + (idx * 33.333) + '% + ' + (2 - idx * 4 / 3) + 'px);width:calc(33.333% - 1.333px)';
+    return '<div class="tabs tabs-sub" id="kindTabs">' +
+      defs.map(function (d) {
+        return '<button class="tab' + (kind === d[0] ? ' on' : '') + '" data-kind="' + d[0] + '" ' +
+          'onclick="setKind(\'' + d[0] + '\')">' + d[1] + '</button>';
+      }).join('') +
+      '<span class="tab-glider" id="kindGlider" style="' + glider + '"></span></div>';
+  }
+  window.setKind = function (k) {
+    spKind = k;
+    try { localStorage.setItem('secKind', k); } catch (e) {}
+    var sel = document.getElementById('dateSel');
+    render(sel && sel.value ? sel.value : (secDates[0] ? secDates[0].ds : ''));
+  };
 
   sel.addEventListener('change', function () { render(sel.value); });
   if (def) { sel.value = def; render(def); document.getElementById('spTip').hidden = false; }

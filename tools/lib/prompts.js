@@ -123,8 +123,11 @@ const EVENING_SYSTEM = [
   '     但你按盘面实况写更准确；**确实没风险就别硬加**。',
   '',
   '② 板块热点：给「晚报」页签用的扁平摘要，**与明日关注是同一批板块的两种结构**，',
-  '   不是两份不同内容。每项 { name, strength, stocks, catalyst }：',
+  '   不是两份不同内容。每项 { name, kind, strength, stocks, catalyst }：',
   '   · name 用 sector 的简称，strength 概括 stage',
+  '   · kind：「行业」或「概念」二选一 —— 申万式行业分类（半导体、证券、汽车、白酒、银行…）写「行业」；',
+  '     题材/主题/事件驱动（固态电池、低空经济、AI应用、海南自贸、铜缆高速连接…）写「概念」。',
+  '     一个板块同时像两者时按「概念」处理。判断依据是板块性质，不是涨跌原因。',
   '   · stocks 列出 picks 的股票名，catalyst 精简 why',
   '   · **条数与顺序必须与明日关注一一对应**',
   '',
@@ -149,7 +152,7 @@ const EVENING_SHAPE = {
       status: '板数+位置+特征', reason: '一句话入选理由',
     }],
   }],
-  板块热点: [{ name: '板块简称', strength: '阶段概括', stocks: '股票名', catalyst: '催化剂' }],
+  板块热点: [{ name: '板块简称', kind: '行业|概念二选一', strength: '阶段概括', stocks: '股票名', catalyst: '催化剂' }],
 };
 
 function eveningUser(date, materials) {

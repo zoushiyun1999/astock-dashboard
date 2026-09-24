@@ -397,6 +397,12 @@ function validateEvening(json, res, opts) {
       reqStr(E, base + '.strength', x.strength);
       reqStr(E, base + '.stocks', x.stocks);
       reqStr(E, base + '.catalyst', x.catalyst);
+      // kind（2026-09-24 新增，可选）：行业/概念 分类，供热点板块页分组。
+      // 🔴 可选字段守卫：缺失不告警（历史数据没有此字段）；值非法只 W 不拦 —— 内容判断不拦写。
+      if (x.kind !== undefined && x.kind !== null && x.kind !== '行业' && x.kind !== '概念') {
+        W.push({ code: 'W8', msg: '⚠️ [' + base + '.kind] 应为「行业」或「概念」，实到「' + x.kind +
+          '」—— 已放行，热点板块页会把它归入「全部」。' });
+      }
     });
     // H7 规则 17：条数严格相等（仅当 明日关注 > 0，与 health_check.js:258 同口径）
     if (tmrLen > 0 && ev['板块热点'].length !== tmrLen) {

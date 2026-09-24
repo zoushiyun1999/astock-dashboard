@@ -485,6 +485,30 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     eq(fileText(f), before, '#20.4 文件未变');
   }
 
+  // 4b 板块热点 kind 字段（2026-09-24 新增，可选）：缺失合法；非法值 W8 不拦；合法值无警告
+  {
+    const base = eveningJson();
+    const mkKind = (k) => {
+      const j = JSON.parse(JSON.stringify(base));
+      j.evening['板块热点'].forEach((x) => { if (k !== undefined) x.kind = k; else delete x.kind; });
+      return j;
+    };
+    const vOf = (k) => mr.validate('evening', mkKind(k), {});
+    ok(vOf(undefined).warnings.every((w) => w.code !== 'W8'), '#20.23 kind 缺失（历史数据）→ 无 W8');
+    ok(vOf('概念').warnings.every((w) => w.code !== 'W8'), '#20.23 kind=概念 → 无 W8');
+    ok(vOf('行业').warnings.every((w) => w.code !== 'W8'), '#20.23 kind=行业 → 无 W8');
+    ok(vOf('半导体').warnings.some((w) => w.code === 'W8'), '#20.23 kind=半导体（非法值）→ W8 警告');
+    ok(mr.validate('evening', mkKind('半导体'), {}).errors.length === 0, '#20.23 非法 kind 不产生 H 级错误（不拦写）');
+    // kind 透传：合并后数据保留该字段（板块页分组依赖它）
+    const f2 = tmpFile(dataSrc(0));
+    const withKind = JSON.parse(JSON.stringify(base));
+    withKind.evening['板块热点'][0].kind = '概念';
+    run('evening', jsonFile(withKind), f2, { now: '2026-09-15 21:05' });
+    const d2 = readData(f2);
+    const merged = d2.reports[0].evening['板块热点'];
+    eq(merged[0].kind, '概念', '#20.23 合并后 kind=概念 透传');
+  }
+
   // 5 日期格式错误（H1）
   {
     const bad = morningJson({ date: '2026/09/15' });
