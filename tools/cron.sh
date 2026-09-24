@@ -143,6 +143,8 @@ case "$TASK" in
       node tools/track.js || log "· track.js 失败（不阻塞发布；前端将显示暂无走势数据）"
       bash tools/publish.sh "次日验证 + 走势跟踪 $DAY"
       rc=$?
+      # 自检兜底（2026-09-24）：契约/资源/账本/两套单测，软步骤 —— 失败只记日志不回滚
+      node tools/selfcheck.js || log "· selfcheck 有失败（见上，请人工复核）"
     fi
     ;;
   health)

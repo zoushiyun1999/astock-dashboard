@@ -312,6 +312,17 @@ docs/              方案与说明文档
     - **改动前端后**：跑 `bash tools/bump_version.sh`（已串联）或单独 `node tools/code_version.js`；
       忘记盖章会被 #21.7 断言拦下。
 
+37. 🔴 **推送/收尾前跑 `node tools/selfcheck.js`（改动前端后加 `--online`）**（2026-09-24 起）。
+    它把本会话踩过的每一类 bug 固化成守卫：滑块公式两处一致（renderPicks vs positionSubGlider）、
+    loadTrack 有 el.src 且失败清 TRACK_P、EMPTY_ICO 图标键合法、verifyBadge 调用点带 code+ch、
+    cv 章不漂移、CSS 类有定义、数据契约（reports 升序/账本/track.js 结构）、两套单元测试。
+    - 每条守卫对应一次真实事故（文件头有「案底」注释），**别删**；新增同类 bug 时**先加守卫再修**。
+    - cron.sh 的 verify 分支在发布后软调用（失败只记 cron.log 不回滚）。
+    - ⚠️ 守卫本身也会出 bug：selfcheck 首版就犯了两类 —— ① 哈希自己重新实现而不是复用
+      `code_version.js` 导出的 `computeHash`（两处维护，算出不同值假报警）；② `check()` 不 await
+      async 检查函数。**检查器与被检查代码同样要测**（负样本：临时破坏一处，确认会红再恢复）。
+    - ECS 无浏览器，selfcheck 只做静态+数据+单测；CDP 截图/交互验证仍在本机做。
+
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 
 ```
