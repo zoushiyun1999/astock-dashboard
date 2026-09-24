@@ -750,20 +750,19 @@
     if (v.locked) {
       return '<span class="st-verify v-none">🔒 一字板·未成交</span>';
     }
-    // 实盘口径优先；老数据无 buyRet 时回退旧口径
-    var hasLive = (typeof v.buyRet === 'number' && isFinite(v.buyRet));
-    var r = hasLive ? v.buyRet : v.gain;
+    // 只显示一个数：应验日当天涨跌幅（收盘 vs 昨收），并标注「当天」。
+    // 用户 2026-09-24 定版：不要双数字并排（实盘 buyRet + 旧 gain 容易被误读成两个指标）。
+    var r = (typeof v.gain === 'number' && isFinite(v.gain)) ? v.gain :
+            (typeof v.buyRet === 'number' && isFinite(v.buyRet) ? v.buyRet : null);
+    if (r === null) return '<span class="st-verify v-none">➖</span>';
     var cls = r > 0 ? 'v-up' : r < 0 ? 'v-down' : 'v-none';
-    var txt = (r > 0 ? '+' : '') + r + '%';
-    var html = '<span class="st-verify ' + cls + '">' + (r > 0 ? '✅' : r < 0 ? '❌' : '➖') + txt + '</span>';
+    var html = '<span class="st-verify ' + cls + '">' + (r > 0 ? '✅' : r < 0 ? '❌' : '➖') +
+      '当天' + (r > 0 ? '+' : '') + r + '%</span>';
     // 高开惩罚警示（2026-09-22 统计：高开>5% 追入 n=17，胜率 35.3%，平均净 -3.40%）
     if (typeof v.openPct === 'number' && isFinite(v.openPct) && v.openPct > 5) {
       html += '<span class="st-verify v-warn" ' +
         'title="历史统计：高开>5%的推荐按开盘买入，胜率仅35%、平均净亏3.4%（n=17）——不建议追">' +
         '⚠️高开' + v.openPct + '%·勿追</span>';
-    }
-    if (hasLive && typeof v.gain === 'number' && isFinite(v.gain)) {
-      html += '<span class="st-verify v-old-note v-old">' + (v.gain > 0 ? '+' : '') + v.gain + '%</span>';
     }
     return html;
   }
