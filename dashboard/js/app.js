@@ -527,7 +527,12 @@
         clearTimeout(timer);
         if (ok) {
           TRACK = window.TRACK || null;
-          if (TRACK) return res(TRACK);
+          if (TRACK) {
+            // 徽章（入场至今涨跌幅）依赖 TRACK：预取完成时若正停在选股页，重渲染一次让徽章现身。
+            // render() 只替换 Tab 内容，不影响已打开的走势抽屉。
+            try { if (curTab === 'picks') render(); } catch (e) {}
+            return res(TRACK);
+          }
         }
         TRACK_P = null;                              // 🔴 允许下一次点击重试
         rej(new Error(why || '加载失败'));
@@ -742,7 +747,7 @@
    *  次口径 = 旧 gain（验证日收盘涨跌幅，相对昨收），弱化显示并明确标注 [收盘]，
    *           避免被误读为"跟着开盘买能赚这么多"。
    *  一字板（locked）单独标记，不显示收益（买不进，收益无意义）。 */
-  function verifyBadge(v) {
+  function verifyBadge(v, code, ch) {
     if (!v) return '';
     if (v.hit === null || v.hit === undefined) {
       return '<span class="st-verify v-none">⏸ 停牌</span>';
@@ -750,14 +755,19 @@
     if (v.locked) {
       return '<span class="st-verify v-none">🔒 一字板·未成交</span>';
     }
-    // 只显示一个数：应验日当天涨跌幅（收盘 vs 昨收），并标注「当天」。
-    // 用户 2026-09-24 定版：不要双数字并排（实盘 buyRet + 旧 gain 容易被误读成两个指标）。
-    var r = (typeof v.gain === 'number' && isFinite(v.gain)) ? v.gain :
-            (typeof v.buyRet === 'number' && isFinite(v.buyRet) ? v.buyRet : null);
-    if (r === null) return '<span class="st-verify v-none">➖</span>';
-    var cls = r > 0 ? 'v-up' : r < 0 ? 'v-down' : 'v-none';
-    var html = '<span class="st-verify ' + cls + '">' + (r > 0 ? '✅' : r < 0 ? '❌' : '➖') +
-      '当天' + (r > 0 ? '+' : '') + r + '%</span>';
+    // 区间涨跌幅（2026-09-24 用户定版）：不再显示「当天涨跌幅」，改为
+    // **入场日开盘价买入 → 截至最新跟踪日收盘**的累计涨跌幅 —— 与「走势」抽屉同源同口径，
+    // 回答的是"如果我照着买，拿到现在是赚是亏"。数据来自 TRACK（懒加载+进选股页预取）；
+    // 没有跟踪记录（如今天刚推、尚未入场，或 21:40 前当日尚未回补）就不显示数字。
+    var html = '';
+    var s = code ? tkFind(ch + '|' + code + '|' + curDate) : null;
+    if (s && s.days && s.days.length) {
+      var r = s.days[s.days.length - 1].p;
+      var cls = r > 0 ? 'v-up' : r < 0 ? 'v-down' : 'v-none';
+      html += '<span class="st-verify ' + cls + '" ' +
+        'title="按入场日开盘价买入、持有至今的累计涨跌幅（相对入场价），每个交易日 21:40 后更新">' +
+        (r > 0 ? '✅' : r < 0 ? '❌' : '➖') + '入场至今' + (r > 0 ? '+' : '') + r + '%</span>';
+    }
     // 高开惩罚警示（2026-09-22 统计：高开>5% 追入 n=17，胜率 35.3%，平均净 -3.40%）
     if (typeof v.openPct === 'number' && isFinite(v.openPct) && v.openPct > 5) {
       html += '<span class="st-verify v-warn" ' +
@@ -771,7 +781,7 @@
     return '<li><div class="body">' +
       '<div class="nm">' + esc(x.name) +
       (x.sector ? '<span class="sec">' + esc(x.sector) + '</span>' : '') +
-      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'm') + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify, x.code, 'm') + trackBtn(x.code, 'm') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
@@ -791,7 +801,7 @@
     return '<li><span class="rank">' + (i + 1) + '</span><div class="body">' +
       '<div class="nm">' + esc(x.name) +
       (x.role ? '<span class="tag">' + esc(x.role) + '</span>' : '') +
-      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'e') + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify, x.code, 'e') + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
@@ -802,7 +812,7 @@
       '<div class="nm">' + esc(x.name) +
       (x.role ? '<span class="tag tag-gray">' + esc(x.role) + '</span>' : '') +
       '<span class="tag tag-gray">不参与</span>' +
-      stBadge(x.status) + verifyBadge(x.verify) + trackBtn(x.code, 'e') + '</div>' +
+      stBadge(x.status) + verifyBadge(x.verify, x.code, 'e') + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
   }
