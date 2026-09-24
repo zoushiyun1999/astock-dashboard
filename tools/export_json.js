@@ -57,8 +57,22 @@ const pad = (n) => String(n).padStart(2, '0');
 const stamp = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
   ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
 
+// 前端「代码版本」：由 tools/code_version.js 盖章在 index.html 的 <meta name="cv">。
+// 🔴 客户端拿它决定**要不要整页重载**（只有代码变了才重载；纯数据变化交给 60s 轮询就地更新）。
+//    2026-09-24 之前客户端比对的是 ?v= 时间戳，而它每次 publish 都变 → 数据更新也重载一次。
+//    读不到就写空串：客户端把空值当"未知"，**不重载**（fail-safe）。
+let codeVer = '';
+try {
+  const idx = fs.readFileSync(path.join(DASH, 'index.html'), 'utf8');
+  const mc = idx.match(/<meta\s+name="cv"\s+content="([0-9a-f]+)"\s*>/);
+  if (mc) codeVer = mc[1];
+} catch (e) {
+  console.error('⚠️ 读不到 index.html 的 cv 章：' + e.message + '（客户端将不做代码版本重载）');
+}
+
 const meta = {
   key: key,
+  code: codeVer,
   updatedAt: REPORTS.updatedAt || '',
   reports: (REPORTS.reports || []).length,
   bytes: Buffer.byteLength(payload),
@@ -67,5 +81,5 @@ const meta = {
 fs.writeFileSync(path.join(DASH, 'version.json'), JSON.stringify(meta, null, 2), 'utf8');
 
 console.log('已导出 data.json / version.json');
-console.log('  key=' + key + '  updatedAt=' + meta.updatedAt +
+console.log('  key=' + key + '  cv=' + (codeVer || '(无)') + '  updatedAt=' + meta.updatedAt +
   '  reports=' + meta.reports + '  ' + Math.round(meta.bytes / 1024) + 'KB');

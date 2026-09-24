@@ -12,7 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="A股速览">
-<link rel="stylesheet" href="css/style.css?v=202609241234">
+<link rel="stylesheet" href="css/style.css?v=202609241343">
+<meta name="cv" content="0ae94ac5debd">
 </head>
 <body>
 
@@ -88,34 +89,42 @@
 </div>
 
 <!-- 数据（定时任务自动写入，勿手改） -->
-<script src="data.js?v=202609241234"></script>
+<script src="data.js?v=202609241343"></script>
 <!-- 量价选股独立数据（与 data.js 隔离，防覆盖） -->
-<script src="screener.js?v=202609241234"></script>
+<script src="screener.js?v=202609241343"></script>
 <!-- 休市日（节假日，用于前端显示「休市」） -->
-<script src="holidays.js?v=202609241234"></script>
+<script src="holidays.js?v=202609241343"></script>
 <!-- 渲染逻辑 -->
-<script src="js/app.js?v=202609241234"></script>
+<script src="js/app.js?v=202609241343"></script>
 
-<!-- 破缓存自检：服务端无 Cache-Control，手机会缓存旧 HTML 导致更新看不见。
-     这里比对「当前页面引用的版本号」与「服务端最新 HTML 的版本号」，
-     不一致说明有新版本，自动重载一次（同一版本每次会话只刷一次）。 -->
+<!-- 破缓存自检（2026-09-24 改为「只在代码变化时重载」）。
+     🔴 原来比对的是资源版本号 ?v=202609241343<时间戳>，但它**每次 publish 都会 bump**（3~5 次/天），
+        且同时挂在 CSS 和 4 个 JS 上 → 纯数据更新也会整页重载一次。
+        观感就是"进去加载比较慢"：页面刚出来、正准备读，它闪一下又从头加载。
+     现在改比对 version.json 的 code 字段（= 前端代码内容的短哈希，由 tools/code_version.js
+     盖章进 <meta name="cv">、export_json.js 带进 version.json）：
+       · 只有 index.html / css / app.js 变了才整页重载
+       · 纯数据变化交给 app.js 里 60s 的 version.json 轮询**就地更新**，不再重载
+     顺带把探测文件从整个 HTML（约 3KB）换成 version.json（约 140B）。
+     fail-safe：拿不到 code（离线 / 部署中 / 旧版文件）**一律不重载**。 -->
 <script>
 (function () {
   try {
-    var link = document.querySelector('link[rel="stylesheet"]');
-    if (!link) return;
-    var m0 = link.getAttribute('href').match(/[?&]v=(\d+)/);
-    if (!m0) return;
-    var cur = m0[1];
+    var meta = document.querySelector('meta[name="cv"]');
+    if (!meta) return;
+    var cur = meta.getAttribute('content') || '';
+    if (!cur) return;
     setTimeout(function () {
-      fetch(location.pathname + '?_vc=' + Date.now(), { cache: 'no-store' })
-        .then(function (r) { return r.text(); })
-        .then(function (t) {
-          var m = t.match(/[?&]v=(\d+)/);
-          if (m && m[1] !== cur && !sessionStorage.getItem('_rl_' + m[1])) {
-            sessionStorage.setItem('_rl_' + m[1], '1');
-            location.replace(location.pathname + '?_f=' + m[1]);
-          }
+      // ?_c=<ts> 是必需的：只加 {cache:'no-store'} 只绕过浏览器缓存，
+      // CDN 边缘仍按 URL 缓存 version.json（max-age=600）→ 会拿到 10 分钟前的旧值。
+      fetch('version.json?_c=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var code = j && j.code;
+          if (!code || code === cur) return;
+          if (sessionStorage.getItem('_rl_' + code)) return;   // 防重载风暴
+          sessionStorage.setItem('_rl_' + code, '1');
+          location.replace(location.pathname + '?_f=' + code);
         })['catch'](function () {});
     }, 1000);
   } catch (e) {}

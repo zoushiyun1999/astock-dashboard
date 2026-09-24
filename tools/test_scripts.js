@@ -840,6 +840,101 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
   }
 }
 
+/* ══════════ #21 前端代码版本（cv）：只有代码变了才该触发整页重载 ══════════
+   背景：index.html 的破缓存自检原本比对 ?v= 时间戳，而它每次 publish 都 bump
+   （3~5 次/天）→ 纯数据更新也整页重载一次，用户观感"进去加载慢"。
+   现在改为比对 version.json.code = 前端代码内容哈希。
+   本组断言锁住三件事：①数据变化不得影响哈希 ②盖章本身不得影响哈希（自指陷阱）
+   ③已提交的 version.json.code 必须与 index.html 的章一致（防漂移）。 */
+{
+  console.log('\n#21 前端代码版本 cv（整页重载只在代码变化时发生）');
+  const cv = require('./code_version');
+
+  // — 在临时目录里造一份 dashboard，绝不碰真实文件 —
+  const cvDir = path.join(tmpDir, 'cvdash');
+  fs.mkdirSync(path.join(cvDir, 'css'), { recursive: true });
+  fs.mkdirSync(path.join(cvDir, 'js'), { recursive: true });
+  const HTML0 = '<!DOCTYPE html>\n<html><head>\n<link rel="stylesheet" href="css/style.css?v=202601010000">\n</head><body>\nX\n</body></html>\n';
+  const writeFixture = () => {
+    fs.writeFileSync(path.join(cvDir, 'index.html'), HTML0);
+    fs.writeFileSync(path.join(cvDir, 'css', 'style.css'), 'body{color:#000}\n');
+    fs.writeFileSync(path.join(cvDir, 'js', 'app.js'), 'var a=1;\n');
+  };
+  writeFixture();
+
+  // ① 核心不变量：数据文件不得进哈希（否则"削掉数据重载"就白做了）
+  ok(cv.CODE_FILES.indexOf('data.js') < 0, '#21.1 data.js 不在代码哈希里（数据变化不该触发重载）');
+  ok(cv.CODE_FILES.indexOf('screener.js') < 0, '#21.1 screener.js 不在代码哈希里');
+  ok(cv.CODE_FILES.indexOf('holidays.js') < 0, '#21.1 holidays.js 不在代码哈希里');
+  ok(cv.CODE_FILES.indexOf('js/app.js') >= 0 && cv.CODE_FILES.indexOf('css/style.css') >= 0,
+    '#21.1 真正的前端代码（app.js / style.css）在哈希里');
+
+  // ② 归一化：只改 ?v= 时间戳 → 哈希必须不变（否则又退回"每次发布都变"）
+  const h1 = cv.computeHash(cvDir);
+  fs.writeFileSync(path.join(cvDir, 'index.html'), HTML0.replace('202601010000', '202609241234'));
+  ok(cv.computeHash(cvDir) === h1, '#21.2 只改 ?v= 时间戳 → 哈希不变（归一化生效）');
+
+  // ③ normalizeHtml 的精确行为
+  ok(cv.normalizeHtml('<a href="x.css?v=123">') === '<a href="x.css?v=">',
+    '#21.3 normalizeHtml 抹掉 ?v=<数字>');
+  ok(cv.normalizeHtml('<x>\n<meta name="cv" content="abcdef">\n<y>') === '<x>\n<y>',
+    '#21.3 normalizeHtml 把 cv 章**整行删掉**（含换行）');
+
+  // ④ 自指陷阱：盖章前后哈希必须一致。
+  //    只抹 content 不删整行时，这里会挂（首次盖章写进去的是错值，要跑两遍才收敛）。
+  ok(cv.stamp(cvDir, h1) === true, '#21.4 首次盖章写入成功');
+  ok(cv.readStamp(cvDir) === h1, '#21.4 readStamp 能读回章');
+  ok(cv.computeHash(cvDir) === h1, '#21.4 盖章后哈希不变（无自指）');
+  ok(cv.stamp(cvDir, h1) === false, '#21.4 重复盖章幂等（不写盘）');
+
+  // ⑤ 真正的代码变化必须被捕获（否则要不要重载就失效了）
+  fs.writeFileSync(path.join(cvDir, 'js', 'app.js'), 'var a=2;\n');
+  const h2 = cv.computeHash(cvDir);
+  ok(h2 !== h1, '#21.5 改 app.js → 哈希变化（会触发重载）');
+  fs.writeFileSync(path.join(cvDir, 'css', 'style.css'), 'body{color:#111}\n');
+  const h3 = cv.computeHash(cvDir);
+  ok(h3 !== h2, '#21.5 改 style.css → 哈希变化');
+
+  // ⑥ 哈希形态与确定性
+  ok(/^[0-9a-f]{12}$/.test(h1), '#21.6 哈希是 12 位小写十六进制', h1);
+  ok(cv.computeHash(cvDir) === h3, '#21.6 同内容重复计算结果稳定');
+
+  // ⑦ 真实仓库集成：已提交的版本号不得漂移（漂移 = 客户端要么漏重载、要么反复重载）
+  const realIdx = fs.readFileSync(path.join(ROOT, 'dashboard', 'index.html'), 'utf8');
+  const stampM = realIdx.match(/<meta\s+name="cv"\s+content="([0-9a-f]+)"\s*>/);
+  ok(!!stampM, '#21.7 dashboard/index.html 里有 cv 章');
+  const realHash = cv.computeHash();
+  ok(stampM && realHash === stampM[1],
+    '#21.7 当前代码算出的哈希 == 已盖章的值（未漂移：改了前端要重跑 code_version.js）',
+    'compute=' + realHash + ' stamp=' + (stampM ? stampM[1] : '(无)'));
+  const vjson = JSON.parse(fs.readFileSync(path.join(ROOT, 'dashboard', 'version.json'), 'utf8'));
+  ok(vjson.code === (stampM ? stampM[1] : null),
+    '#21.7 version.json.code == index.html 的章（防两处漂移）',
+    'vjson=' + vjson.code + ' stamp=' + (stampM ? stampM[1] : '(无)'));
+
+  // ⑧ 客户端自检的源码守卫：不得退回比对 ?v=，且必须用 version.json
+  ok(!/_vc=/.test(realIdx), '#21.8 旧的自检（取整个 HTML 比 ?v=）已移除');
+  ok(/version\.json\?_c=/.test(realIdx), '#21.8 自检改为取 version.json（带 _c 破缓存参数）');
+  ok(/j\.code/.test(realIdx), '#21.8 自检比对的是 code 字段');
+  ok(/!_c=[\s\S]{0,400}no-store|no-store/.test(realIdx), '#21.8 自检请求带 no-store');
+  // 没有 code 时必须不重载（fail-safe）
+  ok(/if \(!code \|\| code === cur\) return;/.test(realIdx), '#21.8 拿不到 code 时不重载（fail-safe）');
+
+  // ⑨ 发布链路的顺序：盖章必须早于 export_json（否则 version.json 带不到新哈希）
+  //    ⚠️ 不能用 indexOf 直接找文件名：bump_version.sh 顶部注释里就提到过 export_json.js，
+  //       会比真正的调用行更早命中（2026-09-24 本人踩到，断言假失败）。
+  //       必须只比**非注释行**的行号。
+  const bump = fs.readFileSync(path.join(ROOT, 'tools', 'bump_version.sh'), 'utf8');
+  const bumpLines = bump.split('\n');
+  const firstExecLine = (needle) => bumpLines.findIndex(
+    (l) => l.indexOf(needle) >= 0 && !/^\s*#/.test(l));
+  const lCv = firstExecLine('code_version.js');
+  const lEx = firstExecLine('tools/export_json.js');
+  ok(lCv >= 0, '#21.9 bump_version.sh 真正调用了 code_version.js', 'line=' + (lCv + 1));
+  ok(lCv >= 0 && lEx >= 0 && lCv < lEx, '#21.9 盖章先于 export_json.js（哈希才带得进 version.json）',
+    'code_version@line' + (lCv + 1) + ' export_json@line' + (lEx + 1));
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 

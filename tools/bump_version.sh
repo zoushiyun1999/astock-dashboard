@@ -59,6 +59,15 @@ fi
 # 否则 dashboard/calendar/ 会无限膨胀并拖慢每次发布。
 "$NODE_BIN" "$WIN_DIR/tools/clean_calendar.js" --quiet || true
 
+# 前端代码版本盖章（必须先于 export_json.js —— 它要把这个哈希带进 version.json）
+#   客户端靠它判断「要不要整页重载」：只有 index.html / css / app.js 变了才重载，
+#   纯数据变化交给 app.js 里 60s 的 version.json 轮询就地更新（2026-09-24 之前
+#   客户端比对 ?v= 时间戳，而它每次 publish 都变 → 数据更新也重载一次）。
+#   幂等：归一化掉 ?v= 与自身 meta 后取内容哈希，代码没变就不写盘（不产生多余提交）。
+#   软步骤：失败只告警不阻塞发布（客户端的 fallback 是"不重载"，最坏 10 分钟自然过期；
+#   export_json.js 读不到章会打印 ⚠️，从这里能看出问题）。
+"$NODE_BIN" "$WIN_DIR/tools/code_version.js" || true
+
 # 导出 data.json / version.json（前端按 version.json 轻量轮询，避免每分钟拉全量 data.js）
 # ⚠️ 这一步失败必须让整条发布失败：data.js 已更新但 data.json 没更新时，
 #    前端轮询拿到的仍是旧版本，而 publish.sh 会照样 commit + push，

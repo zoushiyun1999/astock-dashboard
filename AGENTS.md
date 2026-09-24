@@ -295,12 +295,30 @@ docs/              方案与说明文档
     即可在本机真实模拟 Linux（只改 PATH **遮不住** bash 内建 `pwd`，必须 `enable -n`）。
     断言要带对照组（「修复前的写法必须 rc=2」），否则无法证明模拟真的生效。
 
+36. 🔴 **整页重载只在「前端代码」变化时发生 —— 靠 `index.html` 的 `<meta name="cv">` 与
+    `version.json` 的 `code` 比对**（2026-09-24 起）。`tools/code_version.js` 把前端代码的
+    **内容哈希**盖章进 index.html，`export_json.js` 再带进 version.json；客户端拿两者比对，
+    不一致才 `location.replace()`。
+    - **动机**：旧逻辑比对资源版本号 `?v=<时间戳>`，而它**每次 publish 都 bump**（3~5 次/天）
+      且同时挂在 CSS 和 4 个 JS 上 → **纯数据更新也会整页重载**，用户观感「进去加载慢」。
+      数据变化本就有 60s 的 `version.json` 轮询就地更新，重载只为代码服务。
+    - 🔴 **`CODE_FILES` 只放 `index.html` / `css/style.css` / `js/app.js`**。把
+      `data.js` / `screener.js` / `holidays.js` 塞进去会让这个修复**静默失效**（又退回"数据更新也重载"）。
+      `test_scripts.js` 的 **#21** 组会拦住这种改动，并检查「已盖章的值 == 当前代码的哈希」（防漂移）。
+    - 🔴 **归一化是必需的**：`index.html` 自己含 `?v=<时间戳>`，盖章又改写 meta 自身 →
+      不先抹掉这两处，哈希就会跟着时间戳变（`normalizeHtml()` 里 `?v` 抹值、cv meta **整行删除**）。
+      ⚠️ meta 必须**整行删（含换行）**，只抹 `content` 会让「未盖章 vs 已盖章」两种状态哈希不同，
+      首次写进去的是错值、要跑两遍才收敛（2026-09-24 实测踩到）。
+    - **改动前端后**：跑 `bash tools/bump_version.sh`（已串联）或单独 `node tools/code_version.js`；
+      忘记盖章会被 #21.7 断言拦下。
+
 ## 发布链路（改任何与"上线"相关的东西前先看这张图）
 
 ```
 写数据 → bash tools/publish.sh "说明"
            ├─ 陈旧 git 锁守卫（锁存在且无 git 进程 → 自动清除，见硬性规则 24）
-           ├─ bump_version.sh（版本号 + sort_reports + 日历图压缩/回收 + sync_holidays + export_json）
+           ├─ bump_version.sh（版本号 + sort_reports + 日历图压缩/回收 + sync_holidays
+           │                   + code_version 盖章 + export_json；见硬性规则 36）
            ├─ git commit
            ├─ .git/hooks/post-commit → tools/gh_push_api.js（GitHub Trees API）
            │    └─ 无 .gh-token 时：静默跳过，退出码 0（不阻塞本地提交）
