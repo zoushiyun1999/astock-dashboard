@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="热点板块">
-<link rel="stylesheet" href="css/style.css?v=202609242100">
+<link rel="stylesheet" href="css/style.css?v=202609251930">
 <style>
 /* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ──
    配色：浅色阅读主题 —— 主看板头部是深色渐变+白字，本页标题曾误用深色变量导致看不清。
@@ -135,6 +135,40 @@ body { padding-bottom: 24px; }
     var d = new Date(ds + 'T00:00:00');
     return isNaN(d) ? '' : '周' + '日一二三四五六'.charAt(d.getDay());
   }
+
+  /* 板块评级 chip（2026-09-25）：数据来自 sector_rank.js（东财收盘快照 × 规则引擎）。
+     SR 为 null（未生成/加载失败）→ 不渲染 chip，板块页一切照旧。 */
+  function rateChip(name) {
+    if (!SR || !SR.items) return '';
+    var it = null;
+    for (var i = 0; i < SR.items.length; i++) if (SR.items[i].name === name) { it = SR.items[i]; break; }
+    if (!it) return '';
+    var cls = { '可关注': 'r-ok', '过热勿追': 'r-hot', '退潮观望': 'r-fade', '中性': 'r-flat' }[it.rating] || 'r-flat';
+    return '<button class="sp-rate ' + cls + '" onclick="showRate(\'' + esc(name) + '\')" ' +
+      'title="点开看评级依据（东财行情 × 规则引擎，非荐股）">' + esc(it.rating) + '›</button>';
+  }
+  window.showRate = function (name) {
+    if (!SR || !SR.items) return;
+    var it = null;
+    for (var i = 0; i < SR.items.length; i++) if (SR.items[i].name === name) { it = SR.items[i]; break; }
+    if (!it) return;
+    var v = document.getElementById('rateViewer');
+    var rows =
+      '<div class="rv-row"><span>当日涨跌幅</span><b class="' + (it.chg > 0 ? 'up' : it.chg < 0 ? 'down' : '') + '">' +
+        (it.chg > 0 ? '+' : '') + it.chg + '%</b></div>' +
+      '<div class="rv-row"><span>主力净流入</span><b class="' + (it.inflowYi > 0 ? 'up' : it.inflowYi < 0 ? 'down' : '') + '">' +
+        (it.inflowYi > 0 ? '+' : '') + it.inflowYi + ' 亿</b></div>' +
+      '<div class="rv-row"><span>上涨 / 下跌家数</span><b>' + it.up + ' / ' + it.down + '</b></div>' +
+      '<div class="rv-rules"><b>评级依据</b><ul>' +
+        it.why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>' +
+      (it.matched !== it.name ? '<div class="rv-src">匹配到东财板块「' + esc(it.matched) + '」（' + (it.how === 'exact' ? '同名' : '名称包含）') + '</div>' : '') +
+      '<div class="rv-src">快照 ' + esc(SR.snapshotDate || '') + ' · ' + esc(SR.source || '东方财富') + '<br>' + esc(SR.disclaimer || '') + '</div>';
+    v.querySelector('.rv-body').innerHTML = '<div class="rv-title">' + esc(it.name) +
+      '<span class="sp-rate ' + ({ '可关注': 'r-ok', '过热勿追': 'r-hot', '退潮观望': 'r-fade', '中性': 'r-flat' }[it.rating]) + '">' +
+      esc(it.rating) + '</span></div>' + rows;
+    v.classList.add('open');
+  };
+  window.hideRate = function () { document.getElementById('rateViewer').classList.remove('open'); };
 
   function boot() {
   var reports = (window.REPORTS && window.REPORTS.reports) || [];
@@ -261,6 +295,7 @@ body { padding-bottom: 24px; }
           '<span class="nm">' + esc(x.name) + '</span>' +
           (curKind === 'all' && x.kind ? '<span class="sp-kind">' + esc(x.kind) + '</span>' : '') +
           badge +
+          rateChip(x.name) +
           '</div>' +
           (x.strength ? '<div><span class="sp-st">' + esc(x.strength) + '</span></div>' : '') +
           (x.stocks ? '<div class="stocks">' + esc(x.stocks) + '</div>' : '') +
@@ -302,17 +337,34 @@ body { padding-bottom: 24px; }
 
   // 数据动态加载：每次带时间戳请求 data.js，杜绝手机缓存旧数据
   // （主看板靠 bump_version.sh 刷 ?v=，独立页没有这个流程，自管缓存最稳）
-  if (window.REPORTS) { boot(); }
-  else {
+  // 板块评级（2026-09-25）并行加载，软依赖：失败只置 SR=null，板块页照常渲染
+  var SR = null;
+  function loadRating() {
+    return fetch('sector_rank.js?ts=' + Date.now())
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (t) { (new Function(t))(); SR = window.SECTOR_RATING || null; })
+      .catch(function () { SR = null; });
+  }
+  var pMain = window.REPORTS ? Promise.resolve() :
     fetch('data.js?ts=' + Date.now())
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-      .then(function (t) { (new Function(t))(); boot(); })
-      .catch(function (e) {
-        document.getElementById('app').innerHTML =
-          '<div class="sp-empty"><b>数据加载失败</b>' + esc(e.message) + ' —— 请稍后刷新重试。</div>';
-      });
-  }
+      .then(function (t) { (new Function(t))(); });
+  pMain.then(loadRating).then(function () { if (window.REPORTS) boot(); })
+    .catch(function (e) {
+      document.getElementById('app').innerHTML =
+        '<div class="sp-empty"><b>数据加载失败</b>' + esc(e.message) + ' —— 请稍后刷新重试。</div>';
+    });
+  if (window.REPORTS) loadRating().then(function () {
+    // 主数据是同步就绪的（boot 已跑过），评级到达后补渲染一次让 chip 现身
+    var sel = document.getElementById('dateSel');
+    if (sel && sel.value) render(sel.value);
+  });
 })();
 </script>
+<!-- 板块评级抽屉：固定底部滑入，白底（区别于看图用的深色遮罩） -->
+<div id="rateViewer" onclick="if(event.target===this)hideRate()">
+  <div class="rv-sheet"><div class="rv-body"></div>
+    <button class="rv-close" onclick="hideRate()">关闭</button></div>
+</div>
 </body>
 </html>

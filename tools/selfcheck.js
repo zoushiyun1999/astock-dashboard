@@ -195,6 +195,20 @@ function dataChecks() {
       detail: `${(T.series || []).length} 条明细（重复 key ${dup}），updatedAt=${T.updatedAt}` };
   });
 
+  // 板块评级（2026-09-25）：软依赖，文件不存在合法（尚未跑过/东财被掐）；存在则契约必须完整
+  check(G, 'dashboard/sector_rank.js 契约（评级四档内 / 每条带依据 / 带免责）', () => {
+    if (!fs.existsSync(path.join(ROOT, 'dashboard', 'sector_rank.js'))) {
+      return { ok: true, detail: '文件不存在（软依赖未跑过），跳过' };
+    }
+    const R = loadVar('dashboard/sector_rank.js', 'SECTOR_RATING');
+    if (!R || !Array.isArray(R.items)) return { ok: false, detail: 'items 缺失或非数组' };
+    const legal = ['可关注', '过热勿追', '退潮观望', '中性'];
+    const bad = R.items.filter(it => legal.indexOf(it.rating) < 0 || !Array.isArray(it.why) || !it.why.length);
+    return { ok: !bad.length && !!R.disclaimer && !!R.source,
+      detail: `${R.items.length} 条评级，快照 ${R.snapshotDate}` +
+        (bad.length ? '，非法条目: ' + bad.slice(0, 3).map(b => b.name).join(',') : '') };
+  });
+
   check(G, '效果统计的渠道覆盖 = series 的渠道集合', () => {
     const T = loadVar('dashboard/track.js', 'TRACK');
     const inStats = Object.keys(T.stats || {});

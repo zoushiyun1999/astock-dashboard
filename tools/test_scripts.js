@@ -1088,6 +1088,83 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
     '#22.8 track.js 是软步骤（失败不阻塞 verify 的成果发布）');
 }
 
+/* ══ #23 板块评级（sector_rating）：名称匹配 / 规则引擎 / 输出契约（2026-09-25）══
+ * 规则引擎是确定性可解释的 —— 断言锁的是「哪条规则在哪组数字下命中哪一级」，
+ * 匹配锁的是「大类语义」：包含匹配取成交额最大者，不是名字最短。 */
+{
+  console.log('\n#23 板块评级（匹配 / 规则引擎 / 产出契约）');
+  const sr = require('./sector_rating');
+
+  // — ① normalizeName —
+  eq(sr.normalizeName('机器人概念'), '机器人', '#23.1 去「概念」后缀');
+  eq(sr.normalizeName(' 光通信 板块 '), '光通信', '#23.1 去空白与「板块」');
+  eq(sr.normalizeName('半导体／芯片（相关）'), '半导体／芯片', '#23.1 去括号注释');
+
+  // — ② matchSector：精确 > 包含；包含取成交额最大（大类语义）—
+  const pool = [
+    { name: '机器人执行器', turnover: 1e8 },
+    { name: '人形机器人', turnover: 5e8 },
+    { name: '机器人概念', turnover: 9e8 },
+    { name: '医药电商', turnover: 2e8 },
+    { name: '生物医药', turnover: 7e8 },
+    { name: '光通信', turnover: 4e8 },
+  ];
+  eq(sr.matchSector('机器人概念', pool).how, 'exact', '#23.2 同名精确优先');
+  eq(sr.matchSector('机器人', pool).row.name, '机器人概念', '#23.2 包含匹配取成交额最大（大类语义，勿回退成名字最短）');
+  eq(sr.matchSector('医药', pool).row.name, '生物医药', '#23.2 「医药」应到大板块，不是医药电商');
+  eq(sr.matchSector('光通信', pool).row.name, '光通信', '#23.2 名字含后缀差异仍精确命中');
+  ok(sr.matchSector('华字辈', pool) === null, '#23.2 自创概念匹配不到 → null（不硬凑）');
+  ok(sr.matchSector('', pool) === null, '#23.2 空名 → null');
+
+  // — ③ rateRules：四档 + 优先级 —
+  eq(sr.rateRules(5, 1e8, 60, 40).rating, '过热勿追', '#23.3 涨幅>4% → 过热（即便资金流入）');
+  eq(sr.rateRules(3, -1e8, 70, 30).rating, '过热勿追', '#23.3 涨>2% 且资金净流出 → 价涨钱出');
+  eq(sr.rateRules(-1, -2e8, 30, 70).rating, '退潮观望', '#23.3 资金流出+上涨占比<45% → 退潮');
+  eq(sr.rateRules(1, 2e8, 60, 40).rating, '可关注', '#23.3 资金正+广度≥55% → 可关注');
+  eq(sr.rateRules(0.5, -1e5, 50, 50).rating, '中性', '#23.3 信号不明 → 中性');
+  eq(sr.rateRules(null, 1e8, 1, 1).rating, '中性', '#23.3 数据不全 → 保守中性，不崩');
+  ok(sr.rateRules(3, -1e8, 70, 30).why.length >= 2, '#23.3 why 必须可解释（≥2 行依据）');
+
+  // — ④ rateAll：透传 + 未匹配收集 —
+  const r = sr.rateAll(
+    [{ name: '机器人', kind: '概念' }, { name: '华字辈' }, { name: '' }],
+    { industry: [], concept: pool.map(p => Object.assign({ chg: -1, inflow: -1e8, up: 1, down: 9 }, p)) },
+    '2026-09-25');
+  eq(r.items.length, 1, '#23.4 空 name 跳过（机器人命中、华字辈进 unmatched、空名剔除）');
+  eq(r.unmatched.join(','), '华字辈', '#23.4 未匹配收集');
+  eq(r.items[0].kind, '概念', '#23.4 kind 透传');
+  eq(r.snapshotDate, '2026-09-25', '#23.4 快照日期透传');
+  ok(typeof r.items[0].inflowYi === 'number', '#23.4 inflowYi 已换算成亿');
+
+  // — ⑤ 契约：dashboard/sector_rank.js 结构（若已生成）—
+  const OUT = path.join(ROOT, 'dashboard', 'sector_rank.js');
+  if (fs.existsSync(OUT)) {
+    const txt = fs.readFileSync(OUT, 'utf8');
+    ok(/^window\.SECTOR_RATING=/.test(txt), '#23.5 输出以 window.SECTOR_RATING= 开头');
+    const j = JSON.parse(txt.slice('window.SECTOR_RATING='.length).replace(/;$/, ''));
+    ok(Array.isArray(j.items) && j.items.length > 0, '#23.5 items 非空');
+    const legal = ['可关注', '过热勿追', '退潮观望', '中性'];
+    ok(j.items.every(it => legal.indexOf(it.rating) >= 0), '#23.5 rating 全部在四档内');
+    ok(j.items.every(it => Array.isArray(it.why) && it.why.length >= 1), '#23.5 每条评级带依据');
+    ok(!!j.disclaimer, '#23.5 带免责声明（非荐股口径）');
+    ok(!!j.source, '#23.5 带数据源标注');
+  } else {
+    console.log('  (dashboard/sector_rank.js 未生成，跳过 #23.5 契约断言)');
+  }
+
+  // — ⑥ job_evening 挂载：软依赖 + dry 不跑 + publish 之前 —
+  const je = fs.readFileSync(path.join(ROOT, 'tools', 'job_evening.js'), 'utf8');
+  const iSR = je.indexOf("tools/sector_rating.js");
+  const iCC = je.indexOf("tools/check_codes.js");
+  // 🔴 勿用全文件 indexOf 找 publish：晚报主流程之前还有日历分支的 publish 调用（09-25 踩过）
+  const iPub = je.indexOf("tools/publish.sh", iSR);
+  ok(iSR > 0, '#23.6 job_evening 调用了 sector_rating');
+  ok(iCC > 0 && iSR > iCC && iPub > iSR, '#23.6 顺序：check_codes → sector_rating → publish（发布前生成才带得上）',
+    'sr@' + iSR + ' pub@' + iPub);
+  ok(/if \(!args\.dry\)/.test(je.slice(iSR - 200, iSR)), '#23.6 --dry 分支不跑（dry 不写盘）');
+  ok(/软依赖|不阻塞/.test(je.slice(iSR - 400, iSR)), '#23.6 注释声明软依赖（东财有风控前科，抓不到不能拖垮晚报）');
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 

@@ -1014,3 +1014,35 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
 .tab:active, .link-row a:active, .blogger-head:active { opacity: .62; }
 /* 可点卡片/行的轻按下底：不改变布局，只给一点点反馈 */
 .blogger-head { transition: background var(--t-fast), opacity var(--t-fast); border-radius: 6px; }
+
+/* ── 板块评级 chip + 依据抽屉（2026-09-25，板块页用；token 同源）── */
+.sp-rate { display: inline-flex; align-items: center; flex: none; margin-left: auto;
+  height: 22px; padding: 0 8px; border: 0; border-radius: var(--radius-pill);
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold); cursor: pointer; }
+.sp-rate.r-ok   { color: #b03a2e; background: #fdecea; }   /* 可关注：红=积极（A股习惯，涨红） */
+.sp-rate.r-hot  { color: var(--warn); background: var(--warn-bg); }  /* 过热勿追：琥珀 */
+.sp-rate.r-fade { color: var(--ink-2); background: var(--bg); border: 0.5px solid var(--line); } /* 退潮观望：灰 */
+.sp-rate.r-flat { color: var(--ink-3); background: var(--bg); }
+.sp-rate:active { transform: scale(.96); }
+#rateViewer { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.42);
+  opacity: 0; pointer-events: none; transition: opacity var(--t-base); }
+#rateViewer.open { opacity: 1; pointer-events: auto; }
+#rateViewer .rv-sheet { position: absolute; left: 10px; right: 10px; bottom: 10px;
+  background: var(--card); border-radius: 18px; padding: 18px 16px 14px;
+  transform: translateY(102%); transition: transform 320ms ease;
+  box-shadow: var(--nm-raise-lg); max-height: 76vh; overflow: auto; }
+#rateViewer.open .rv-sheet { transform: translateY(0); }
+.rv-title { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--ink);
+  display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+.rv-row { display: flex; justify-content: space-between; align-items: baseline;
+  padding: 7px 0; border-bottom: 0.5px solid var(--line); font-size: var(--fs-sm); }
+.rv-row span { color: var(--ink-2); }
+.rv-row b { font-variant-numeric: tabular-nums; font-weight: var(--fw-semibold); }
+.rv-row b.up { color: var(--up); } .rv-row b.down { color: var(--down); }
+.rv-rules { padding: 10px 0 0; font-size: var(--fs-sm); }
+.rv-rules > b { color: var(--ink-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
+.rv-rules ul { margin: 6px 0 0; padding-left: 16px; color: var(--ink); line-height: 1.65; }
+.rv-src { margin-top: 10px; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.6; }
+.rv-close { width: 100%; margin-top: 12px; height: var(--ctl-h); border: 0;
+  border-radius: var(--radius-md); background: var(--bg); color: var(--ink-2);
+  font-size: var(--fs-base); cursor: pointer; }

@@ -540,6 +540,16 @@ async function main() {
   /* ⑧ 代码校验 + 发布 */
   run('node', ['tools/check_codes.js', '--fix', '--prune']);
 
+  // 板块评级（2026-09-25，软依赖）：东财收盘快照 × 规则引擎 → dashboard/sector_rank.js。
+  // 失败只告警不阻塞发布（板块页对缺失文件自动降级为无 chip）。
+  if (!args.dry) {
+    const sr = run('node', ['tools/sector_rating.js']);
+    if (sr.code !== 0) {
+      console.warn('⚠️ sector_rating 失败（不阻塞发布）：' +
+        ((sr.stderr || sr.stdout || '').trim().slice(0, 300)));
+    }
+  }
+
   let pubInfo = '未发布（--no-publish）';
   if (args.publish) {
     const pu = run('bash', ['tools/publish.sh', '晚报 ' + today]);
