@@ -1069,3 +1069,9 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
   border: 2.5px solid var(--line-2); border-top-color: var(--accent); border-radius: 50%;
   animation: tkspin .8s linear infinite; }
 @keyframes tkspin { to { transform: rotate(360deg); } }
+
+/* 胜率着色（2026-09-26 用户定版）：≥50% 红（跑赢对半）、<50% 绿 */
+.tk-tbl td em.w-up { color: var(--up-ink); }
+.tk-tbl td em.w-down { color: var(--down-ink); }
+.tk-card-d i.w-up { color: var(--up-ink); }
+.tk-card-d i.w-down { color: var(--down-ink); }

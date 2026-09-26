@@ -639,7 +639,7 @@
     function tkStatsBody() {
     if (!TRACK || !TRACK.stats) return '<div class="tk-note">暂无统计数据。</div>';
     var at = TRACK.statAt || [0, 1, 3, 5, 10];
-    var COLS = { 0: '买入当天', 1: '持有1天', 3: '持有3天', 5: '持有5天', 10: '持有10天' };
+    var COLS = { 0: '买入当天', 1: '1天', 3: '3天', 5: '5天', 10: '10天' };   // 表格列头用短名（2026-09-26 用户：太宽）；"持有 N 个交易日"的语义在口径说明里
 
     /* ── ① 渠道结论卡：一渠道一卡，先给答案再看明细（2026-09-26 改版）──
        旧版「阅读困难」的根因：intro 长文 + 「一眼看懂」把表格数字原样复述一遍，
@@ -662,7 +662,7 @@
         else { verdict = '各持有期表现接近'; vcls = 'mid'; }
       } else { verdict = '远期还没样本'; vcls = 'mid'; }
       var tailHtml = tL
-        ? '<b class="' + (tL.avg >= 0 ? 'up' : 'down') + '">' + tkPct(tL.avg) + '</b><i>（' + Math.round(tL.win) + '% 赚）</i>'
+        ? '<b class="' + (tL.avg >= 0 ? 'up' : 'down') + '">' + tkPct(tL.avg) + '</b><i class="' + (tL.win >= 50 ? 'w-up' : 'w-down') + '">（' + Math.round(tL.win) + '%）</i>'
         : '<i>样本不足</i>';
       return '<div class="tk-card">' +
         '<div class="tk-card-h"><b>' + esc(TK_CH[ch] || '') + '</b>' +
@@ -687,7 +687,7 @@
         var a = c.at && c.at[t];
         if (!a || !a.n) return '<td><b class="flat">—</b><em title="还没有推荐走满这个天数，暂无数据">暂无</em></td>';
         return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
-          '<em>' + Math.round(a.win) + '% 赚·' + a.n + ' 回</em></td>';
+          '<em class="' + (a.win >= 50 ? 'w-up' : 'w-down') + '">' + Math.round(a.win) + '%·' + a.n + '回</em></td>';
       }).join('') + '</tr>';
     }).join('');
 
