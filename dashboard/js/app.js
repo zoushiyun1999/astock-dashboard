@@ -685,7 +685,7 @@
       if (!c) return '';
       return '<tr><th>' + esc(TK_CH[ch] || '') + '</th>' + tblAt.map(function (t) {
         var a = c.at && c.at[t];
-        if (!a || !a.n) return '<td><b class="flat">—</b><em>还没人拿这么久</em></td>';
+        if (!a || !a.n) return '<td><b class="flat">—</b><em title="还没有推荐走满这个天数，暂无数据">暂无</em></td>';
         return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
           '<em>' + Math.round(a.win) + '% 赚·' + a.n + ' 回</em></td>';
       }).join('') + '</tr>';
