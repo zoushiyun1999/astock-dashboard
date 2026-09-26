@@ -710,8 +710,18 @@
   }
 
   window.tkStats = function () {
-    loadTrack().then(function () { tkSheet('推荐效果统计', '累计账本', tkStatsBody()); })
-      .catch(function () { tkSheet('推荐效果统计', '', '<div class="tk-note">统计数据加载失败。</div>'); });
+    // 2026-09-26：点击**立即弹抽屉**给加载中反馈（与「走势」按钮同款处理）——
+    // 弱网下 loadTrack 可能要几秒，此前点击到抽屉出现之间零反馈 =「响应不及时」。
+    // 用户中途关闭则数据到达后不再弹回（查 tkViewer 是否还在）。
+    tkSheet('推荐效果统计', '累计账本', '<div class="tk-loading">正在获取统计数据…</div>');
+    loadTrack().then(function () {
+      if (!document.getElementById('tkViewer')) return;   // 用户已关闭
+      tkSheet('推荐效果统计', '累计账本', tkStatsBody());
+    }).catch(function (e) {
+      if (!document.getElementById('tkViewer')) return;   // 用户已关闭
+      tkSheet('推荐效果统计', '', '<div class="tk-note">统计数据加载失败（' + esc(e.message) + '）。' +
+        '<button class="tk-retry" type="button" onclick="tkStats()">重试</button></div>');
+    });
   };
 
   /** 选股页入口。一行高度，不挤头部、不动二级分段（顶部三行刚对齐好，别再塞东西）。 */
@@ -1304,13 +1314,14 @@
     // 不在这里同步的话，body.scrolled 会残留 → header 永久保持收起态
     // （日期淡出、上下留白变窄），且只在下次滚动时才恢复。
     requestAnimationFrame(syncScrolled);
-    // 🔴 选股页全是「走势」按钮 → 提前 2 秒把跟踪数据拉好，点了就是秒开。
+    // 🔴 选股页全是「走势」按钮 + 效果统计入口 → 进页就预取 track.js，点了秒开。
     //    只在选股页预取（其它页没有按钮），且TRACK_P 挂上后条件自然失效、不会重复拉。
-    //    延迟 2s：别和首屏渲染抢带宽。失败静默（点按时会再试并给反馈）。
+    //    延迟 300ms：给首屏渲染让路即可（2026-09-26 从 2s 提前——2s 内点效果统计的人
+    //    撞上"未预取"窗口，是「响应不及时」的另一半原因）。失败静默（点按会再试并给反馈）。
     if (tab === 'picks' && !TRACK && !TRACK_P) {
       setTimeout(function () {
         if (curTab === 'picks') loadTrack()['catch'](function () {});
-      }, 2000);
+      }, 300);
     }
   }
 

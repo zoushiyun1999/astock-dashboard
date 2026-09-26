@@ -1062,3 +1062,10 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
 .rv-close { width: 100%; margin-top: 12px; height: var(--ctl-h); border: 0;
   border-radius: var(--radius-md); background: var(--bg); color: var(--ink-2);
   font-size: var(--fs-base); cursor: pointer; }
+
+/* 效果统计抽屉：加载中态与失败重试（2026-09-26，与走势抽屉同款反馈） */
+.tk-loading { text-align: center; color: var(--ink-2); font-size: var(--fs-sm); padding: 26px 0; }
+.tk-loading::after { content: ''; display: block; margin: 10px auto 0; width: 18px; height: 18px;
+  border: 2.5px solid var(--line-2); border-top-color: var(--accent); border-radius: 50%;
+  animation: tkspin .8s linear infinite; }
+@keyframes tkspin { to { transform: rotate(360deg); } }
