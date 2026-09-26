@@ -954,8 +954,12 @@ footer { text-align: center; padding: 18px 0 8px; color: var(--ink-3); font-size
    原图只在「查看原图」查看器里才拉。展开/收起不重新下载。 */
 .cal-fold { position: relative; margin: 0 0 12px; border-radius: 12px; overflow: hidden;
   border: 0.5px solid var(--line); background: var(--card); }
-.cal-fold .cal-prev-img { display: block; width: 100%; }
-.cal-fold:not(.open) .cal-prev-img { height: 190px; object-fit: cover; object-position: top; }
+/* 2026-09-25 改版：一张日历一组——折叠态只露第一张图头（.cal-head-img），展开态显示全部（.cal-fold-body） */
+.cal-fold .cal-prev-img { display: block; width: 100%; margin: 0 0 2px; }
+.cal-fold.open .cal-prev-img:last-child { margin-bottom: 0; }
+.cal-fold:not(.open) .cal-fold-body { display: none; }
+.cal-fold:not(.open) .cal-head-img { display: block; width: 100%; height: 190px; object-fit: cover; object-position: top; }
+.cal-fold.open .cal-head-img { display: none; }
 .cal-fold .cal-fold-btn { height: 30px; padding: 0 14px; border: 0.5px solid var(--line);
   border-radius: var(--radius-pill); background: var(--card); color: var(--ink);
   font-size: var(--fs-xs); font-weight: var(--fw-medium); cursor: pointer; white-space: nowrap;

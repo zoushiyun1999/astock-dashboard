@@ -130,7 +130,7 @@ function staticChecks() {
 
   // G. 关键 CSS 类：JS 用到的必须在 style.css 有定义（改版遗留守卫）
   check(G, 'CSS 类守卫：JS 使用的 tk/sub/st-verify 类都有定义', () => {
-    const need = ['tk-link', 'tk-btn', 'tk-days', 'tk-tbl', 'sub-row', 'st-verify', 'v-up', 'v-down', 'v-warn', 'date-bar', 'db-group', 'db-latest', 'cal-fold', 'cal-prev-img', 'cal-fold-btn'];
+    const need = ['tk-link', 'tk-btn', 'tk-days', 'tk-tbl', 'sub-row', 'st-verify', 'v-up', 'v-down', 'v-warn', 'date-bar', 'db-group', 'db-latest', 'cal-fold', 'cal-prev-img', 'cal-fold-btn', 'cal-head-img', 'cal-fold-body'];
     const missing = need.filter(c => !new RegExp('\\.' + c + '[\\s,{.:]').test(css));
     const orphan = /\.tk-cta[\s,{.:]/.test(css);
     return { ok: !missing.length && !orphan, detail: missing.length ? '缺定义: ' + missing.join(',') : (orphan ? '.tk-cta 已废弃但 CSS 残留' : need.length + ' 个类全部有定义，无废弃残留') };

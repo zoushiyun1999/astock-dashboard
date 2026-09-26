@@ -932,23 +932,31 @@
       '<div class="cal-title">' + esc(c.title) + '</div>' +
       '<div class="cal-meta">发布于 ' + esc(c.publishedAt) + (c.url ? ' · <a href="' + esc(c.url) + '" target="_blank">查看原文 ↗</a>' : '') + '</div></div>';
 
-    // 日历全图内嵌（2026-09-24）：默认折叠（190px 只露图头），展开直接阅读。
+    // 日历全图内嵌（2026-09-25 改版）：一张日历的多张图合并为**一个折叠组、一个按钮**，
+    // 折叠态只露第一张图头（190px），点「展开全部 N 张」就地全展开。
     // 🔴 展开加载的是 _prev.webp 预览（720 宽 / 598~830KB，管线 optimize_calendar.py 生成），
     //    不是 2MB 原图；原图只进「查看原图」全屏查看器（放大/双指缩放才需要）。
     //    预览缺失（旧数据/生成失败）时 onerror 回退原图。
+    //    折叠图头与展开后的第一张是同一 URL → 浏览器只下载一次。
     if (c.images && c.images.length) {
       var total = c.images.length;
-      var figs = c.images.map(function (p, i) {
-        var pv = p.replace(/\.png$/i, '_prev.webp');
-        return '<figure class="cal-fold" id="calFold' + i + '">' +
-          '<img class="cal-prev-img" loading="lazy" decoding="async" alt="日历全图 ' + (i + 1) + '/' + total + '" ' +
-          'data-full="' + esc(p) + '" src="' + esc(pv) + '" ' +
-          'onerror="this.onerror=null;this.src=this.getAttribute(\'data-full\')">' +
-          '<button class="cal-fold-btn" type="button" onclick="toggleCalFold(' + i + ')">展开全图</button>' +
-          '</figure>';
+      var pvOf = function (p) { return p.replace(/\.png$/i, '_prev.webp'); };
+      var body = c.images.map(function (p, i) {
+        return '<img class="cal-prev-img" loading="lazy" decoding="async" alt="日历全图 ' + (i + 1) + '/' + total + '" ' +
+          'data-full="' + esc(p) + '" src="' + esc(pvOf(p)) + '" ' +
+          'onerror="this.onerror=null;this.src=this.getAttribute(\'data-full\')">';
       }).join('');
+      var btnLabel = total > 1 ? '展开全部 ' + total + ' 张' : '展开全图';
       html += sectionCard('日历全图', 'up',
-        '<div class="wl-desc">共 ' + total + ' 张 · 默认折叠，点「展开全图」直接阅读 · 小字要放大用底部原图</div>' + figs +
+        '<div class="wl-desc">共 ' + total + ' 张 · 一个按钮全部展开 · 小字要放大用底部原图</div>' +
+        '<figure class="cal-fold" id="calFold0">' +
+          '<img class="cal-head-img" loading="lazy" decoding="async" alt="日历图头预览" ' +
+            'data-full="' + esc(c.images[0]) + '" src="' + esc(pvOf(c.images[0])) + '" ' +
+            'onerror="this.onerror=null;this.src=this.getAttribute(\'data-full\')">' +
+          '<div class="cal-fold-body">' + body + '</div>' +
+          '<button class="cal-fold-btn" type="button" data-total="' + total + '" ' +
+            'onclick="toggleCalFold(0)">' + btnLabel + '</button>' +
+        '</figure>' +
         '<button class="cal-open" onclick="openCalViewer()">' +
         '<span>查看日历原图</span>' +
         '<span class="cal-open-meta">（高清 · 可双指缩放）</span>' +
@@ -970,13 +978,17 @@
   };
 
   /* ── 日历原图全屏查看器 ── */
-  /** 折叠/展开单张日历全图。展开不重新下载（预览图已在折叠态加载），只改高度与按钮文案 */
+  /** 折叠/展开整组日历图（2026-09-25：一张日历一组，不再每张各一个按钮）。
+   *  展开不重新下载（预览图已在折叠态由图头预热缓存），只改高度与按钮文案 */
   window.toggleCalFold = function (i) {
     var el = document.getElementById('calFold' + i);
     if (!el) return;
     var open = el.classList.toggle('open');
     var b = el.querySelector('.cal-fold-btn');
-    if (b) b.textContent = open ? '收起' : '展开全图';
+    if (b) {
+      var n = +b.getAttribute('data-total') || 1;
+      b.textContent = open ? '收起' : (n > 1 ? '展开全部 ' + n + ' 张' : '展开全图');
+    }
   };
 
   window.openCalViewer = function () {
