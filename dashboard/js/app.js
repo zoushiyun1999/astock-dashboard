@@ -673,14 +673,17 @@
     }).join('');
     if (!cards.replace(/<[^>]*>/g, '').trim()) return '<div class="tk-note">暂无统计数据。</div>';
 
-    /* ── ② 明细表：卡片下面给全量数字 ── */
-    var head = '<tr><th>渠道</th>' + at.map(function (t) {
+    /* ── ② 明细表：卡片下面给全量数字 ──
+       2026-09-26 用户定版：去掉「买入当天」列（结论卡里已有），表只留持有期列，
+       5 列挤成 73px/格的问题随之消失 */
+    var tblAt = at.filter(function (t) { return t !== 0; });
+    var head = '<tr><th>渠道</th>' + tblAt.map(function (t) {
       return '<th>' + (COLS[t] || '+' + t + '天') + '</th>';
     }).join('') + '</tr>';
     var rows = ['m', 'e', 's'].map(function (ch) {
       var c = TRACK.stats[ch];
       if (!c) return '';
-      return '<tr><th>' + esc(TK_CH[ch] || '') + '</th>' + at.map(function (t) {
+      return '<tr><th>' + esc(TK_CH[ch] || '') + '</th>' + tblAt.map(function (t) {
         var a = c.at && c.at[t];
         if (!a || !a.n) return '<td><b class="flat">—</b><em>还没人拿这么久</em></td>';
         return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
