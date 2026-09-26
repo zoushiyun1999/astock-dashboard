@@ -662,7 +662,7 @@
         else { verdict = '各持有期表现接近'; vcls = 'mid'; }
       } else { verdict = '远期还没样本'; vcls = 'mid'; }
       var tailHtml = tL
-        ? '<b class="' + (tL.avg >= 0 ? 'up' : 'down') + '">' + tkPct(tL.avg) + '</b><i>（胜' + Math.round(tL.win) + '%）</i>'
+        ? '<b class="' + (tL.avg >= 0 ? 'up' : 'down') + '">' + tkPct(tL.avg) + '</b><i>（' + Math.round(tL.win) + '% 赚）</i>'
         : '<i>样本不足</i>';
       return '<div class="tk-card">' +
         '<div class="tk-card-h"><b>' + esc(TK_CH[ch] || '') + '</b>' +
@@ -687,7 +687,7 @@
         var a = c.at && c.at[t];
         if (!a || !a.n) return '<td><b class="flat">—</b><em>还没人拿这么久</em></td>';
         return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
-          '<em>胜' + Math.round(a.win) + '%·' + a.n + '次</em></td>';
+          '<em>' + Math.round(a.win) + '% 赚·' + a.n + ' 回</em></td>';
       }).join('') + '</tr>';
     }).join('');
 
@@ -699,7 +699,7 @@
     return cards +
       '<table class="tk-tbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
       '<details class="tk-note-d"><summary>口径与样本说明（点开）</summary><div class="tk-note">' +
-      '· 表格每格上行 = <b>平均涨跌幅</b>；下行 = <b>胜·次数</b>（赚钱次数 ÷ 总次数）。<br>' +
+      '· 表格每格上行 = <b>平均每次赚多少</b>；下行 = <b>45% 赚 · 40 回</b> 的意思：这个渠道一共推荐过 40 回（走满该天数的），其中 45% 的回是赚的。<br>' +
       '· 「买入当天」= 推荐后第一个交易日，按当天<b>开盘价</b>买、按当天收盘算；' +
       '后面的列 = 从买入那天起再拿 N 个交易日。<br>' +
       '· 同一只票不同日期被推荐算不同次数；一字板（开=高=低=收，实际买不到）已剔除' +
