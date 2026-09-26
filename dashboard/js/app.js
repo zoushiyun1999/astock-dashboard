@@ -639,85 +639,71 @@
     function tkStatsBody() {
     if (!TRACK || !TRACK.stats) return '<div class="tk-note">暂无统计数据。</div>';
     var at = TRACK.statAt || [0, 1, 3, 5, 10];
-    // 列名不用「当日 / +N日」这种内部口径，直接说人话
     var COLS = { 0: '买入当天', 1: '持有1天', 3: '持有3天', 5: '持有5天', 10: '持有10天' };
 
+    /* ── ① 渠道结论卡：一渠道一卡，先给答案再看明细（2026-09-26 改版）──
+       旧版「阅读困难」的根因：intro 长文 + 「一眼看懂」把表格数字原样复述一遍，
+       同样的数要读两次。新版：卡片只给定性判断 + 两个关键数字；intro 删除；脚注折叠。 */
+    var cards = ['m', 'e', 's'].map(function (ch) {
+      var c = TRACK.stats[ch];
+      if (!c) return '';
+      var t0 = c.at && c.at[0];
+      var tL = null, tLn = 0;
+      at.forEach(function (t) {
+        var a = c.at && c.at[t];
+        if (a && a.n >= 5 && typeof a.avg === 'number') { tL = a; tLn = t; }
+      });
+      if (!t0 || typeof t0.avg !== 'number') return '';
+      var verdict, vcls;
+      if (tL && tLn > 0) {
+        var d = +(tL.avg - t0.avg).toFixed(2);
+        if (d <= -1) { verdict = '拿得越久越亏 · 只适合当天'; vcls = 'bad'; }
+        else if (d >= 1) { verdict = '放几天反而更好'; vcls = 'good'; }
+        else { verdict = '各持有期表现接近'; vcls = 'mid'; }
+      } else { verdict = '远期还没样本'; vcls = 'mid'; }
+      var tailHtml = tL
+        ? '<b class="' + (tL.avg >= 0 ? 'up' : 'down') + '">' + tkPct(tL.avg) + '</b><i>（胜' + Math.round(tL.win) + '%）</i>'
+        : '<i>样本不足</i>';
+      return '<div class="tk-card">' +
+        '<div class="tk-card-h"><b>' + esc(TK_CH[ch] || '') + '</b>' +
+          '<span class="tk-vv ' + vcls + '">' + verdict + '</span></div>' +
+        '<div class="tk-card-d">买入当天 <b class="' + (t0.avg >= 0 ? 'up' : 'down') + '">' + tkPct(t0.avg) + '</b>' +
+          (tL ? '<i> → 持有' + tLn + '天</i> ' + tailHtml : '<i>（远期还没样本）</i>') + '</div>' +
+        '</div>';
+    }).join('');
+    if (!cards.replace(/<[^>]*>/g, '').trim()) return '<div class="tk-note">暂无统计数据。</div>';
+
+    /* ── ② 明细表：卡片下面给全量数字 ── */
     var head = '<tr><th>渠道</th>' + at.map(function (t) {
       return '<th>' + (COLS[t] || '+' + t + '天') + '</th>';
     }).join('') + '</tr>';
-
     var rows = ['m', 'e', 's'].map(function (ch) {
       var c = TRACK.stats[ch];
       if (!c) return '';
       return '<tr><th>' + esc(TK_CH[ch] || '') + '</th>' + at.map(function (t) {
         var a = c.at && c.at[t];
-        // 没样本时把原因写出来（不够天数），而不是只给一个孤零零的「—」
         if (!a || !a.n) return '<td><b class="flat">—</b><em>还没人拿这么久</em></td>';
-        // 胜率取整、前缀「胜」、后缀「次」：让两个数字自带含义，不用去读脚注
         return '<td><b class="' + tkPctCls(a.avg) + '">' + tkPct(a.avg) + '</b>' +
           '<em>胜' + Math.round(a.win) + '%·' + a.n + '次</em></td>';
       }).join('') + '</tr>';
     }).join('');
 
-    // 一眼看懂：表格只给数据不给结论，是「没看懂」的根因。
-    // 动态挑最好/最差的一格 + 每个渠道「放得越久越好/越差」的趋势。只挑样本 ≥5 的格子，避免被 1 次样本带偏。
-    var cells = [];
-    ['m', 'e', 's'].forEach(function (ch) {
-      var c = TRACK.stats[ch];
-      if (!c) return;
-      at.forEach(function (t) {
-        var a = c.at && c.at[t];
-        if (a && a.n >= 5 && typeof a.avg === 'number')
-          cells.push({ ch: ch, t: t, avg: a.avg, win: a.win, n: a.n });
-      });
-    });
-    var take = '';
-    if (cells.length >= 2) {
-      cells.sort(function (a, b) { return b.avg - a.avg; });
-      var best = cells[0], worst = cells[cells.length - 1];
-      var say = function (c) {
-        return '<b class="' + tkPctCls(c.avg) + '">' + tkPct(c.avg) + '</b>、' +
-          Math.round(c.win) + '% 赚钱（' + c.n + ' 次）';
-      };
-      var lis = ['<li>表现最好：' + TK_CH[best.ch] + ' ' + (COLS[best.t] || '') + ' → ' + say(best) + '</li>'];
-      if (worst !== best && worst.avg < 0)
-        lis.push('<li>表现最差：' + TK_CH[worst.ch] + ' ' + (COLS[worst.t] || '') + ' → ' + say(worst) + '</li>');
-      // 渠道级趋势：拿得越久越好 / 越差 —— 这是最能指导操作的结论
-      ['m', 'e', 's'].forEach(function (ch) {
-        var c = TRACK.stats[ch];
-        if (!c) return;
-        var t0 = c.at && c.at[0], tL = null, tLn = 0;
-        at.forEach(function (t) { var a = c.at && c.at[t]; if (a && a.n >= 5) { tL = a; tLn = t; } });
-        if (!t0 || !tL || tLn <= 0) return;
-        if (typeof t0.avg !== 'number' || typeof tL.avg !== 'number') return;
-        var d = +(tL.avg - t0.avg).toFixed(2);
-        if (Math.abs(d) < 1) return;                       // 变化太小就不说
-        lis.push('<li>' + TK_CH[ch] + '：' + (d < 0
-          ? '拿得越久越差（当天 <b class="up">' + tkPct(t0.avg) + '</b> → 持有 ' + tLn + ' 天 <b class="down">' + tkPct(tL.avg) + '</b>），只适合短线'
-          : '放几天反而更好（当天 ' + tkPct(t0.avg) + ' → 持有 ' + tLn + ' 天 <b class="up">' + tkPct(tL.avg) + '</b>）') + '</li>');
-      });
-      take = '<div class="tk-take"><div class="tk-take-t">一眼看懂（当前累计数据）</div><ul>' +
-        lis.join('') + '</ul></div>';
-    }
-
+    /* ── ③ 口径说明收进 details 默认折叠：解释文字不该占阅读动线 ── */
     var lk = ['m', 'e', 's'].reduce(function (n, ch) {
       return n + (((TRACK.stats[ch] || {}).locked) || 0);
     }, 0);
 
-    return '<div class="tk-intro">这张表回答一个问题：<b>按某渠道的推荐，在推荐后第一个交易日' +
-      '以开盘价买入、持有 N 个交易日后卖出，结果如何？</b><br>例：晚报 09-23 推荐某股 → ' +
-      '09-24 开盘价买入 →「买入当天」看 09-24 收盘，「持有3天」看第 3 个交易日后的收盘。</div>' +
-      take +
+    return cards +
       '<table class="tk-tbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
-      '<div class="tk-note" style="margin-top:12px">' +
-      '· 每格上行 = <b>平均涨跌幅</b>；下行 = <b>胜·次数</b>（赚钱次数 ÷ 总次数）。<br>' +
+      '<details class="tk-note-d"><summary>口径与样本说明（点开）</summary><div class="tk-note">' +
+      '· 表格每格上行 = <b>平均涨跌幅</b>；下行 = <b>胜·次数</b>（赚钱次数 ÷ 总次数）。<br>' +
       '· 「买入当天」= 推荐后第一个交易日，按当天<b>开盘价</b>买、按当天收盘算；' +
       '后面的列 = 从买入那天起再拿 N 个交易日。<br>' +
       '· 同一只票不同日期被推荐算不同次数；一字板（开=高=低=收，实际买不到）已剔除' +
       (lk ? ' ' + lk + ' 次' : '') + '。<br>' +
       '· 样本是<b>累计账本</b>，不会被报告的 7 期轮换清掉 —— 越右边的列样本越少，' +
       '但越接近长期持有的真实结果。<br>' +
-      '· 涨跌幅未扣手续费；往期表现不构成未来保证。</div>';
+      '· 涨跌幅未扣手续费；往期表现不构成未来保证。</div></details>';
   }
 
   window.tkStats = function () {
