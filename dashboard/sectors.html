@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="热点板块">
-<link rel="stylesheet" href="css/style.css?v=202609251930">
+<link rel="stylesheet" href="css/style.css?v=202609272000">
 <style>
 /* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ──
    配色：浅色阅读主题 —— 主看板头部是深色渐变+白字，本页标题曾误用深色变量导致看不清。
@@ -79,6 +79,10 @@ body { padding-bottom: 24px; }
   white-space: nowrap;
 }
 .sp-streak.cold { color: var(--ink-2); background: var(--brand-soft); }
+/* 轮动趋势色（2026-09-27）：主线=强持续琥珀强调 / 持续=常规琥珀 / 反复=蓝（断后重回）/ 新=灰（同 .cold） */
+.sp-streak.main { color: #B54708; background: #FFE9D6; font-weight: 700; }
+.sp-streak.cont { color: #8A5300; background: #FDF6E7; }
+.sp-streak.back { color: #1D4ED8; background: #E8F0FE; }
 /* 行业/概念 小标（「全部」视图里挂在板块名后；分组视图里不显示） */
 .sp-kind {
   font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--accent-deep);
@@ -221,6 +225,9 @@ body { padding-bottom: 24px; }
     // p = 所选日期在 secDates 中的下标。连续期数：中间「没有板块数据的期」被整体排除在
     // secDates 之外（天然跳过、不断档），一旦某期有板块数据但没有该板块 → 断。
     // last5 = 含本期在内最近 5 期板块数据中上榜次数。
+    // trend（2026-09-27 借鉴 TickFlow 轮动概念）：基于连续期数 + 近 5 期频次给定性，
+    // 纯前端、无新数据 ——
+    //   streak>=4 主线（强持续）/ 2-3 持续 / streak==1 且 last5>=2 反复（断后重回）/ 否则 新。
     var streak = 0, last5 = 0;
     for (var j = p; j >= 0; j--) {
       if (secDates[j].map[name]) {
@@ -228,7 +235,11 @@ body { padding-bottom: 24px; }
         if (p - j < 5) last5++;
       } else break;
     }
-    return { streak: streak, last5: last5 };
+    var trend = 'new', tlabel = '新';
+    if (streak >= 4) { trend = 'main'; tlabel = '主线'; }
+    else if (streak >= 2) { trend = 'cont'; tlabel = '持续'; }
+    else if (last5 >= 2) { trend = 'back'; tlabel = '反复'; }
+    return { streak: streak, last5: last5, trend: trend, tlabel: tlabel };
   }
 
   function render(ds) {
@@ -276,6 +287,17 @@ body { padding-bottom: 24px; }
     }
 
     summary.textContent = '共 ' + list.length + ' 个板块（行业 ' + counts.hy + ' · 概念 ' + counts.gn + '）· 数据来自 ' + ds + ' 晚报（博主复盘提炼）';
+    // 退潮提示（2026-09-27）：取上一期有数据的一期，列出「上期有、本期无」的板块，
+    // 补上轮动视角里缺失的"退潮"一维。仅当期非最新、且存在上一期时计算。
+    if (p > 0 && secDates[p - 1]) {
+      var prevNames = secDates[p - 1].list.map(function (x) { return x.name; });
+      var curNames = list.map(function (x) { return x.name; });
+      var faded = prevNames.filter(function (n) { return curNames.indexOf(n) < 0; });
+      if (faded.length) {
+        var shownFaded = faded.slice(0, 4).join('、') + (faded.length > 4 ? ' 等' + faded.length + '个' : '');
+        summary.textContent += ' · 退潮：' + shownFaded;
+      }
+    }
 
     var shown = list.filter(function (x) {
       if (curKind === 'all') return true;
@@ -286,10 +308,11 @@ body { padding-bottom: 24px; }
       (curKind === 'all' ? '（按强度排序）' : '（' + (curKind === 'hy' ? '行业' : '概念') + '·按强度排序）') + '</h3>' +
       kindTabs(curKind) +
       shown.map(function (x, i) {
-        var st = (p >= 0 && x.name) ? streakStats(x.name, p) : { streak: 1, last5: 1 };
+        var st = (p >= 0 && x.name) ? streakStats(x.name, p) : { streak: 1, last5: 1, trend: 'new', tlabel: '新' };
+        var trendIcon = { main: '★', cont: '↑', back: '↻', new: '▲' }[st.trend] || '▲';
         var badge = st.streak >= 2
-          ? '<span class="sp-streak">连续 ' + st.streak + ' 期</span>'
-          : '<span class="sp-streak cold">新上榜</span>';
+          ? '<span class="sp-streak ' + st.trend + '">' + trendIcon + ' 连续 ' + st.streak + ' 期 · ' + st.tlabel + '</span>'
+          : '<span class="sp-streak cold">' + trendIcon + ' ' + (st.trend === 'back' ? '回归' : '新上榜') + '</span>';
         return '<div class="sector">' +
           '<div class="sc-head"><span class="rank">' + (i + 1) + '</span>' +
           '<span class="nm">' + esc(x.name) + '</span>' +

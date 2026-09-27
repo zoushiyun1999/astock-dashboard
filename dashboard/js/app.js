@@ -839,15 +839,74 @@
       '</div>';
   }
 
+  /* ── 短线情绪面板（2026-09-27 借鉴 TickFlow/Vibe-Research）：
+     把 report 顶层已有的「大盘概况.metrics」+「连板梯队」压缩成短线 Tab 顶部一行市场温度。
+     零新数据源 —— 数据来自收盘快照，晚报任务已生成（与 renderEvening 的大盘概况同源）。 */
+  function metricCell(x) {
+    if (!x) return '';
+    var n = parseFloat(String(x.v).replace(/[^0-9.\-]/g, ''));
+    var cls = x.up === true ? ' up' : x.up === false ? ' down'
+      : (!isNaN(n) ? (n > 0 ? ' up' : (n < 0 ? ' down' : '')) : '');
+    // 炸板率是"越高越危险"的逆向指标，≥50% 标警示色（与 renderEvening 同口径）
+    var warn = '';
+    if (/炸板/.test(x.k)) {
+      var num = parseFloat(x.v);
+      if (!isNaN(num) && num >= 50) warn = ' warn';
+    }
+    return '<div class="metric' + warn + '"><div class="k">' + esc(x.k) + '</div>' +
+      '<div class="v' + cls + '">' + esc(x.v) + '</div>' +
+      (x.d ? '<div class="d">' + esc(x.d) + '</div>' : '') + '</div>';
+  }
+  /* 从连板梯队数组里提取最高板数 + 代表标的（如「4板：瑞尔特…」→ 4 / 瑞尔特） */
+  function topBoard(ladder) {
+    if (!ladder || !ladder.length) return null;
+    var max = 0, label = '';
+    ladder.forEach(function (t) {
+      var m = String(t).match(/(\d+)\s*板/);
+      if (m) {
+        var n = +m[1];
+        if (n > max) { max = n; label = String(t).replace(/^\d+\s*板[：:]/, '').split('（')[0].split('(')[0].trim(); }
+      }
+    });
+    return max ? { n: max, label: label } : null;
+  }
+  /* 情绪条拼接：连板高度 + 关键 metrics。无数据（老日期/未生成）时返回 ''，调用方安全。 */
+  function moodPanel(r) {
+    // 大盘概况 / 连板梯队 在 report.evening 上（renderEvening 接收的就是 evening 对象），
+    // 不是 report 顶层，这里必须走 r.evening 取。
+    var m = r && r.evening && r.evening['大盘概况'];
+    var ladder = r && r.evening && r.evening['连板梯队'];
+    if (!m && !ladder) return '';
+    var cells = [];
+    var tb = topBoard(ladder);
+    if (tb) cells.push('<div class="metric mood-hi"><div class="k">连板高度</div><div class="v">' + tb.n + '板</div>' +
+      (tb.label ? '<div class="d">' + esc(tb.label) + '</div>' : '') + '</div>');
+    var mt = m && m.metrics;
+    // 支持「涨停/跌停合并键」或「涨停家数/跌停家数」分离键；按优先级顺序取，避免重复。
+    var patterns = [/涨停家数|涨停\/跌停/, /跌停家数/, /封板率/, /炸板/, /上涨家数/, /下跌家数/, /成交额/];
+    var seen = {};
+    patterns.forEach(function (re) {
+      if (!mt) return;
+      for (var i = 0; i < mt.length; i++) {
+        if (mt[i] && re.test(mt[i].k) && !seen[mt[i].k]) { cells.push(metricCell(mt[i])); seen[mt[i].k] = true; break; }
+      }
+    });
+    if (!cells.length) return '';
+    return sectionCard('短线情绪 · 今日市场温度', 'rank1',
+      '<div class="metrics mood-grid">' + cells.join('') + '</div>' +
+      '<div class="wl-desc">连板高度 / 封板率 / 炸板率取自收盘数据，用于判断情绪高潮（谨慎接力）与冰点（可试错）。炸板率 ≥50% 标警示。</div>');
+  }
+
   function renderWatchlist(r, ds) {
     var bar = dateBar(ds, latestDate());
     var ev = r && r.evening, mo = r && r.morning;
     var today = (mo && mo['今日关注']) || [];
     var tmr = (ev && ev['明日关注']) || [];
     if (!today.length && !tmr.length) {
-      return bar + emptyFor(ds, '短线关注');
+      return bar + moodPanel(r) + emptyFor(ds, '短线关注');
     }
     var html = bar;
+    html += moodPanel(r);
 
     if (today.length) {
       html += sectionCard('今日可关注 · 来自早报', 'info',
