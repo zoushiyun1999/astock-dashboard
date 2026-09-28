@@ -779,7 +779,7 @@
 
   function todayLi(x) {
     return '<li><div class="body">' +
-      '<div class="nm">' + esc(x.name) +
+      '<div class="nm">' + esc(x.name) + buyTag(x) +
       (x.sector ? '<span class="sec">' + esc(x.sector) + '</span>' : '') +
       stBadge(x.status) + verifyBadge(x.verify, x.code, 'm') + trackBtn(x.code, 'm') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
@@ -797,9 +797,17 @@
     return mx >= 5;
   }
 
+  /** 买入适宜度标签（2026-09-28 用户要求：每只个股显式标注能否买入）
+   *  可跟（非观察、非≥5板高位风向标）→ 适合买入；高位风向标/不参与 → 观望。 */
+  function buyTag(p) {
+    return isWatchPick(p)
+      ? '<span class="tag tag-wait">观望</span>'
+      : '<span class="tag tag-buy">适合买入</span>';
+  }
+
   function pickLi(x, i) {
     return '<li><span class="rank">' + (i + 1) + '</span><div class="body">' +
-      '<div class="nm">' + esc(x.name) +
+      '<div class="nm">' + esc(x.name) + buyTag(x) +
       (x.role ? '<span class="tag">' + esc(x.role) + '</span>' : '') +
       stBadge(x.status) + verifyBadge(x.verify, x.code, 'e') + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
@@ -811,7 +819,7 @@
     return '<li><span class="rank rank-gray">👁</span><div class="body">' +
       '<div class="nm">' + esc(x.name) +
       (x.role ? '<span class="tag tag-gray">' + esc(x.role) + '</span>' : '') +
-      '<span class="tag tag-gray">不参与</span>' +
+      buyTag(x) +
       stBadge(x.status) + verifyBadge(x.verify, x.code, 'e') + trackBtn(x.code, 'e') + '</div>' +
       (x.reason ? '<div class="note">' + esc(x.reason) + '</div>' : '') +
       '</div></li>';
@@ -922,7 +930,7 @@
     }
 
     html += renderHotRepeat();
-    html += '<div class="card tip"><span class="ico">📌</span><span>以上为博主看好个股提炼 + 当前状态标注，仅供盯盘参考，不构成投资建议。红色状态=高位风险，绿色=低位相对安全，灰色=需验证。✅/❌ 为推荐后实际表现（次日验证）；⚠️高开=次日开盘涨幅超5%（历史统计该类追入为负收益，勿追）。👁 观察区为高位风向标，仅跟踪板块高度，不参与。</span></div>';
+    html += '<div class="card tip"><span class="ico">📌</span><span>以上为博主看好个股提炼 + 当前状态标注，仅供盯盘参考，不构成投资建议。红色状态=高位风险，绿色=低位相对安全，灰色=需验证。✅/❌ 为推荐后实际表现（次日验证）；⚠️高开=次日开盘涨幅超5%（历史统计该类追入为负收益，勿追）。👁 观察区为高位风向标，仅跟踪板块高度，不参与。<b>买入标签</b>：红色「适合买入」=模型认为可参与；灰色「观望」=高位风向标或风险待验证，不建议买。</span></div>';
     return html;
   }
 

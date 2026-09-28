@@ -583,7 +583,7 @@ body.scrolled .h-date { opacity: 0; }
 /* ── 状态徽章（个股当前状态）· 风险层三档 ── */
 .st-badge {
   display: inline-block; font-size: var(--fs-xs); font-weight: var(--fw-semibold);
-  border-radius: var(--radius-pill); padding: 1px 8px; line-height: var(--lh-tight); flex: none;
+  border-radius: var(--radius-pill); padding: 1px 8px; line-height: var(--lh-tight); flex: 0 1 auto; min-width: 0;
 }
 .st-badge.st-risk { color: var(--risk-high); background: var(--risk-high-bg); }  /* 高位/风险 */
 .st-badge.st-low  { color: var(--risk-low);  background: var(--risk-low-bg);  }  /* 低位/补涨 · 蓝，非绿 */
@@ -601,7 +601,7 @@ body.scrolled .h-date { opacity: 0; }
 .watch li:nth-child(1) .rank { background: var(--rank-1); color: #fff; }
 .watch li:nth-child(2) .rank { background: var(--rank-2); color: #fff; }
 .watch li:nth-child(3) .rank { background: var(--rank-3); color: #fff; }
-.watch .body { flex: 1; }
+.watch .body { flex: 1; min-width: 0; }  /* 2026-09-28 防长标签撑爆 flex item */
 .watch .nm { font-size: var(--fs-lg); font-weight: var(--fw-bold); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 /* 角色标签：结构层，不用红色 */
 .watch .tag {
@@ -683,6 +683,9 @@ body.scrolled .h-date { opacity: 0; }
 .watch-gray { opacity: .62; }
 .watch-gray .rank-gray { background: var(--line); color: var(--ink-3); }
 .watch .tag-gray { color: var(--ink-3); background: var(--risk-none-bg); }
+/* 买入适宜度标签（2026-09-28）：红=适合买入（A股涨红语义），灰=观望 */
+.watch .tag-buy { color: var(--up-ink); background: var(--up-soft); }
+.watch .tag-wait { color: var(--ink-3); background: var(--risk-none-bg); }
 /* v7 量价表「次日实盘」列：净收益芯片复用 st-verify 配色；未标列淡显示 */
 .sc-ver .st-verify { margin-left: 0; }
 .hot-rep { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
