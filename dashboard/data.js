@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-09-29 21:05",
+  "updatedAt": "2026-09-29 21:30",
   "calendar": [
     {
       "id": "4ep5unl7h92",
@@ -4232,84 +4232,244 @@ window.REPORTS = {
             "code": "600630",
             "sector": "传媒",
             "status": "3板 中位 一字板",
-            "reason": "重大资产重组推进中，5连板后今日3板一字板，重组预期强"
+            "reason": "重大资产重组推进中，5连板后今日3板一字板，重组预期强",
+            "verify": {
+              "gain": -2.9,
+              "hit": false,
+              "price": 7.71,
+              "code": "600630",
+              "at": "2026-09-29",
+              "open": 7.87,
+              "openPct": -0.88,
+              "buyRet": -2.03,
+              "netRet": -2.23,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "国轩高科",
             "code": "002074",
             "sector": "新能源汽车",
             "status": "未连板 中位",
-            "reason": "大众中国拟协议转让股份及组建合资公司，利好催化"
+            "reason": "大众中国拟协议转让股份及组建合资公司，利好催化",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 28.68,
+              "code": "002074",
+              "at": "2026-09-29",
+              "open": 27.5,
+              "openPct": 5.49,
+              "buyRet": 4.29,
+              "netRet": 4.08,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "联创光电",
             "code": "600363",
             "sector": "电子",
             "status": "未连板 中位",
-            "reason": "实施其他风险警示，停牌复牌"
+            "reason": "实施其他风险警示，停牌复牌",
+            "verify": {
+              "gain": null,
+              "hit": null,
+              "price": null,
+              "code": "600363",
+              "at": "2026-09-29",
+              "by": "hist",
+              "note": "停牌/无数据（该交易日无K线）"
+            }
           },
           {
             "name": "园林股份",
             "code": "605303",
             "sector": "建筑装饰",
             "status": "未连板 中位",
-            "reason": "拟定增收购华澜微93.5%股份，临停复牌"
+            "reason": "拟定增收购华澜微93.5%股份，临停复牌",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 26.05,
+              "code": "605303",
+              "at": "2026-09-29",
+              "open": 26.05,
+              "openPct": 10.01,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "*ST亿通",
             "code": "000989",
             "sector": "计算机",
             "status": "未连板 中位",
-            "reason": "撤销退市风险警示，临停复牌"
+            "reason": "撤销退市风险警示，临停复牌",
+            "verify": {
+              "gain": -0.12,
+              "hit": false,
+              "price": 8.55,
+              "code": "000989",
+              "at": "2026-09-29",
+              "open": 8.52,
+              "openPct": -0.47,
+              "buyRet": 0.35,
+              "netRet": 0.15,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "广汽集团",
             "code": "601238",
             "sector": "汽车",
             "status": "未连板 中位",
-            "reason": "拟定增收购一汽丰田50%股权，临停复牌"
+            "reason": "拟定增收购一汽丰田50%股权，临停复牌",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 5.6,
+              "code": "601238",
+              "at": "2026-09-29",
+              "open": 5.6,
+              "openPct": 10.02,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "三峡新材",
             "code": "600293",
             "sector": "新材料",
             "status": "未连板 中位",
-            "reason": "筹划购买珠海赛纬不低于53.14%股份，停牌预计不超10个交易日"
+            "reason": "筹划购买珠海赛纬不低于53.14%股份，停牌预计不超10个交易日",
+            "verify": {
+              "gain": null,
+              "hit": null,
+              "price": null,
+              "code": "600293",
+              "at": "2026-09-29",
+              "by": "hist",
+              "note": "停牌/无数据（该交易日无K线）"
+            }
           },
           {
             "name": "博纳影业",
             "code": "001330",
             "sector": "传媒",
             "status": "未连板 中位",
-            "reason": "首部AI超写实院线电影《三星堆：未来往事》正式定档2026年10月23日"
+            "reason": "首部AI超写实院线电影《三星堆：未来往事》正式定档2026年10月23日",
+            "verify": {
+              "gain": 4.25,
+              "hit": true,
+              "price": 6.63,
+              "code": "001330",
+              "at": "2026-09-29",
+              "open": 6.8,
+              "openPct": 6.92,
+              "buyRet": -2.5,
+              "netRet": -2.69,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "优利德",
             "code": "688628",
             "sector": "仪器仪表",
             "status": "未连板 中位",
-            "reason": "688629（原文优利德为688628，此处根据历史记录修正代码为688629）"
+            "reason": "688629（原文优利德为688628，此处根据历史记录修正代码为688629）",
+            "verify": {
+              "gain": -4.26,
+              "hit": false,
+              "price": 88.07,
+              "code": "688628",
+              "at": "2026-09-29",
+              "open": 89.31,
+              "openPct": -2.91,
+              "buyRet": -1.39,
+              "netRet": -1.59,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "普源精电",
             "code": "688337",
             "sector": "仪器仪表",
             "status": "未连板 中位",
-            "reason": "1板+换手+VNA+芯片"
+            "reason": "1板+换手+VNA+芯片",
+            "verify": {
+              "gain": -3.64,
+              "hit": false,
+              "price": 49.74,
+              "code": "688337",
+              "at": "2026-09-29",
+              "open": 50,
+              "openPct": -3.14,
+              "buyRet": -0.52,
+              "netRet": -0.72,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东方中科",
             "code": "002819",
             "sector": "计算机",
             "status": "未连板 中位",
-            "reason": "1板+换手+VNA"
+            "reason": "1板+换手+VNA",
+            "verify": {
+              "gain": -1.16,
+              "hit": false,
+              "price": 24.68,
+              "code": "002819",
+              "at": "2026-09-29",
+              "open": 23.81,
+              "openPct": -4.65,
+              "buyRet": 3.65,
+              "netRet": 3.45,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "电科思仪",
             "code": "300573",
             "sector": "仪器仪表",
             "status": "未连板 中位",
-            "reason": "1板+换手+光模块"
+            "reason": "1板+换手+光模块",
+            "verify": {
+              "gain": 0.31,
+              "hit": true,
+              "price": 35.69,
+              "code": "300573",
+              "at": "2026-09-29",
+              "open": 36.13,
+              "openPct": 1.55,
+              "buyRet": -1.22,
+              "netRet": -1.42,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
