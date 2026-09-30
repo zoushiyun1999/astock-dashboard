@@ -1195,11 +1195,32 @@
     return arr.length ? arr[arr.length - 1] : latestDate();
   }
 
+  /** 量价选股最近一期「有效」（非故障）日期。故障标记卡用它给"查看最近一期有效数据"出口，
+   *  避免出现"最新一期就是故障期→按钮跳回自己"的死循环。 */
+  function latestScOkDate() {
+    var arr = screenerList().filter(function (x) { return x && x.date && !x.fault; })
+      .map(function (x) { return x.date; }).sort();
+    return arr.length ? arr[arr.length - 1] : '';
+  }
+
   function renderScreener(ds) {
     var bar = dateBar(ds, latestScDate());
     var sc = screenerOn(ds);
     // 没有这一期的记录 → 按日期性质分别给出"休市 / 无数据 / 待更新"，不再一律写"待更新"
     if (!sc) return bar + emptyFor(ds, '量价选股');
+
+    // 🔴 上游故障标记（2026-09-30）：任务跑了但数据源挂了，写进 fault 标记而非静默跳过。
+    //    必须在此显式识别 —— 否则会落入下方「0 只符合条件」分支，把"故障"误报成"当天真没选出票"。
+    if (sc.fault) {
+      var fd = String(sc.date).slice(5).replace('-', '/');
+      var okDs = latestScOkDate();
+      var okBtn = okDs
+        ? '<button class="act" type="button" onclick="pickDay(\'' + esc(okDs) + '\')">查看最近一期有效数据 · ' + esc(String(okDs).slice(5).replace('-', '/')) + '</button>'
+        : '';
+      var reasonTxt = (sc.reason || '数据源（东财行情接口）在交易时段抓取失败，无法筛选，非「无符合条件个股」。') +
+        (sc.runAt ? '（标记于 ' + sc.runAt + '）' : '');
+      return bar + emptyCard('量价选股 · ' + fd + ' · 上游故障', reasonTxt, 'warn', okBtn);
+    }
 
     var c = sc.criteria || {};
     var cond = [

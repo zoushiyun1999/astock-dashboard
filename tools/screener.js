@@ -322,10 +322,33 @@ async function main() {
       console.log('  ℹ ' + fmtDate(now) + ' 为非交易日（周末/节假日）→ 正常跳过，不写入、不发布。');
       return;
     }
-    throw abortSc('全市场 0 只，但 ' + fmtDate(now) + ' 是交易日 → 判定为数据源故障，' +
-      '不是「没有符合条件个股」。本次不写入、不覆盖任何历史期。' +
-      '排查：① 用同域对照确认 push2 系列域名是否可达（如 quote.eastmoney.com 应正常）；' +
-      '② 用沙箱外进程（如 PowerShell）交叉验证，排除 agent 工具沙箱出网限制。');
+    // 🔴 上游故障标记（2026-09-30 新增）：交易日抓到全市场 0 只 = 数据源故障。
+    //   旧行为：throw abortSc → exit 2 + 不写盘，线上 SCREENER 停在上一交易日，
+    //   用户完全分不清"休市 / 未到点"还是"数据源挂了"（本次 09-28~09-30 连续缺失即此）。
+    //   现改为：写入一条 fault 标记到 dashboard/screener.js（按日期幂等覆盖当天），
+    //   前端 renderScreener 识别后显式提示"上游故障未更新"并给出"查看最近一期有效数据"按钮。
+    //   不触碰 data.js（reports/calendar 不变）、不覆盖任何历史期；exit 0 让 cron.sh 照常发布。
+    if (process.argv.includes('--dry')) {
+      console.error('  (--dry) 上游故障：若非 dry 将写入故障标记到 dashboard/screener.js（不发布）。');
+      return;
+    }
+    var faultResult = {
+      date: fmtDate(now),
+      runAt: fmtTime(now),
+      fault: true,
+      reason: '数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。' +
+        '通常是上游网络/接口临时故障，不是"没有符合条件个股"。故障恢复后下一交易日会自动补录。',
+      count: 0,
+      list: []
+    };
+    writeScreenerFault(faultResult);
+    try {
+      ops.appendAlert({ stage: 'screener', result: 'FAULT', script: 'screener.js',
+        detail: faultResult.reason, fix: '确认 push2 系列域名可达（如 quote.eastmoney.com 应正常）后重跑本任务（幂等覆盖当天标记）', link: 'dashboard/screener.js' });
+    } catch (_) { /* 忽略 */ }
+    console.error('  ✗ ' + fmtDate(now) + ' 上游故障：' + faultResult.reason);
+    console.log('  ✔ 已写入故障标记到 dashboard/screener.js（不覆盖历史期、不触碰 data.js）');
+    return;   // exit 0 → cron.sh 会照常发布
   }
 
   const base = market.filter(passBase);
@@ -470,6 +493,21 @@ function loadScreenerFile(file) {
   if (Array.isArray(parsed)) return parsed;
   if (parsed && parsed.list) return [parsed];               // 兼容旧的单对象结构
   throw abortSc('dashboard/screener.js 结构非法：window.SCREENER 缺失或既非数组也无 list（拒绝当作首次运行覆盖历史）');
+}
+
+/** 写入上游故障标记（2026-09-30）：仅追加/覆盖当天 fault 期到 dashboard/screener.js，
+ *  不触碰 data.js、不覆盖历史期。与正常路径写盘同构（loadScreenerFile + 按日期 upsert）。
+ *  文件损坏时 loadScreenerFile 抛 __abort → 顶层记 ALERT+exit2（绝不静默覆盖历史）。 */
+function writeScreenerFault(result) {
+  var HISTORY_MAX = 10;
+  var seed = loadScreenerFile();
+  var hist = [];
+  if (Array.isArray(seed)) hist = seed.slice();
+  else if (seed && seed.list) hist = [seed];
+  var dup = hist.findIndex(function (x) { return x && x.date === result.date; });
+  if (dup >= 0) hist[dup] = result; else hist.unshift(result);
+  hist = hist.slice(0, HISTORY_MAX);
+  fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(hist, null, 2) + ';\n');
 }
 
 if (require.main === module) {
