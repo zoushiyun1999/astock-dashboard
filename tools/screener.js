@@ -97,6 +97,26 @@ async function fetchMarket() {
   return all;
 }
 
+/** 🔴 瞬时空响应自愈（2026-09-30 加固）
+ *  背景：`getJSON` 只对「请求抛错」重试；当上游（push2delay）返回 HTTP 200 但 body 为空
+ *  （瞬时空页 / 连接抖动，历史上 09-21、09-28~09-30 反复出现），`getJSON` 当作成功返回，
+ *  `fetchMarket()` 拿到空数组 → 直接判「全市场 0 只」→ 交易日触发 fault 标记，需手动补跑。
+ *  本函数：交易日却抓到 0 只属异常，先整段重试 `fetchMarket` 最多 2 次（每次退避 1.5s）排除瞬时空响应；
+ *  非交易日本就跳过、无需重试（避免无谓延迟）。返回最终 market（重试后仍 0 才交给 main 判故障）。
+ *  抽成独立函数以便单测（mock fetch + 已知交易日即可断言自愈次数与结果）。 */
+async function fetchMarketWithRetry(dateObj) {
+  let market = await fetchMarket();
+  if (!market.length && gapCheck.isTradingDay(dateObj, HOLIDAY_YEARS)) {
+    for (let a = 1; a <= 2; a++) {
+      console.log('  ⚠ 交易日抓取全市场 0 只（疑似上游瞬时空响应），1.5s 后重试（' + a + '/2）');
+      await sleep(1500);
+      market = await fetchMarket();
+      if (market.length) break;
+    }
+  }
+  return market;
+}
+
 /** 排除 ST / 退市 / 新股(N前缀) / 次新(C前缀)
  *  注意：A股新股名形如「N华虹」、次新形如「C华虹」，字母紧贴名字**中间无空格**，
  *  原来的 /N\s|C\s/ 要求字母后跟空白，实际一个都匹配不到，形同虚设。
@@ -310,7 +330,7 @@ async function main() {
   // ⚠️ 抓数之前先与远端对齐：历史期数据（dashboard/screener.js）是**追加**的，
   //    拿陈旧副本会丢掉另一侧已发布的期数，并在发布时把它推回远端。
   preSync('选股');
-  const market = await fetchMarket();
+  let market = await fetchMarketWithRetry(now);
   console.log('  全市场（沪深主板）：' + market.length + ' 只');
 
   // 🔴 上游闸门（2026-09-21 补）：全市场 0 只必须区分「非交易日」与「数据源故障」。
@@ -530,5 +550,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main };
+module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main, fetchMarket, fetchMarketWithRetry };
 
