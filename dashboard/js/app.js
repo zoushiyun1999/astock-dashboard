@@ -1203,11 +1203,79 @@
     return arr.length ? arr[arr.length - 1] : '';
   }
 
+  /** 量价补跑命令：在 ECS 产线执行（本机/前端无执行通道，只能给出命令让用户去 ECS 粘贴）。
+   *  2026-09-30 方案 A：纯前端「检测 + 复制命令」按钮用。 */
+  var SCR_CMD = 'cd /opt/astock && bash tools/cron.sh screener';
+
+  /** 复制补跑命令到剪贴板（https 站点可用 navigator.clipboard）。
+   *  🔴 必须挂到 window：渲染层用 onclick="copyScCmd()" 调用，而本函数在 IIFE 内，
+   *     不暴露成全局则点击会 ReferenceError（与 switchTab/pickDay 同款挂在 window 上）。 */
+  function copyScCmd() {
+    var ok = false;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(SCR_CMD); ok = true; } } catch (e) {}
+    var tip = document.getElementById('scCopied');
+    if (tip) tip.textContent = ok ? ' 已复制 ✓' : ' 复制失败，请手动执行：' + SCR_CMD;
+  }
+  window.copyScCmd = copyScCmd;
+
+  /** 检测量价是否逾期未更新：re-fetch data.json（带 cache-buster）反映最新线上状态，
+   *  避免 GitHub Pages CDN 缓存导致看到旧数据。以 REPORTS 最新日期为参照（早报/晚报每天更新，
+   *  是「系统健康」代理）；若 SCREENER 最新比它早 ≥2 天即视为逾期。
+   *  🔴 三种结果都要讲清楚，绝不能把"故障期"误报成"已更新 ✅"：
+   *    ① 最新一期本身是 fault 标记 → warn（不是真实数据，给复制补跑按钮）；
+   *    ② 比日报晚 ≥2 天 → warn（逾期，给复制补跑按钮）；
+   *    ③ 其余 → ok。 */
+  window.checkScFreshness = function () {
+    var box = document.getElementById('scStatus');
+    if (box) { box.className = 'sc-status loading'; box.textContent = '正在检测量价更新状态…'; }
+    fetch('data.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) {
+        var scArr = (j.SCREENER || []).filter(function (x) { return x && x.date; })
+          .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        var scLatestObj = scArr.length ? scArr[scArr.length - 1] : null;
+        var scLatest = scLatestObj ? scLatestObj.date : '';
+        // reports 约定 newest-at-bottom（升序），最后一个即最新；兜底取最大日期，免得顺序反了误判
+        var rep = j.REPORTS && j.REPORTS.reports;
+        var repDates = (Array.isArray(rep) && rep.length)
+          ? rep.map(function (r) { return r.date; }).filter(Boolean) : [];
+        var repLatest = repDates.length ? repDates.slice().sort().pop() : '';
+        if (!box) return;
+        // ① 最新一期本身就是故障标记 → 明确告知，不误报 ✅
+        if (scLatestObj && scLatestObj.fault) {
+          box.className = 'sc-status warn';
+          box.innerHTML = '量价最新一期 <b>' + esc(scLatest) + '</b> 是上游故障标记（未产出真实数据），并非「无符合条件的票」。' +
+            '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>' +
+            '<span class="copied" id="scCopied"></span>';
+          return;
+        }
+        // ② 逾期（比日报晚 ≥2 天）
+        var days = (scLatest && repLatest && scLatest < repLatest)
+          ? Math.round((Date.parse(repLatest) - Date.parse(scLatest)) / 86400000) : 0;
+        if (scLatest && repLatest && days >= 2) {
+          box.className = 'sc-status warn';
+          box.innerHTML = '量价停在 <b>' + esc(scLatest) + '</b>，看板日报已到 <b>' + esc(repLatest) +
+            '</b>，已 ' + days + ' 天未更新（可能上游故障）。' +
+            '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>' +
+            '<span class="copied" id="scCopied"></span>';
+        } else {
+          box.className = 'sc-status ok';
+          box.innerHTML = '量价已更新至 <b>' + esc(scLatest || '—') + '</b> ✅（看板日报 ' + esc(repLatest || '—') + '）';
+        }
+      })
+      .catch(function (e) {
+        if (box) { box.className = 'sc-status warn'; box.textContent = '检测失败：' + e.message + '（可手动去 ECS 执行补跑命令）'; }
+      });
+  };
+
   function renderScreener(ds) {
     var bar = dateBar(ds, latestScDate());
+    var top = bar + '<div class="sc-refresh">' +
+      '<button class="act" type="button" onclick="checkScFreshness()">检测量价更新</button>' +
+      '<span class="sc-status" id="scStatus">点此检测量价是否逾期未更新</span></div>';
     var sc = screenerOn(ds);
     // 没有这一期的记录 → 按日期性质分别给出"休市 / 无数据 / 待更新"，不再一律写"待更新"
-    if (!sc) return bar + emptyFor(ds, '量价选股');
+    if (!sc) return top + emptyFor(ds, '量价选股');
 
     // 🔴 上游故障标记（2026-09-30）：任务跑了但数据源挂了，写进 fault 标记而非静默跳过。
     //    必须在此显式识别 —— 否则会落入下方「0 只符合条件」分支，把"故障"误报成"当天真没选出票"。
@@ -1219,7 +1287,8 @@
         : '';
       var reasonTxt = (sc.reason || '数据源（东财行情接口）在交易时段抓取失败，无法筛选，非「无符合条件个股」。') +
         (sc.runAt ? '（标记于 ' + sc.runAt + '）' : '');
-      return bar + emptyCard('量价选股 · ' + fd + ' · 上游故障', reasonTxt, 'warn', okBtn);
+      var copyBtn = '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>';
+      return top + emptyCard('量价选股 · ' + fd + ' · 上游故障', reasonTxt, 'warn', okBtn + copyBtn);
     }
 
     var c = sc.criteria || {};
@@ -1238,12 +1307,12 @@
     var tip = '<div class="card tip"><span class="ico">📌</span><span>纯技术面条件筛选，不含题材与基本面判断，仅供盯盘参考，不构成投资建议。带板块标签的为当日主线/博主看好个股。</span></div>';
 
     if (!sc.list || !sc.list.length) {
-      return bar + sectionCard('量价选股 · ' + esc(sc.date), 'info', head) + tip;
+      return top + sectionCard('量价选股 · ' + esc(sc.date), 'info', head) + tip;
     }
 
     var rows = sc.list.slice().sort(function (a, b) { return (b.gain || 0) - (a.gain || 0); });
 
-    return bar + sectionCard('量价选股 · ' + esc(sc.date), 'info',
+    return top + sectionCard('量价选股 · ' + esc(sc.date), 'info',
       head +
       // 11 列在手机上会溢出屏外，加提示 + 右侧渐隐遮罩，告诉用户"右边还有"
       '<div class="sc-hint" id="scHint">← 左右滑动查看全部 11 项指标</div>' +
