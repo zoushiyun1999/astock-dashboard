@@ -1,0 +1,26 @@
+[Unit]
+Description=A股推送系统 - 量价一键补跑触发端点
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/astock
+# 🔴 RERUN_KEY 必须和前端 app.js 里写死的 rerunKey 一致，否则触发返回 403。
+#    公开仓库里这个值等于公开，真正的安全靠 rerun_server.js 的命令白名单/防重入/限频/超时。
+Environment=RERUN_KEY=astock-rerun-2026
+#    若看板用非 asx.79zl.cn 的域名访问，把下面这行放开并改成你的域，否则浏览器 CORS 拦截。
+# Environment=RERUN_ALLOW_ORIGIN=https://你的域名
+ExecStart=/usr/bin/node /opt/astock/tools/rerun_server.js
+Restart=always
+RestartSec=5
+# 进程异常退出后最多 5 秒内重启，避免雪崩
+StartLimitIntervalSec=60
+StartLimitBurst=10
+# 标准输出进 journal，排障用：journalctl -u rerun-server -f
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

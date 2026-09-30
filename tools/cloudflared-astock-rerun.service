@@ -1,0 +1,19 @@
+[Unit]
+Description=A股推送系统 - Cloudflare 隧道(rerun.79zl.cn -> localhost:8787)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+# 读 ~/.cloudflared/config.yml（hostname: rerun.79zl.cn -> http://localhost:8787）
+ExecStart=/usr/local/bin/cloudflared tunnel run astock-rerun
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
