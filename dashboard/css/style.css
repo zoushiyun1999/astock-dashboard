@@ -760,6 +760,20 @@ body.scrolled .h-date { opacity: 0; }
 .sc-status.warn { color: #b06a00; }
 .sc-status b { font-weight: var(--fw-semibold); }
 .sc-status .copied { margin-left: 6px; color: #2e7d32; font-weight: var(--fw-semibold); }
+/* 自动补跑：小链接按钮（复制命令兜底） */
+.sc-refresh .lnk, .sc-status .lnk {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  color: var(--accent, #007AFF); font-size: var(--fs-sm); padding: 2px 4px; margin-left: 4px;
+  border-radius: 6px; line-height: 1.4;
+}
+.sc-refresh .lnk:active, .sc-status .lnk:active { background: rgba(0,122,255,.1); }
+/* 补跑失败日志尾 */
+.sc-status .sc-tail {
+  display: block; margin-top: 6px; max-height: 120px; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px; line-height: 1.5; color: var(--ink-3, #888);
+  white-space: pre-wrap; word-break: break-all;
+}
 
 /* ── 推荐走势 / 效果统计（2026-09-24，方案 B）────────────────────
    底部抽屉式弹层。不复用 .cal-viewer 的深色遮罩：那是「看图」用的（深底衬托图片），

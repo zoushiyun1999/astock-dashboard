@@ -1207,6 +1207,11 @@
    *  2026-09-30 方案 A：纯前端「检测 + 复制命令」按钮用。 */
   var SCR_CMD = 'cd /opt/astock && bash tools/cron.sh screener';
 
+  /** 一键补跑端点（Plan B / Cloudflare 隧道）：ECS 上 rerun_server.js 暴露的 https 地址。
+   *  RERUN_KEY 只作「挡君子」标识（公开仓库里等于公开），真正安全靠服务端命令白名单+限频+防重入。 */
+  var RERUN_EP = 'https://rerun.79zl.cn';
+  var RERUN_KEY = 'astock-rerun-2026';
+
   /** 复制补跑命令到剪贴板（https 站点可用 navigator.clipboard）。
    *  🔴 必须挂到 window：渲染层用 onclick="copyScCmd()" 调用，而本函数在 IIFE 内，
    *     不暴露成全局则点击会 ReferenceError（与 switchTab/pickDay 同款挂在 window 上）。 */
@@ -1217,6 +1222,70 @@
     if (tip) tip.textContent = ok ? ' 已复制 ✓' : ' 复制失败，请手动执行：' + SCR_CMD;
   }
   window.copyScCmd = copyScCmd;
+
+  /** 补跑按钮组：主按钮「自动补跑」（触发 ECS 端点）+ 小链接「复制命令」（隧道没起时兜底）。 */
+  function rerunBtnGroup() {
+    return '<button class="act" type="button" onclick="rerunScreener()">自动补跑</button>' +
+      '<button class="lnk" type="button" onclick="copyScCmd()">复制命令</button>';
+  }
+
+  /** 设置检测框状态文本（loading/ok/warn 复用既有 .sc-status 样式）。 */
+  function setScStatus(cls, html) {
+    var box = document.getElementById('scStatus');
+    if (!box) return;
+    box.className = 'sc-status ' + cls;
+    box.innerHTML = html;
+  }
+
+  /** 点击「自动补跑」：POST 到 ECS 端点触发 screener，再轮询 /status 回显进度。
+   *  🔴 必须挂 window：渲染层 onclick="rerunScreener()" 调用，IIFE 内不暴露会 ReferenceError（同 copyScCmd 教训）。 */
+  window.rerunScreener = function () {
+    setScStatus('loading', '正在请求 ECS 补跑量价…');
+    fetch(RERUN_EP + '/rerun', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task: 'screener', key: RERUN_KEY })
+    }).then(function (r) {
+      if (r.status === 202) { pollRerun(); return; }
+      return r.json().then(function (j) {
+        var msg = (j && j.error) ? j.error : ('HTTP ' + r.status);
+        if (r.status === 409) msg = '上一次补跑还在运行，请稍等几分钟再点';
+        else if (r.status === 403) msg = '触发密钥不匹配（ECS 端 RERUN_KEY 未配置或不符）';
+        else if (r.status === 400) msg = '非法请求：' + msg;
+        setScStatus('warn', '补跑未启动：' + esc(msg) +
+          ' <button class="lnk" type="button" onclick="copyScCmd()">复制命令手动跑</button>');
+      });
+    }).catch(function (e) {
+      setScStatus('warn', '触发失败：' + esc(e.message) + '（隧道未起？）' +
+        ' <button class="lnk" type="button" onclick="copyScCmd()">复制命令手动跑</button>');
+    });
+  };
+
+  /** 轮询 /status 直到 running=false，更新检测框文案；成功则自动刷新页面拉取新数据。 */
+  function pollRerun() {
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      if (tries > 60) { clearInterval(timer); setScStatus('warn', '补跑超过 3 分钟未结束，请稍后刷新页面查看，或复制命令手动跑'); return; }
+      fetch(RERUN_EP + '/status', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (s) {
+          if (s.running) { setScStatus('loading', 'ECS 正在补跑量价（约 ' + (tries * 3) + 's）…'); return; }
+          clearInterval(timer);
+          var lr = s.lastRun;
+          if (!lr) { setScStatus('warn', '补跑结束但无结果，请刷新页面查看'); return; }
+          if (lr.rc === 0) {
+            setScStatus('ok', '补跑完成 ✅（用时 ' + Math.round(lr.durationMs / 1000) + 's）页面即将刷新');
+            setTimeout(function () { location.reload(); }, 1800);
+          } else {
+            var tail = lr.logTail ? '<br><span class="sc-tail">' + esc(lr.logTail.slice(-400)) + '</span>' : '';
+            setScStatus('warn', '补跑失败（rc=' + lr.rc + (lr.note ? '，' + esc(lr.note) : '') + '）' + tail +
+              ' <button class="lnk" type="button" onclick="copyScCmd()">复制命令手动跑</button>');
+          }
+        })
+        .catch(function (e) { clearInterval(timer); setScStatus('warn', '状态查询失败：' + esc(e.message)); });
+    }, 3000);
+  }
 
   /** 检测量价是否逾期未更新：re-fetch data.json（带 cache-buster）反映最新线上状态，
    *  避免 GitHub Pages CDN 缓存导致看到旧数据。以 REPORTS 最新日期为参照（早报/晚报每天更新，
@@ -1245,7 +1314,7 @@
         if (scLatestObj && scLatestObj.fault) {
           box.className = 'sc-status warn';
           box.innerHTML = '量价最新一期 <b>' + esc(scLatest) + '</b> 是上游故障标记（未产出真实数据），并非「无符合条件的票」。' +
-            '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>' +
+            rerunBtnGroup() +
             '<span class="copied" id="scCopied"></span>';
           return;
         }
@@ -1256,7 +1325,7 @@
           box.className = 'sc-status warn';
           box.innerHTML = '量价停在 <b>' + esc(scLatest) + '</b>，看板日报已到 <b>' + esc(repLatest) +
             '</b>，已 ' + days + ' 天未更新（可能上游故障）。' +
-            '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>' +
+            rerunBtnGroup() +
             '<span class="copied" id="scCopied"></span>';
         } else {
           box.className = 'sc-status ok';
@@ -1287,7 +1356,7 @@
         : '';
       var reasonTxt = (sc.reason || '数据源（东财行情接口）在交易时段抓取失败，无法筛选，非「无符合条件个股」。') +
         (sc.runAt ? '（标记于 ' + sc.runAt + '）' : '');
-      var copyBtn = '<button class="act" type="button" onclick="copyScCmd()">复制补跑命令</button>';
+      var copyBtn = rerunBtnGroup();
       return top + emptyCard('量价选股 · ' + fd + ' · 上游故障', reasonTxt, 'warn', okBtn + copyBtn);
     }
 
