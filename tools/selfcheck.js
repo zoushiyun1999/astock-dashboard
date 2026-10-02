@@ -173,10 +173,14 @@ function dataChecks() {
     return { ok: asc && ds.length <= 7, detail: `${ds.length} 期: ${ds[0]}→${ds[ds.length - 1]} 升序=${asc}` };
   });
 
-  check(G, 'screener.js 可解析且期数 ≤8', () => {
+  // 🔴 期数上限必须与 screener.js 的 HISTORY_MAX 同源（2026-10-02 修复：selfcheck 曾硬写 ≤8，
+  //   而 screener 已改为 10 → 长期误报失败）。现从 screener.js 源码读 HISTORY_MAX，避免再漂移。
+  const scSrc = (function () { try { return fs.readFileSync(path.join(ROOT, 'tools', 'screener.js'), 'utf8'); } catch (e) { return ''; } })();
+  const HISTORY_MAX = parseInt((scSrc.match(/HISTORY_MAX\s*=\s*(\d+)/) || [,'10'])[1], 10) || 10;
+  check(G, 'screener.js 可解析且期数 ≤ HISTORY_MAX(' + HISTORY_MAX + ')', () => {
     const S = loadVar('dashboard/screener.js', 'SCREENER');
     const n = (S || []).length;
-    return { ok: Array.isArray(S) && n <= 8, detail: n + ' 期' };
+    return { ok: Array.isArray(S) && n <= HISTORY_MAX, detail: n + ' 期' };
   });
 
   check(G, 'track_ledger.json 可解析；每条记录有 t 快照', () => {

@@ -10,5 +10,7 @@ const OUT = path.join(ROOT, 'dashboard', 'holidays.js');
 
 let data = { years: {} };
 try { data = JSON.parse(fs.readFileSync(SRC, 'utf8')); } catch (e) { console.log('  跳过：无休市配置'); return; }
-fs.writeFileSync(OUT, 'window.TRADE_HOLIDAYS = ' + JSON.stringify(data.years || {}, null, 2) + ';\n');
-console.log('  ✔ 已同步 dashboard/holidays.js（' + Object.keys(data.years || {}).join(',') + '）');
+fs.writeFileSync(OUT, 'window.TRADE_HOLIDAYS = ' + JSON.stringify(data.years || {}, null, 2) + ';\n' +
+  'window.HOLIDAY_MAKEUP = ' + JSON.stringify(data.makeupTradingDays || [], null, 2) + ';\n');
+console.log('  ✔ 已同步 dashboard/holidays.js（' + Object.keys(data.years || {}).join(',') +
+  (data.makeupTradingDays ? ' + 调休 ' + data.makeupTradingDays.length + ' 天' : '') + '）');

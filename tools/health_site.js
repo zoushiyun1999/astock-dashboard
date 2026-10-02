@@ -15,6 +15,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const gapCheck = require('./lib/gap_check');
 
 const ROOT = path.join(__dirname, '..');
 const SITE = (function () {
@@ -81,19 +82,12 @@ async function freshness() {
 }
 
 function isTradingToday() {
-  const now = new Date();
-  const w = now.getDay();
-  if (w === 0 || w === 6) return false;
-  const pad = (n) => String(n).padStart(2, '0');
-  const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  // 口径收敛到 gap_check（与 verify / health_check / screener / 前端同源；makeupTradingDays 一并生效，
+  // 否则调休上班的交易日会被误判为休市、误报「数据已 N 小时未更新」）。
   try {
-    // 注意：trade_holidays.json 的真实结构是 { note, years: { "2026": [...] } }，
-    // 必须取 .years[年] —— 曾误写成 hs[年]，永远得到 undefined，
-    // 使「节假日」被一律判为交易日，休市日会误报「数据已 26 小时未更新」。
-    const hs = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8'));
-    const list = (hs.years && hs.years[String(now.getFullYear())]) || [];
-    return list.indexOf(today) < 0;
-  } catch (e) { return true; }
+    const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')) || {};
+    return gapCheck.isTradingDay(new Date(), cfg);
+  } catch (e) { return true; }   // 配置缺失 → 保守视为交易日，避免误报
 }
 
 function domainExpiry() {

@@ -35,10 +35,19 @@ function fmtDate(d) {
 /** 是否交易日：周末排除 + 节假日（holidayYears = { "2026": ["2026-09-25", ...] }）排除。
  *  与 verify.js / health_check.js 同一口径（年份取字符串键，结构见 AGENTS.md 规则 16c）。 */
 function isTradingDay(d, holidayYears) {
+  const ds = fmtDate(d);
+  const cfg = holidayYears || {};
+  // 兼容两种传参：① 完整配置 { years, makeupTradingDays }（job_*/verify/health 现传此）；
+  //          ② 纯 per-year map { "2026": [...] }（computeGaps 单测等历史传参）。
+  const years = cfg.years || cfg;
+  const makeup = cfg.makeupTradingDays || cfg.makeup || [];
+  // 🔴 调休补班：周末上班 → 视为交易日（如 2026-10-10 周六为国庆调休上班，A股开市）。
+  //   否则 isTradingDay 会把周末一刀切跳过，导致调休交易日整天空跑、数据滞后（同一类「交易日判断」bug）。
+  if (makeup.indexOf(ds) >= 0) return true;
   const w = d.getDay();
   if (w === 0 || w === 6) return false;
-  const list = (holidayYears && holidayYears[String(d.getFullYear())]) || [];
-  return list.indexOf(fmtDate(d)) < 0;
+  const list = years[String(d.getFullYear())] || [];
+  return list.indexOf(ds) < 0;
 }
 
 /** now 是否早于当天最早任务时刻（默认 08:30）。

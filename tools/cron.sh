@@ -22,9 +22,9 @@
 #   ---------------------------------------------------------------
 #   0  7  * * *    cd /opt/astock && bash tools/cron.sh health    >> logs/cron.log 2>&1
 #   30 8  * * *    cd /opt/astock && bash tools/cron.sh morning   >> logs/cron.log 2>&1
-#   10 15 * * 1-5  cd /opt/astock && bash tools/cron.sh screener  >> logs/cron.log 2>&1
+#   10 15 * * *    cd /opt/astock && bash tools/cron.sh screener  >> logs/cron.log 2>&1
 #   0  21 * * *    cd /opt/astock && bash tools/cron.sh evening   >> logs/cron.log 2>&1
-#   30 21 * * 1-5  cd /opt/astock && bash tools/cron.sh verify    >> logs/cron.log 2>&1
+#   30 21 * * *    cd /opt/astock && bash tools/cron.sh verify    >> logs/cron.log 2>&1
 #   ---------------------------------------------------------------
 #
 # 退出码：透传被调任务的退出码；0 表示成功或「正常跳过」。

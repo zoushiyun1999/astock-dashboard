@@ -982,10 +982,10 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
   ok(recs.length === 3, '#22.1 三个渠道各收到 1 条', '实得 ' + recs.length);
   ok(byCh.m && byCh.m.entryDate === '2026-09-18',
     '#22.1 早报：入场日 = 报告当日', byCh.m && byCh.m.entryDate);
-  ok(byCh.e && byCh.e.entryDate === '2026-09-21',
-    '#22.1 晚报：入场日 = 次一交易日（周五 09-18 → 周一 09-21）', byCh.e && byCh.e.entryDate);
-  ok(byCh.s && byCh.s.entryDate === '2026-09-21',
-    '#22.1 量价：入场日 = 期日的次一交易日', byCh.s && byCh.s.entryDate);
+  ok(byCh.e && byCh.e.entryDate === '2026-09-20',
+    '#22.1 晚报：入场日 = 次一交易日（周五 09-18 → 09-20 周日，国庆调休上班故为交易日）', byCh.e && byCh.e.entryDate);
+  ok(byCh.s && byCh.s.entryDate === '2026-09-20',
+    '#22.1 量价：入场日 = 期日的次一交易日（09-18 周五 → 09-20 调休交易日）', byCh.s && byCh.s.entryDate);
   // 与 verify.js 的同名函数必须给出**同一个**结果（防止两套口径漂移）
   ok(byCh.e.entryDate === verify.nextTradingDay('2026-09-18'),
     '#22.1 应验日 == verify.nextTradingDay()（口径不漂移）');
@@ -1271,6 +1271,27 @@ console.log('\n#27 · 量价休市守卫：非交易日抓数前跳过 + 历史�
   // ④ 解析不了的日期保守保留（不误删）
   ok(screener.pruneNonTrading([{ date: 'not-a-date' }], HY).length === 1, '#27 非法日期保守保留');
 }
+
+/* ═════════════ #28 · 调休交易日（2026-10-02 修复：周末调休上班被一刀切跳过） ═════════════ */
+console.log('\n#28 · 调休交易日：makeupTradingDays 须被 isTradingDay 视为交易日');
+(function () {
+  const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8'));
+  const HY = cfg.years;
+  const makeup = cfg.makeupTradingDays || [];
+  // ① 配置必须列出全部 6 个 2026 调休交易日（国办 2025-11-04 通知）
+  const EXPECT = ['2026-01-04', '2026-02-14', '2026-02-28', '2026-05-09', '2026-09-20', '2026-10-10'];
+  ok(EXPECT.every(function (d) { return makeup.indexOf(d) >= 0; }), '#28 makeupTradingDays 含全部 6 个 2026 调休交易日', JSON.stringify(makeup));
+  // ② 调休周六/周日 → 视为交易日（即便是周末）
+  ok(gapCheck.isTradingDay(new Date('2026-10-10T15:10:00+08:00'), cfg) === true, '#28 国庆调休 10-10(周六) → 交易日');
+  ok(gapCheck.isTradingDay(new Date('2026-02-14T15:10:00+08:00'), cfg) === true, '#28 春节调休 2-14(周六) → 交易日');
+  ok(gapCheck.isTradingDay(new Date('2026-09-20T15:10:00+08:00'), cfg) === true, '#28 国庆调休 9-20(周日) → 交易日');
+  // ③ 普通周末（非调休）→ 仍非交易日
+  ok(gapCheck.isTradingDay(new Date('2026-10-03T15:10:00+08:00'), cfg) === false, '#28 普通周六 10-03 → 非交易');
+  ok(gapCheck.isTradingDay(new Date('2026-10-04T15:10:00+08:00'), cfg) === false, '#28 普通周日 10-04 → 非交易');
+  // ④ 节假日 / 普通交易日 → 不受影响
+  ok(gapCheck.isTradingDay(new Date('2026-10-02T15:10:00+08:00'), cfg) === false, '#28 国庆假期 10-02 → 非交易');
+  ok(gapCheck.isTradingDay(new Date('2026-09-30T15:10:00+08:00'), cfg) === true, '#28 普通交易日 09-30 → 交易');
+})();
 
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }

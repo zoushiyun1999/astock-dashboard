@@ -27,7 +27,8 @@ const gapCheck = require('./lib/gap_check');
 const ROOT = path.resolve(__dirname, '..');
 
 const HOLIDAYS = (function () {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {}; }
+  // 返回完整配置（含 years + makeupTradingDays），使 isTradingDay 能识别调休补班日
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')) || {}; }
   catch (e) { return {}; }
 })();
 

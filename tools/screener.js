@@ -45,11 +45,15 @@ const EM = 'https://push2delay.eastmoney.com';
 const gapCheck = require('./lib/gap_check');
 const HOLIDAY_YEARS = (function () {
   try {
-    return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {};
+    // 返回完整配置对象（含 years + makeupTradingDays），isTradingDay 才能识别调休补班日
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')) || {};
   } catch (e) {
     return {};   // 读不到时退化为「仅排除周末」，不阻断主流程
   }
 })();
+
+// 历史期数上限（selfcheck 同源读取，勿硬编码两处）。最新在前，保留最近 HISTORY_MAX 期。
+const HISTORY_MAX = 10;
 
 /** 🔴 是否应跳过（周末/节假日）：放在抓数之前，无条件拦截。
  *  背景（2026-10-02 修复）：旧守卫只在「抓到 0 只」时才判休市，但休市日东财接口
@@ -497,7 +501,7 @@ async function main() {
   // data.screener 读，每次运行历史都会被重置为仅当日 → 历史全丢（P2-4(b) 关键坑）。
   // loadScreenerFile(): 返回 Array = 正常历史；null = 文件缺失（首次运行，合法空历史）；
   //   抛 __abort = 文件损坏 → 顶层 catch 记 ALERT 并 exit 2（**绝不静默当首次运行覆盖历史**）。
-  const HISTORY_MAX = 10;
+  // HISTORY_MAX 已在模块顶层定义（=10）。
   const seed = loadScreenerFile();
   let hist = [];
   if (Array.isArray(seed)) hist = seed.slice();
@@ -557,7 +561,7 @@ function loadScreenerFile(file) {
  *  不触碰 data.js、不覆盖历史期。与正常路径写盘同构（loadScreenerFile + 按日期 upsert）。
  *  文件损坏时 loadScreenerFile 抛 __abort → 顶层记 ALERT+exit2（绝不静默覆盖历史）。 */
 function writeScreenerFault(result) {
-  var HISTORY_MAX = 10;
+  // HISTORY_MAX 已在模块顶层定义（=10）
   var seed = loadScreenerFile();
   var hist = [];
   if (Array.isArray(seed)) hist = seed.slice();
@@ -588,5 +592,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main, fetchMarket, fetchMarketWithRetry, isSkipDay, pruneNonTrading };
+module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main, fetchMarket, fetchMarketWithRetry, isSkipDay, pruneNonTrading, HISTORY_MAX };
 

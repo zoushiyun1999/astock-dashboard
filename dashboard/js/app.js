@@ -79,10 +79,14 @@
   function isTradingDay(ds) {
     var d = parseYmd(ds);
     var w = d.getDay();
-    if (w === 0 || w === 6) return false;
     var hd = window.TRADE_HOLIDAYS || {};
     var offs = hd[String(d.getFullYear())] || [];
-    return offs.indexOf(ds) < 0;
+    if (offs.indexOf(ds) >= 0) return false;            // 节假日 → 休市
+    if (w === 0 || w === 6) {                            // 周末：仅调休补班日为交易日
+      var makeup = window.HOLIDAY_MAKEUP || [];
+      return makeup.indexOf(ds) >= 0;                   // 调休上班 → 开市；否则休市
+    }
+    return true;                                         // 其余工作日 → 交易日
   }
 
   /** 判断今天是否交易日 */

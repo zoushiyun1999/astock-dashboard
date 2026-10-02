@@ -192,7 +192,8 @@ if (screenerState.state === 'parse-error') {
 //   · reports 里没这天 + logs/这天.md 存在  → 当日数据源没发内容，系统行为正确，不算问题
 //   · reports 里没这天 + logs/这天.md 也没有 → 管线压根没跑（PC 关机/任务失败），这才是真问题
 const HOLIDAYS = (function () {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {}; }
+  // 返回完整配置（含 years + makeupTradingDays），使 isTradingDay 能识别调休补班日
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')) || {}; }
   catch (e) { return {}; }
 })();
 // 已知永久缺口（config/known_gaps.json）：历史数据不可再得的交易日。

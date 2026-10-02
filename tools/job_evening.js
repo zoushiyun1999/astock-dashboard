@@ -105,7 +105,8 @@ function run(cmd, args) {
 
 function loadHolidays() {
   try {
-    return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years || {};
+    // 返回完整配置对象（含 years + makeupTradingDays），isTradingDay 才能识别调休补班日
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')) || {};
   } catch (e) {
     console.warn('⚠️ 读不到 config/trade_holidays.json → 退化为仅排除周末');
     return {};

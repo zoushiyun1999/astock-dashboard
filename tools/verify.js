@@ -72,6 +72,9 @@ const { preSync } = require('./lib/pre_sync');
 // v7：量价入选股验证 —— dashboard/screener.js 是量价历史的唯一源（loadScreenerFile 自带
 // 「损坏即中止、绝不当作首期」的安全语义，复用它而非本地重写解析）。
 const { loadScreenerFile } = require('./screener');
+// 口径收敛到 gap_check（2026-10-02 修复：原本地 isTradingDay 与 gap_check 各写一份，
+// 调休/节假日改动要改两处 → 漏改即复发。现统一委托 gap_check）。
+const gapCheck = require('./lib/gap_check');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dashboard', 'data.js');
@@ -219,16 +222,14 @@ function barAsQuote(bars, code, date, name) {
 }
 
 
-/** 读取休市日配置（config/trade_holidays.json） */
+/** 读取休市日配置（config/trade_holidays.json，含 years + makeupTradingDays） */
 let HOLIDAY_YEARS = {};
-try { HOLIDAY_YEARS = (JSON.parse(fs.readFileSync(HOLIDAYS_FILE, 'utf8')).years) || {}; } catch (e) { HOLIDAY_YEARS = {}; }
+try { HOLIDAY_YEARS = JSON.parse(fs.readFileSync(HOLIDAYS_FILE, 'utf8')) || {}; } catch (e) { HOLIDAY_YEARS = {}; }
 
-/** 判断是否交易日：周末跳过 + 节假日（配置文件）跳过 */
+/** 判断是否交易日：口径收敛到 tools/lib/gap_check（单一来源，调休/节假日改动只在一处生效）。
+ *  周末跳过 + 节假日（years）跳过 + 调休补班（makeupTradingDays）视为交易日。 */
 function isTradingDay(d) {
-  const w = d.getDay();
-  if (w === 0 || w === 6) return false;
-  const list = HOLIDAY_YEARS[String(d.getFullYear())] || [];
-  return list.indexOf(fmtDate(d)) < 0;
+  return gapCheck.isTradingDay(d, HOLIDAY_YEARS);
 }
 
 /** 由 YYYY-MM-DD 取下一个交易日（晚报「明日关注」的应验日口径） */
