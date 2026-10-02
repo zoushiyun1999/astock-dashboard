@@ -1248,6 +1248,30 @@ console.log('\n#26 · rerun_server.planRun：命令白名单 + key 校验 + 防�
   ok(d.ok === true, '#26 key 未启用时任意 key 放行（仅靠白名单+限频）');
 }
 
+/* ═════════════ #27 · 量价休市守卫（2026-10-02 国庆误写根因修复） ═════════════ */
+console.log('\n#27 · 量价休市守卫：非交易日抓数前跳过 + 历史剔除非交易日');
+{
+  const HY = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'trade_holidays.json'), 'utf8')).years;
+  // ① isSkipDay：休市日/周末 → true；交易日 → false（根因修复：旧实现守卫只在「0 只」时判休市，
+  //   但休市日东财仍返回上一交易日快照 → market.length>0 → 守卫被绕过 → 错贴休市日日期）
+  ok(screener.isSkipDay(new Date('2026-10-02T15:10:00+08:00'), HY) === true, '#27 国庆休市日 isSkipDay=true（根因修复）');
+  ok(screener.isSkipDay(new Date('2026-10-03T15:10:00+08:00'), HY) === true, '#27 周六 isSkipDay=true');
+  ok(screener.isSkipDay(new Date('2026-10-04T15:10:00+08:00'), HY) === true, '#27 周日 isSkipDay=true');
+  ok(screener.isSkipDay(new Date('2026-09-30T15:10:00+08:00'), HY) === false, '#27 交易日(09-30 周三) isSkipDay=false');
+  // ② pruneNonTrading：剔除历史里任何非交易日记录（自愈，避免看板残留「休市日却有数据」）
+  const hist = [
+    { date: '2026-10-02' }, { date: '2026-10-03' },   // 休市/周末 → 应剔除
+    { date: '2026-09-30' }, { date: '2026-09-29' }    // 交易日 → 保留
+  ];
+  const kept = screener.pruneNonTrading(hist, HY);
+  ok(kept.length === 2 && kept[0].date === '2026-09-30' && kept[1].date === '2026-09-29',
+    '#27 历史里 10-02/10-03 被剔除，仅留交易日 09-30/09-29', JSON.stringify(kept.map(function (x) { return x.date; })));
+  // ③ 确诊线上那次误写：10-02 会被 pruneNonTrading 清掉
+  ok(screener.pruneNonTrading([{ date: '2026-10-02' }], HY).length === 0, '#27 线上 10-02 误写记录会被清掉');
+  // ④ 解析不了的日期保守保留（不误删）
+  ok(screener.pruneNonTrading([{ date: 'not-a-date' }], HY).length === 1, '#27 非法日期保守保留');
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 
