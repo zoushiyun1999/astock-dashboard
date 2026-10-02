@@ -94,7 +94,7 @@ echo "    tunnel id = ${TUNNEL_ID:-<token模式>}"
 
 step "[6/7] 安装 systemd 单元并启动"
 cp "$ASTOCK_DIR/tools/rerun-server.service" /etc/systemd/system/ 2>/dev/null \
-  || { echo "!! 找不到 $ASTOCK_DIR/tools/rerun-server.service，请先 git pull 拉到该文件"; exit 1; }
+  || { echo "!! 找不到 $ASTOCK_DIR/tools/rerun-server.service，请先同步代码： node tools/sync_from_api.js --apply"; exit 1; }
 cp "$ASTOCK_DIR/tools/cloudflared-astock-rerun.service" /etc/systemd/system/ 2>/dev/null
 systemctl daemon-reload
 systemctl enable --now rerun-server.service
