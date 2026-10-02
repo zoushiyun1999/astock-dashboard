@@ -24,6 +24,7 @@ const verify = require('./verify');
 const gapCheck = require('./lib/gap_check');   // 断更检测/交易日判定纯逻辑（#19）
 
 let pass = 0, fail = 0;
+const pending = [];   // 收集异步测试（如 #25 的 fetchMarketWithRetry），末尾 await 后再汇总
 function ok(cond, label, extra) {
   if (cond) { pass++; console.log('  ✅ ' + label); }
   else { fail++; console.log('  ❌ ' + label + (extra ? '  → ' + extra : '')); }
@@ -1165,11 +1166,96 @@ console.log('\n#20 · merge_report：校验 / 合并 / 安全阀 / verify 保留
   ok(/软依赖|不阻塞/.test(je.slice(iSR - 400, iSR)), '#23.6 注释声明软依赖（东财有风控前科，抓不到不能拖垮晚报）');
 }
 
+/* ════════════ #24 · 前端 onclick 全局暴露守卫（防 IIFE 内函数漏挂 window） ════════════
+ * app.js 整体包在 (function(){...})() 里，函数默认是 IIFE 私有的；渲染层用
+ * onclick="funcName()" 调用时，funcName 不在全局就会点击即 ReferenceError。
+ * 2026-09-30 刷新按钮就踩过：copyScCmd 没挂 window → 两个复制按钮全死。
+ * 用静态扫描兜底：所有 onclick 处理器都必须存在 window.<name> 赋值。 */
+console.log('\n#24 · 前端 onclick 处理器必须挂到 window（防 copyScCmd 类 ReferenceError 回归）');
+{
+  const appJs = fs.readFileSync(path.join(ROOT, 'dashboard', 'js', 'app.js'), 'utf8');
+  const handlers = new Set();
+  const re = /onclick="([A-Za-z_$][\w$]*)\s*\(/g;
+  let m;
+  while ((m = re.exec(appJs))) handlers.add(m[1]);
+  ok(handlers.size > 0, '#24 至少识别到一个 onclick 处理器（扫描未失效）', 'count=' + handlers.size);
+  const missing = [];
+  handlers.forEach(function (name) {
+    if (!new RegExp('window\\.' + name + '\\b').test(appJs)) missing.push(name);
+  });
+  ok(missing.length === 0,
+    '#24 所有 onclick 处理器都已暴露到 window（漏挂=点击即 ReferenceError）',
+    '漏挂: ' + (missing.join(', ') || '无'));
+  // 注：量价补跑/检测按钮（copyScCmd / checkScFreshness）已于 2026-10-02 移除（DNS 阻塞、暂停该特性），
+  //     故不再对这两个函数单独断言；上方「onclick 必须挂 window」通用扫描仍保留，防其他按钮回归同类问题。
+}
+
+/* ════════════ #25 · screener 瞬时空响应自愈（fetchMarketWithRetry） ════════════ */
+console.log('\n#25 · fetchMarketWithRetry：交易日 0 只 → 整段重试自愈（防瞬时空页误判 fault）');
+{
+  const REAL = '{"data":{"total":1,"diff":[{"f2":9.56,"f3":5.87,"f8":8.24,"f10":2.88,"f12":"600661","f14":"昂立教育","f20":2700000000,"f100":"教育"}]}}';
+  const EMPTY = '{"data":{"diff":[]}}';
+  const savedFetch = global.fetch;
+  function bodySeq(sequence) {
+    let i = 0;
+    global.fetch = function () {
+      const b = sequence[Math.min(i, sequence.length - 1)];
+      i++;
+      return Promise.resolve({ ok: true, text: () => Promise.resolve(b) });
+    };
+  }
+  const realDate = new Date('2026-09-30T15:10:00+08:00');   // 周三，交易日（live 已写入 fault 证明确为交易日）
+  pending.push((async () => {
+    // ① 瞬时空页（前 2 次空、第 3 次真数据）→ 自愈出 1 只，不误判 fault
+    bodySeq([EMPTY, EMPTY, REAL]);
+    const r1 = await screener.fetchMarketWithRetry(realDate);
+    ok(r1.length === 1, '#25 前 2 次空 + 第 3 次真 → 自愈出 1 只（不误判 fault）', 'len=' + r1.length);
+    // ② 持续空（3 次全空，交易日）→ 返回 0，留给 main 的 fault 闸门（retry 已耗尽）
+    bodySeq([EMPTY, EMPTY, EMPTY]);
+    const r2 = await screener.fetchMarketWithRetry(realDate);
+    ok(r2.length === 0, '#25 连续 3 次空（交易日）→ 返回 0（retry 耗尽，交 fault 闸门）', 'len=' + r2.length);
+    // ③ 非交易日即便空也不重试（只抓 1 次，避免无谓延迟）
+    const holDate = new Date('2026-10-01T15:10:00+08:00');   // 国庆休市
+    let calls = 0;
+    global.fetch = function () { calls++; return Promise.resolve({ ok: true, text: () => Promise.resolve(EMPTY) }); };
+    const r3 = await screener.fetchMarketWithRetry(holDate);
+    ok(r3.length === 0, '#25 非交易日空 → 返回 0', 'len=' + r3.length);
+    ok(calls === 1, '#25 非交易日不重试（只抓 1 次，无谓延迟规避）', 'calls=' + calls);
+    global.fetch = savedFetch;   // 还原，避免影响其它（虽本块为最后）
+  })());
+}
+
+/* ═════════════ #26 · rerun_server 触发判定（planRun：白名单/key/重入/限频） ═════════════ */
+console.log('\n#26 · rerun_server.planRun：命令白名单 + key 校验 + 防重入 + 限频');
+{
+  const rs = require('./rerun_server.js');
+  const cfg = Object.assign({}, rs.DEFAULTS, { key: 'k1', allowedTasks: ['screener'], cooldownMs: 5000, timeoutMs: 1000 });
+  var d = rs.planRun(rs.makeState(), 'rm -rf', 'k1', cfg);
+  ok(d.ok === false && d.status === 400, '#26 task 不在白名单 → 400（拒绝任意命令）', JSON.stringify(d));
+  d = rs.planRun(rs.makeState(), 'screener', 'wrong', cfg);
+  ok(d.ok === false && d.status === 403, '#26 key 不匹配 → 403');
+  const stRun = rs.makeState(); stRun.running = true;
+  d = rs.planRun(stRun, 'screener', 'k1', cfg);
+  ok(d.ok === false && d.status === 409, '#26 运行中 → 409（防并发覆盖 data.js）');
+  const stCool = rs.makeState(); stCool.lastRun = { ts: Date.now() };
+  d = rs.planRun(stCool, 'screener', 'k1', cfg);
+  ok(d.ok === false && d.status === 429, '#26 冷却期内 → 429（限频）');
+  const stOk = rs.makeState(); stOk.lastRun = { ts: Date.now() - 10000 };
+  d = rs.planRun(stOk, 'screener', 'k1', cfg);
+  ok(d.ok === true && /^[0-9a-f]{12}$/.test(d.runId), '#26 合法触发 → 放行 + runId', JSON.stringify(d));
+  const cfgNoKey = Object.assign({}, cfg, { key: '' });
+  d = rs.planRun(rs.makeState(), 'screener', 'whatever', cfgNoKey);
+  ok(d.ok === true, '#26 key 未启用时任意 key 放行（仅靠白名单+限频）');
+}
+
 // 清理
 try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
 
 console.log('\n' + '─'.repeat(58));
-console.log(fail === 0
-  ? '全部通过 ✅   共 ' + pass + ' 项断言'
-  : '有 ' + fail + ' 项失败 ❌   通过 ' + pass + ' 项，失败 ' + fail + ' 项');
-process.exit(fail === 0 ? 0 : 1);
+(async () => {
+  await Promise.all(pending);
+  console.log(fail === 0
+    ? '全部通过 ✅   共 ' + pass + ' 项断言'
+    : '有 ' + fail + ' 项失败 ❌   通过 ' + pass + ' 项，失败 ' + fail + ' 项');
+  process.exit(fail === 0 ? 0 : 1);
+})();

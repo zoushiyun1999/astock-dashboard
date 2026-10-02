@@ -744,37 +744,6 @@ body.scrolled .h-date { opacity: 0; }
 .empty .t { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--ink-2); }
 .empty .s { font-size: var(--fs-sm); margin-top: var(--sp-1); }
 
-/* ── 量价补跑检测（2026-09-30，方案A：纯前端「检测 + 复制命令」）──
-   纯静态前端无执行通道，按钮只做两件事：① 拉 data.json 检测量价是否逾期未更新；
-   ② 异常时给出可一键复制的 ECS 补跑命令。凸起按钮 = 可点击，与全站新拟态一致。 */
-.sc-refresh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
-.sc-refresh .act {
-  height: 34px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center;
-  font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--accent-deep);
-  background: #fff; border: none; border-radius: var(--radius-md); cursor: pointer;
-  box-shadow: var(--nm-raise-sm); transition: box-shadow var(--t-fast), transform var(--t-fast);
-}
-.sc-refresh .act:active { transform: scale(.97); box-shadow: var(--nm-inset-sm); }
-.sc-status { font-size: var(--fs-sm); color: var(--ink-3); line-height: 1.5; }
-.sc-status.ok { color: var(--accent-deep); }
-.sc-status.warn { color: #b06a00; }
-.sc-status b { font-weight: var(--fw-semibold); }
-.sc-status .copied { margin-left: 6px; color: #2e7d32; font-weight: var(--fw-semibold); }
-/* 自动补跑：小链接按钮（复制命令兜底） */
-.sc-refresh .lnk, .sc-status .lnk {
-  appearance: none; border: 0; background: transparent; cursor: pointer;
-  color: var(--accent, #007AFF); font-size: var(--fs-sm); padding: 2px 4px; margin-left: 4px;
-  border-radius: 6px; line-height: 1.4;
-}
-.sc-refresh .lnk:active, .sc-status .lnk:active { background: rgba(0,122,255,.1); }
-/* 补跑失败日志尾 */
-.sc-status .sc-tail {
-  display: block; margin-top: 6px; max-height: 120px; overflow: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11px; line-height: 1.5; color: var(--ink-3, #888);
-  white-space: pre-wrap; word-break: break-all;
-}
-
 /* ── 推荐走势 / 效果统计（2026-09-24，方案 B）────────────────────
    底部抽屉式弹层。不复用 .cal-viewer 的深色遮罩：那是「看图」用的（深底衬托图片），
    而这里是**表格与数字**，必须在白底上才读得快。
