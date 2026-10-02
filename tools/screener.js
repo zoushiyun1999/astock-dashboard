@@ -50,6 +50,28 @@ const HOLIDAY_YEARS = (function () {
     return {};   // 读不到时退化为「仅排除周末」，不阻断主流程
   }
 })();
+
+/** 🔴 是否应跳过（周末/节假日）：放在抓数之前，无条件拦截。
+ *  背景（2026-10-02 修复）：旧守卫只在「抓到 0 只」时才判休市，但休市日东财接口
+ *  仍返回最近交易日快照（market.length>0）→ 守卫被绕过 → 把上一交易日数据
+ *  错贴休市日日期写进看板（本次 10-02 国庆即此）。现改为抓数前先判，非交易日直接跳过。 */
+function isSkipDay(dateObj, holidayYears) {
+  return !gapCheck.isTradingDay(dateObj, holidayYears);
+}
+
+/** 🔴 剔除历史里任何「非交易日」记录（纯函数，便于单测）。
+ *  历史上若误写入休市/周末期（如 2026-10-02 国庆误写），下次运行自动清理，
+ *  避免看板出现「休市日却有数据」的矛盾记录。解析不了的日期保守保留。 */
+function pruneNonTrading(scList, holidayYears) {
+  if (!Array.isArray(scList)) return scList;
+  return scList.filter(function (x) {
+    if (!x || !x.date) return true;
+    var d = new Date(x.date + 'T00:00:00');
+    if (isNaN(d.getTime())) return true;
+    return gapCheck.isTradingDay(d, holidayYears);
+  });
+}
+
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
 const H = { 'User-Agent': UA, 'Referer': 'https://quote.eastmoney.com/' };
 
@@ -327,21 +349,37 @@ function fmtTime(d) { return fmtDate(d) + ' ' + String(d.getHours()).padStart(2,
 async function main() {
   const now = new Date();
   console.log('▶ 量价选股开始 ' + fmtTime(now));
+
+  // 🔴 2026-10-02 修复：非交易日（周末/节假日）在抓数前无条件跳过，绝不抓取/筛选/写盘。
+  //   旧守卫只在「抓到 0 只」时判休市，但休市日东财仍返回最近交易日快照 → 守卫被绕过 →
+  //   把上一交易日数据错贴休市日日期写进看板（本次 10-02 国庆即此）。
+  //   即便跳过，也顺手清理历史上误写入的非交易日记录（如已被写入的 10-02），
+  //   让看板不会长期残留「休市日却有数据」的矛盾记录。
+  if (isSkipDay(now, HOLIDAY_YEARS)) {
+    try {
+      const seed = loadScreenerFile();
+      if (Array.isArray(seed) && seed.some(function (x) {
+        return x && x.date && !gapCheck.isTradingDay(new Date(x.date + 'T00:00:00'), HOLIDAY_YEARS);
+      })) {
+        const cleaned = pruneNonTrading(seed, HOLIDAY_YEARS);
+        fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(cleaned, null, 2) + ';\n');
+        console.log('  ℹ 已清理历史中 ' + (seed.length - cleaned.length) + ' 条非交易日记录（休市日自检）。');
+      }
+    } catch (_) { /* 自检失败不影响跳过 */ }
+    console.log('  ℹ ' + fmtDate(now) + ' 为非交易日（周末/节假日）→ 正常跳过，不抓取、不写入、不发布。');
+    return;
+  }
+
   // ⚠️ 抓数之前先与远端对齐：历史期数据（dashboard/screener.js）是**追加**的，
   //    拿陈旧副本会丢掉另一侧已发布的期数，并在发布时把它推回远端。
   preSync('选股');
   let market = await fetchMarketWithRetry(now);
   console.log('  全市场（沪深主板）：' + market.length + ' 只');
 
-  // 🔴 上游闸门（2026-09-21 补）：全市场 0 只必须区分「非交易日」与「数据源故障」。
-  //   旧行为把两者都当成「入选 0 只」原样写进看板 —— 线上会出现一期假的「0 只」，
-  //   而 stdout 与休市完全一致，事后极难判断到底是休市还是抓取失败。
-  //   2026-09-21 实测：push2 全系域名被持续重置时，正是这个假「0 只」被写进了 dashboard/screener.js。
+  // 🔴 上游故障标记（2026-09-30 新增）：交易日抓到全市场 0 只 = 数据源故障。
+  //   非交易日（周末/节假日）已在 main() 顶部 isSkipDay 守卫跳过，此处只可能在交易日到达，
+  //   故「0 只」只能解读为数据源故障，不再与休市混淆（旧实现曾把两者混为一谈）。
   if (!market.length) {
-    if (!gapCheck.isTradingDay(now, HOLIDAY_YEARS)) {
-      console.log('  ℹ ' + fmtDate(now) + ' 为非交易日（周末/节假日）→ 正常跳过，不写入、不发布。');
-      return;
-    }
     // 🔴 上游故障标记（2026-09-30 新增）：交易日抓到全市场 0 只 = 数据源故障。
     //   旧行为：throw abortSc → exit 2 + 不写盘，线上 SCREENER 停在上一交易日，
     //   用户完全分不清"休市 / 未到点"还是"数据源挂了"（本次 09-28~09-30 连续缺失即此）。
@@ -466,7 +504,7 @@ async function main() {
   else if (seed && seed.list) hist = [seed];   // 兼容旧的单对象结构
   const dup = hist.findIndex(function (x) { return x && x.date === result.date; });
   if (dup >= 0) hist[dup] = result; else hist.unshift(result);   // 同一天重复运行则覆盖当天那期
-  hist = hist.slice(0, HISTORY_MAX);
+  hist = pruneNonTrading(hist.slice(0, HISTORY_MAX), HOLIDAY_YEARS);
 
   // 停写 data.screener：前端走 window.SCREENER（index.html 先加载 screener.js），
   // data.screener 那份永不生效，却随 data.js/data.json 每次全量传输（P2-4）。
@@ -526,7 +564,7 @@ function writeScreenerFault(result) {
   else if (seed && seed.list) hist = [seed];
   var dup = hist.findIndex(function (x) { return x && x.date === result.date; });
   if (dup >= 0) hist[dup] = result; else hist.unshift(result);
-  hist = hist.slice(0, HISTORY_MAX);
+  hist = pruneNonTrading(hist.slice(0, HISTORY_MAX), HOLIDAY_YEARS);
   fs.writeFileSync(SC_FILE, 'window.SCREENER = ' + JSON.stringify(hist, null, 2) + ';\n');
 }
 
@@ -550,5 +588,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main, fetchMarket, fetchMarketWithRetry };
+module.exports = { isBadName, passBase, buildWarnings, loadScreenerFile, computeYangGain20, CFG, saveDataSafe, main, fetchMarket, fetchMarketWithRetry, isSkipDay, pruneNonTrading };
 
