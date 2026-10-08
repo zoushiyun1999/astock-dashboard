@@ -1,5 +1,79 @@
 window.SCREENER = [
   {
+    "date": "2026-10-08",
+    "runAt": "2026-10-08 15:10",
+    "count": 4,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "601015",
+        "name": "陕西黑猫",
+        "industry": "焦炭Ⅱ",
+        "price": 3.83,
+        "gain": 6.98,
+        "turnover": 6.9,
+        "volRatio": 2.08,
+        "cap": 78,
+        "yang": 4,
+        "gain20": -7.73,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "600573",
+        "name": "惠泉啤酒",
+        "industry": "非白酒",
+        "price": 11.11,
+        "gain": 6.62,
+        "turnover": 8.78,
+        "volRatio": 2.32,
+        "cap": 28,
+        "yang": 3,
+        "gain20": 2.46,
+        "aboveRate": 97,
+        "sector": ""
+      },
+      {
+        "code": "600727",
+        "name": "鲁北化工",
+        "industry": "化学原料",
+        "price": 7.8,
+        "gain": 4.14,
+        "turnover": 3.43,
+        "volRatio": 2.32,
+        "cap": 41,
+        "yang": 2,
+        "gain20": -6.49,
+        "aboveRate": 100,
+        "sector": "化工"
+      },
+      {
+        "code": "000554",
+        "name": "泰山石油",
+        "industry": "炼化及贸易",
+        "price": 6.4,
+        "gain": 3.39,
+        "turnover": 5.33,
+        "volRatio": 2.22,
+        "cap": 31,
+        "yang": 2,
+        "gain20": -8.02,
+        "aboveRate": 100,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-09-30",
     "runAt": "2026-09-30 21:26",
     "fault": true,
