@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-10-09 21:02",
+  "updatedAt": "2026-10-09 21:30",
   "calendar": [
     {
       "id": "jy6w4x656k",
@@ -5056,28 +5056,85 @@ window.REPORTS = {
                 "code": "600241",
                 "role": "可跟",
                 "status": "4板+次高标+高位分歧",
-                "reason": "固态电池龙头，4板确立板块高度，分歧时可考虑低吸"
+                "reason": "固态电池龙头，4板确立板块高度，分歧时可考虑低吸",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 11.76,
+                  "code": "600241",
+                  "at": "2026-10-09",
+                  "open": 11.76,
+                  "openPct": 10.01,
+                  "buyRet": 0,
+                  "netRet": null,
+                  "locked": true,
+                  "basis": "open-to-close",
+                  "by": "hist",
+                  "note": "一字板·无法买入（剔除）"
+                }
               },
               {
                 "name": "传艺科技",
                 "code": "002866",
                 "role": "可跟",
                 "status": "3板+固态电池",
-                "reason": "固态电池核心股，3板表现强势，适合分歧回踩介入"
+                "reason": "固态电池核心股，3板表现强势，适合分歧回踩介入",
+                "verify": {
+                  "gain": -1.45,
+                  "hit": false,
+                  "price": 18.32,
+                  "code": "002866",
+                  "at": "2026-10-09",
+                  "open": 18.41,
+                  "openPct": -0.97,
+                  "buyRet": -0.49,
+                  "netRet": -0.69,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "上海洗霸",
                 "code": "603200",
                 "role": "观察",
                 "status": "3板+算力液冷+高位分歧",
-                "reason": "固态电池叠加算力液冷，3板炸板率较高，需观察次日溢价"
+                "reason": "固态电池叠加算力液冷，3板炸板率较高，需观察次日溢价",
+                "verify": {
+                  "gain": 9.57,
+                  "hit": true,
+                  "price": 53.92,
+                  "code": "603200",
+                  "at": "2026-10-09",
+                  "open": 49.21,
+                  "openPct": 0,
+                  "buyRet": 9.57,
+                  "netRet": 9.35,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "龙蟠科技",
                 "code": "603906",
                 "role": "观察",
                 "status": "2板+固态电池前驱体",
-                "reason": "固态电池前驱体概念，2板表现稳健，可作为低位补涨观察"
+                "reason": "固态电池前驱体概念，2板表现稳健，可作为低位补涨观察",
+                "verify": {
+                  "gain": 2.05,
+                  "hit": true,
+                  "price": 21.37,
+                  "code": "603906",
+                  "at": "2026-10-09",
+                  "open": 21.6,
+                  "openPct": 3.15,
+                  "buyRet": -1.06,
+                  "netRet": -1.26,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5092,21 +5149,64 @@ window.REPORTS = {
                 "code": "600825",
                 "role": "谨慎",
                 "status": "8板+高位分歧+风险",
-                "reason": "8板龙头，但炸板率极高，高位博弈风险大，建议谨慎参与"
+                "reason": "8板龙头，但炸板率极高，高位博弈风险大，建议谨慎参与",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 12.53,
+                  "code": "600825",
+                  "at": "2026-10-09",
+                  "open": 12.53,
+                  "openPct": 10.01,
+                  "buyRet": 0,
+                  "netRet": null,
+                  "locked": true,
+                  "basis": "open-to-close",
+                  "by": "hist",
+                  "note": "一字板·无法买入（剔除）"
+                }
               },
               {
                 "name": "园林股份",
                 "code": "605303",
                 "role": "观察",
                 "status": "3板+芯片+并购",
-                "reason": "并购重组+芯片概念，3板炸板，观察是否能穿越分歧"
+                "reason": "并购重组+芯片概念，3板炸板，观察是否能穿越分歧",
+                "verify": {
+                  "gain": 2.16,
+                  "hit": true,
+                  "price": 32.21,
+                  "code": "605303",
+                  "at": "2026-10-09",
+                  "open": 34.68,
+                  "openPct": 9.99,
+                  "buyRet": -7.12,
+                  "netRet": -7.31,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "恒尚节能",
                 "code": "603137",
                 "role": "观察",
                 "status": "1板+芯片+并购",
-                "reason": "并购重组叠加芯片概念，低位首板，关注后续资金认可度"
+                "reason": "并购重组叠加芯片概念，低位首板，关注后续资金认可度",
+                "verify": {
+                  "gain": -4.65,
+                  "hit": false,
+                  "price": 18.65,
+                  "code": "603137",
+                  "at": "2026-10-09",
+                  "open": 19.37,
+                  "openPct": -0.97,
+                  "buyRet": -3.72,
+                  "netRet": -3.91,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5121,21 +5221,63 @@ window.REPORTS = {
                 "code": "002242",
                 "role": "可跟",
                 "status": "4板+小家电+机器人",
-                "reason": "大消费龙头，4板确立地位，分歧时可关注回踩机会"
+                "reason": "大消费龙头，4板确立地位，分歧时可关注回踩机会",
+                "verify": {
+                  "gain": 10.04,
+                  "hit": true,
+                  "price": 15.13,
+                  "code": "002242",
+                  "at": "2026-10-09",
+                  "open": 14.3,
+                  "openPct": 4,
+                  "buyRet": 5.8,
+                  "netRet": 5.59,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "金健米业",
                 "code": "600127",
                 "role": "可跟",
                 "status": "1板+粮食概念",
-                "reason": "粮食概念涨停，作为大消费分支，关注是否有补涨潜力"
+                "reason": "粮食概念涨停，作为大消费分支，关注是否有补涨潜力",
+                "verify": {
+                  "gain": 10,
+                  "hit": true,
+                  "price": 15.18,
+                  "code": "600127",
+                  "at": "2026-10-09",
+                  "open": 13.8,
+                  "openPct": 0,
+                  "buyRet": 10,
+                  "netRet": 9.78,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "海欣食品",
                 "code": "002702",
                 "role": "观察",
                 "status": "1板+预制菜",
-                "reason": "预制菜概念涨停，低位首板，观察能否跟随板块发酵"
+                "reason": "预制菜概念涨停，低位首板，观察能否跟随板块发酵",
+                "verify": {
+                  "gain": 4.05,
+                  "hit": true,
+                  "price": 6.16,
+                  "code": "002702",
+                  "at": "2026-10-09",
+                  "open": 5.92,
+                  "openPct": 0,
+                  "buyRet": 4.05,
+                  "netRet": 3.85,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5150,21 +5292,63 @@ window.REPORTS = {
                 "code": "605303",
                 "role": "可跟",
                 "status": "3板+芯片+算力",
-                "reason": "芯片+算力+并购三重概念，3板表现强势，适合分歧低吸"
+                "reason": "芯片+算力+并购三重概念，3板表现强势，适合分歧低吸",
+                "verify": {
+                  "gain": 2.16,
+                  "hit": true,
+                  "price": 32.21,
+                  "code": "605303",
+                  "at": "2026-10-09",
+                  "open": 34.68,
+                  "openPct": 9.99,
+                  "buyRet": -7.12,
+                  "netRet": -7.31,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "宏昌电子",
                 "code": "603002",
                 "role": "观察",
                 "status": "1板+芯片+PCB",
-                "reason": "PCB及电子树脂概念，炸板率较高，观察次日修复情况"
+                "reason": "PCB及电子树脂概念，炸板率较高，观察次日修复情况",
+                "verify": {
+                  "gain": -5.4,
+                  "hit": false,
+                  "price": 17.68,
+                  "code": "603002",
+                  "at": "2026-10-09",
+                  "open": 19.06,
+                  "openPct": 1.98,
+                  "buyRet": -7.24,
+                  "netRet": -7.43,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "康达新材",
                 "code": "002669",
                 "role": "观察",
                 "status": "1板+芯片+PCB",
-                "reason": "PCB概念涨停，电子树脂方向活跃，关注能否跟随板块走强"
+                "reason": "PCB概念涨停，电子树脂方向活跃，关注能否跟随板块走强",
+                "verify": {
+                  "gain": -3.33,
+                  "hit": false,
+                  "price": 14.21,
+                  "code": "002669",
+                  "at": "2026-10-09",
+                  "open": 14.56,
+                  "openPct": -0.95,
+                  "buyRet": -2.4,
+                  "netRet": -2.6,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5179,14 +5363,42 @@ window.REPORTS = {
                 "code": "600026",
                 "role": "观察",
                 "status": "1板+港口航运+油气",
-                "reason": "油气改革概念涨停，港口航运叠加，观察是否有持续性"
+                "reason": "油气改革概念涨停，港口航运叠加，观察是否有持续性",
+                "verify": {
+                  "gain": 3.85,
+                  "hit": true,
+                  "price": 23.49,
+                  "code": "600026",
+                  "at": "2026-10-09",
+                  "open": 23.07,
+                  "openPct": 1.99,
+                  "buyRet": 1.82,
+                  "netRet": 1.62,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "招商南油",
                 "code": "601975",
                 "role": "观察",
                 "status": "1板+港口航运+油气",
-                "reason": "油气改革概念涨停，港口航运叠加，关注资金关注程度"
+                "reason": "油气改革概念涨停，港口航运叠加，关注资金关注程度",
+                "verify": {
+                  "gain": -3.82,
+                  "hit": false,
+                  "price": 4.78,
+                  "code": "601975",
+                  "at": "2026-10-09",
+                  "open": 4.98,
+                  "openPct": 0.2,
+                  "buyRet": -4.02,
+                  "netRet": -4.21,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -5273,7 +5485,22 @@ window.REPORTS = {
             "code": "600825",
             "sector": "传媒",
             "status": "8板 高位 风险",
-            "reason": "历史高位连板，风险较高，不建议追高"
+            "reason": "历史高位连板，风险较高，不建议追高",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 12.53,
+              "code": "600825",
+              "at": "2026-10-09",
+              "open": 12.53,
+              "openPct": 10.01,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "时代万恒",

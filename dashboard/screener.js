@@ -34,7 +34,21 @@ window.SCREENER = [
         "yang": 4,
         "gain20": -7.73,
         "aboveRate": 100,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 0.26,
+          "hit": true,
+          "price": 3.84,
+          "code": "601015",
+          "at": "2026-10-09",
+          "open": 3.84,
+          "openPct": 0.26,
+          "buyRet": 0,
+          "netRet": -0.2,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600573",
@@ -48,7 +62,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 2.46,
         "aboveRate": 97,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 5.85,
+          "hit": true,
+          "price": 11.76,
+          "code": "600573",
+          "at": "2026-10-09",
+          "open": 11.1,
+          "openPct": -0.09,
+          "buyRet": 5.95,
+          "netRet": 5.73,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600727",
@@ -62,7 +90,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -6.49,
         "aboveRate": 100,
-        "sector": "化工"
+        "sector": "化工",
+        "verify": {
+          "gain": 0.38,
+          "hit": true,
+          "price": 7.83,
+          "code": "600727",
+          "at": "2026-10-09",
+          "open": 7.81,
+          "openPct": 0.13,
+          "buyRet": 0.26,
+          "netRet": 0.06,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "000554",
@@ -76,7 +118,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -8.02,
         "aboveRate": 100,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -0.31,
+          "hit": false,
+          "price": 6.38,
+          "code": "000554",
+          "at": "2026-10-09",
+          "open": 6.35,
+          "openPct": -0.78,
+          "buyRet": 0.47,
+          "netRet": 0.27,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
@@ -695,18 +751,13 @@ window.SCREENER = [
         "aboveRate": 100,
         "sector": "",
         "verify": {
-          "gain": 7.13,
-          "hit": true,
-          "price": 42.2,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002785",
-          "at": "2026-09-21",
-          "open": 40.96,
-          "openPct": 3.99,
-          "buyRet": 3.03,
-          "netRet": 2.82,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -722,18 +773,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": 5.57,
-          "hit": true,
-          "price": 7.58,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "603321",
-          "at": "2026-09-21",
-          "open": 7.41,
-          "openPct": 3.2,
-          "buyRet": 2.29,
-          "netRet": 2.09,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -749,18 +795,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "算力/AI",
         "verify": {
-          "gain": -2.12,
-          "hit": false,
-          "price": 61.52,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "605111",
-          "at": "2026-09-21",
-          "open": 63,
-          "openPct": 0.24,
-          "buyRet": -2.35,
-          "netRet": -2.54,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -776,18 +817,13 @@ window.SCREENER = [
         "aboveRate": 97,
         "sector": "",
         "verify": {
-          "gain": 3.5,
-          "hit": true,
-          "price": 21.28,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001360",
-          "at": "2026-09-21",
-          "open": 20.55,
-          "openPct": -0.05,
-          "buyRet": 3.55,
-          "netRet": 3.35,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -803,18 +839,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "",
         "verify": {
-          "gain": 1.12,
-          "hit": true,
-          "price": 2.72,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "000797",
-          "at": "2026-09-21",
-          "open": 2.66,
-          "openPct": -1.12,
-          "buyRet": 2.26,
-          "netRet": 2.05,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -830,18 +861,13 @@ window.SCREENER = [
         "aboveRate": 100,
         "sector": "",
         "verify": {
-          "gain": 1.38,
-          "hit": true,
-          "price": 3.68,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "600790",
-          "at": "2026-09-21",
-          "open": 3.61,
-          "openPct": -0.55,
-          "buyRet": 1.94,
-          "netRet": 1.74,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -857,18 +883,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "算力/AI",
         "verify": {
-          "gain": 2.58,
-          "hit": true,
-          "price": 46.47,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002881",
-          "at": "2026-09-21",
-          "open": 46.11,
-          "openPct": 1.79,
-          "buyRet": 0.78,
-          "netRet": 0.58,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -884,18 +905,13 @@ window.SCREENER = [
         "aboveRate": 100,
         "sector": "",
         "verify": {
-          "gain": -1.4,
-          "hit": false,
-          "price": 18.36,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001312",
-          "at": "2026-09-21",
-          "open": 18.5,
-          "openPct": -0.64,
-          "buyRet": -0.76,
-          "netRet": -0.96,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -911,18 +927,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": -1.67,
-          "hit": false,
-          "price": 24.1,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "601595",
-          "at": "2026-09-21",
-          "open": 24.51,
-          "openPct": 0,
-          "buyRet": -1.67,
-          "netRet": -1.87,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -938,18 +949,13 @@ window.SCREENER = [
         "aboveRate": 100,
         "sector": "",
         "verify": {
-          "gain": -1.59,
-          "hit": false,
-          "price": 43.2,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001393",
-          "at": "2026-09-21",
-          "open": 43.62,
-          "openPct": -0.64,
-          "buyRet": -0.96,
-          "netRet": -1.16,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -965,18 +971,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": 2.77,
-          "hit": true,
-          "price": 17.78,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "600793",
-          "at": "2026-09-21",
-          "open": 17.3,
-          "openPct": 0,
-          "buyRet": 2.77,
-          "netRet": 2.57,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -992,18 +993,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "算力/AI",
         "verify": {
-          "gain": 10,
-          "hit": true,
-          "price": 32.44,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001373",
-          "at": "2026-09-21",
-          "open": 29.63,
-          "openPct": 0.47,
-          "buyRet": 9.48,
-          "netRet": 9.26,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1019,18 +1015,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "",
         "verify": {
-          "gain": 3.01,
-          "hit": true,
-          "price": 5.14,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "600638",
-          "at": "2026-09-21",
-          "open": 4.91,
-          "openPct": -1.6,
-          "buyRet": 4.68,
-          "netRet": 4.48,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1046,18 +1037,13 @@ window.SCREENER = [
         "aboveRate": 99,
         "sector": "",
         "verify": {
-          "gain": -1.37,
-          "hit": false,
-          "price": 51.87,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001237",
-          "at": "2026-09-21",
-          "open": 52.02,
-          "openPct": -1.08,
-          "buyRet": -0.29,
-          "netRet": -0.49,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1073,18 +1059,13 @@ window.SCREENER = [
         "aboveRate": 97,
         "sector": "医药",
         "verify": {
-          "gain": 5.78,
-          "hit": true,
-          "price": 32.04,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "603976",
-          "at": "2026-09-21",
-          "open": 30.5,
-          "openPct": 0.69,
-          "buyRet": 5.05,
-          "netRet": 4.84,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1100,18 +1081,13 @@ window.SCREENER = [
         "aboveRate": 99,
         "sector": "",
         "verify": {
-          "gain": 2.86,
-          "hit": true,
-          "price": 32.35,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "603334",
-          "at": "2026-09-21",
-          "open": 31.39,
-          "openPct": -0.19,
-          "buyRet": 3.06,
-          "netRet": 2.85,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1127,18 +1103,13 @@ window.SCREENER = [
         "aboveRate": 95,
         "sector": "",
         "verify": {
-          "gain": 5.34,
-          "hit": true,
-          "price": 11.44,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "600865",
-          "at": "2026-09-21",
-          "open": 10.91,
-          "openPct": 0.46,
-          "buyRet": 4.86,
-          "netRet": 4.65,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1154,18 +1125,13 @@ window.SCREENER = [
         "aboveRate": 97,
         "sector": "",
         "verify": {
-          "gain": 0.7,
-          "hit": true,
-          "price": 7.2,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "000019",
-          "at": "2026-09-21",
-          "open": 7.1,
-          "openPct": -0.7,
-          "buyRet": 1.41,
-          "netRet": 1.21,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1181,18 +1147,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "",
         "verify": {
-          "gain": 1,
-          "hit": true,
-          "price": 17.17,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "601112",
-          "at": "2026-09-21",
-          "open": 16.67,
-          "openPct": -1.94,
-          "buyRet": 3,
-          "netRet": 2.79,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1208,18 +1169,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "算力/AI",
         "verify": {
-          "gain": -0.23,
-          "hit": false,
-          "price": 25.94,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002261",
-          "at": "2026-09-21",
-          "open": 25.74,
-          "openPct": -1,
-          "buyRet": 0.78,
-          "netRet": 0.58,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1235,18 +1191,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "",
         "verify": {
-          "gain": 2.22,
-          "hit": true,
-          "price": 8.3,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "000782",
-          "at": "2026-09-21",
-          "open": 8.13,
-          "openPct": 0.12,
-          "buyRet": 2.09,
-          "netRet": 1.89,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1262,18 +1213,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "算力/AI",
         "verify": {
-          "gain": 3.03,
-          "hit": true,
-          "price": 26.51,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002981",
-          "at": "2026-09-21",
-          "open": 24.96,
-          "openPct": -2.99,
-          "buyRet": 6.21,
-          "netRet": 6,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1289,18 +1235,13 @@ window.SCREENER = [
         "aboveRate": 97,
         "sector": "算力/AI",
         "verify": {
-          "gain": -0.56,
-          "hit": false,
-          "price": 12.45,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002106",
-          "at": "2026-09-21",
-          "open": 12.4,
-          "openPct": -0.96,
-          "buyRet": 0.4,
-          "netRet": 0.2,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1316,18 +1257,13 @@ window.SCREENER = [
         "aboveRate": 99,
         "sector": "",
         "verify": {
-          "gain": -0.32,
-          "hit": false,
-          "price": 3.12,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002489",
-          "at": "2026-09-21",
-          "open": 3.15,
-          "openPct": 0.64,
-          "buyRet": -0.95,
-          "netRet": -1.15,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1343,18 +1279,13 @@ window.SCREENER = [
         "aboveRate": 99,
         "sector": "",
         "verify": {
-          "gain": 2.81,
-          "hit": true,
-          "price": 18.3,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002956",
-          "at": "2026-09-21",
-          "open": 17.72,
-          "openPct": -0.45,
-          "buyRet": 3.27,
-          "netRet": 3.07,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1370,18 +1301,13 @@ window.SCREENER = [
         "aboveRate": 96,
         "sector": "",
         "verify": {
-          "gain": 0.2,
-          "hit": true,
-          "price": 46.09,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "001226",
-          "at": "2026-09-21",
-          "open": 45.99,
-          "openPct": -0.02,
-          "buyRet": 0.22,
-          "netRet": 0.02,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1397,18 +1323,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": 2.63,
-          "hit": true,
-          "price": 6.25,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002522",
-          "at": "2026-09-21",
-          "open": 6.02,
-          "openPct": -1.15,
-          "buyRet": 3.82,
-          "netRet": 3.61,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1424,18 +1345,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": 1.53,
-          "hit": true,
-          "price": 6.65,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "000571",
-          "at": "2026-09-21",
-          "open": 6.6,
-          "openPct": 0.76,
-          "buyRet": 0.76,
-          "netRet": 0.56,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       },
       {
@@ -1451,18 +1367,13 @@ window.SCREENER = [
         "aboveRate": 98,
         "sector": "",
         "verify": {
-          "gain": -0.08,
-          "hit": false,
-          "price": 12.31,
+          "gain": null,
+          "hit": null,
+          "price": null,
           "code": "002748",
-          "at": "2026-09-21",
-          "open": 12.3,
-          "openPct": -0.16,
-          "buyRet": 0.08,
-          "netRet": -0.12,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
+          "at": "2026-09-20",
+          "by": "hist",
+          "note": "停牌/无数据（该交易日无K线）"
         }
       }
     ],
