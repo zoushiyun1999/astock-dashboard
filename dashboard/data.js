@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-10-12 21:08",
+  "updatedAt": "2026-10-12 21:30",
   "calendar": [
     {
       "id": "4eq6gf4vrjz",
@@ -4786,28 +4786,64 @@ window.REPORTS = {
                 "code": "600241",
                 "role": "接力",
                 "status": "5板+高位",
-                "reason": "板块龙头，5板确立地位"
+                "reason": "板块龙头，5板确立地位",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600241",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "紫竹高科",
                 "code": "002058",
                 "role": "观察",
                 "status": "4板+高位",
-                "reason": "板块中军，固态电池铝塑膜"
+                "reason": "板块中军，固态电池铝塑膜",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002058",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "雄韬股份",
                 "code": "002733",
                 "role": "跟风",
                 "status": "2板+低位",
-                "reason": "固态电池前排，2板待确认"
+                "reason": "固态电池前排，2板待确认",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002733",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "丰元股份",
                 "code": "002805",
                 "role": "跟风",
                 "status": "2板+低位",
-                "reason": "固态电池前排，2板待确认"
+                "reason": "固态电池前排，2板待确认",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002805",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           },
@@ -4822,28 +4858,64 @@ window.REPORTS = {
                 "code": "605287",
                 "role": "观察",
                 "status": "2板+低位",
-                "reason": "AI漫剧概念，首板转二板"
+                "reason": "AI漫剧概念，首板转二板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "605287",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "龙版传媒",
                 "code": "605577",
                 "role": "观察",
                 "status": "2板+低位",
-                "reason": "AI漫剧+出版，概念叠加"
+                "reason": "AI漫剧+出版，概念叠加",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "605577",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "上海电影",
                 "code": "601595",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "AI影视概念首板"
+                "reason": "AI影视概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "601595",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "博纳影业",
                 "code": "001330",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "AI短剧概念首板"
+                "reason": "AI短剧概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "001330",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           },
@@ -4858,21 +4930,48 @@ window.REPORTS = {
                 "code": "002242",
                 "role": "接力",
                 "status": "5板+高位",
-                "reason": "小家电龙头，5板加速"
+                "reason": "小家电龙头，5板加速",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002242",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "红豆股份",
                 "code": "600400",
                 "role": "观察",
                 "status": "2板+低位",
-                "reason": "服饰板块2板"
+                "reason": "服饰板块2板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600400",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "妙可蓝多",
                 "code": "600882",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "业绩增长概念首板"
+                "reason": "业绩增长概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600882",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           },
@@ -4887,14 +4986,32 @@ window.REPORTS = {
                 "code": "600825",
                 "role": "谨慎",
                 "status": "9板+高位",
-                "reason": "重组龙头，9板需警惕"
+                "reason": "重组龙头，9板需警惕",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600825",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "新筑股份",
                 "code": "002480",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "资产重组概念首板"
+                "reason": "资产重组概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002480",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           },
@@ -4909,21 +5026,48 @@ window.REPORTS = {
                 "code": "601118",
                 "role": "观察",
                 "status": "2板+低位",
-                "reason": "橡胶概念2板"
+                "reason": "橡胶概念2板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "601118",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "敦煌种业",
                 "code": "600354",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "玉米种子概念首板"
+                "reason": "玉米种子概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600354",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "金健米业",
                 "code": "600127",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "大米概念首板"
+                "reason": "大米概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "600127",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           },
@@ -4938,21 +5082,48 @@ window.REPORTS = {
                 "code": "002912",
                 "role": "谨慎",
                 "status": "8板+高位",
-                "reason": "AI安全龙头，8板风险高"
+                "reason": "AI安全龙头，8板风险高",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "002912",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "绿盟科技",
                 "code": "300369",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "AI安全概念首板"
+                "reason": "AI安全概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "300369",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               },
               {
                 "name": "麒麟信安",
                 "code": "688152",
                 "role": "观察",
                 "status": "1板+低位",
-                "reason": "国产操作系统概念首板"
+                "reason": "国产操作系统概念首板",
+                "verify": {
+                  "gain": null,
+                  "hit": null,
+                  "price": null,
+                  "code": "688152",
+                  "at": "2026-10-10",
+                  "by": "hist",
+                  "note": "停牌/无数据（该交易日无K线）"
+                }
               }
             ]
           }
@@ -5050,98 +5221,295 @@ window.REPORTS = {
             "code": "600825",
             "sector": "传媒",
             "status": "9板 高位 换手板",
-            "reason": "9连板且股价严重脱离基本面，监管提示风险"
+            "reason": "9连板且股价严重脱离基本面，监管提示风险",
+            "verify": {
+              "gain": 9.98,
+              "hit": true,
+              "price": 13.78,
+              "code": "600825",
+              "at": "2026-10-12",
+              "open": 13.78,
+              "openPct": 9.98,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "时代万恒",
             "code": "600241",
             "sector": "新能源车",
             "status": "5板 高位",
-            "reason": "5连板，固态电池概念，但公司澄清未涉及固态电池"
+            "reason": "5连板，固态电池概念，但公司澄清未涉及固态电池",
+            "verify": {
+              "gain": 10.03,
+              "hit": true,
+              "price": 12.94,
+              "code": "600241",
+              "at": "2026-10-12",
+              "open": 12.48,
+              "openPct": 6.12,
+              "buyRet": 3.69,
+              "netRet": 3.48,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "紫竹高科",
             "code": "002058",
             "sector": "锂电池",
             "status": "4板 高位",
-            "reason": "4连板，固态电池相关业务处于早期探索阶段"
+            "reason": "4连板，固态电池相关业务处于早期探索阶段",
+            "verify": {
+              "gain": 3.52,
+              "hit": true,
+              "price": 25.3,
+              "code": "002058",
+              "at": "2026-10-12",
+              "open": 23.5,
+              "openPct": -3.85,
+              "buyRet": 7.66,
+              "netRet": 7.44,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "雄韬股份",
             "code": "002733",
             "sector": "新能源车",
             "status": "2板 低位",
-            "reason": "2连板，固态电池业务尚未进入量产阶段"
+            "reason": "2连板，固态电池业务尚未进入量产阶段",
+            "verify": {
+              "gain": 2.12,
+              "hit": true,
+              "price": 21.22,
+              "code": "002733",
+              "at": "2026-10-12",
+              "open": 21.54,
+              "openPct": 3.66,
+              "buyRet": -1.49,
+              "netRet": -1.68,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "华北制药",
             "code": "600812",
             "sector": "医药",
             "status": "2板 低位",
-            "reason": "2连板，业绩预增"
+            "reason": "2连板，业绩预增",
+            "verify": {
+              "gain": 9.95,
+              "hit": true,
+              "price": 6.63,
+              "code": "600812",
+              "at": "2026-10-12",
+              "open": 6.63,
+              "openPct": 9.95,
+              "buyRet": 0,
+              "netRet": -0.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "丰元股份",
             "code": "002805",
             "sector": "新能源车",
             "status": "2板 低位",
-            "reason": "2连板，固态电池概念，参股比例较低"
+            "reason": "2连板，固态电池概念，参股比例较低",
+            "verify": {
+              "gain": -2.98,
+              "hit": false,
+              "price": 18.86,
+              "code": "002805",
+              "at": "2026-10-12",
+              "open": 19.25,
+              "openPct": -0.98,
+              "buyRet": -2.03,
+              "netRet": -2.22,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "三柏硕",
             "code": "001300",
             "sector": "体育",
             "status": "2板 低位",
-            "reason": "2连板，澄清未涉及体育赛事业务"
+            "reason": "2连板，澄清未涉及体育赛事业务",
+            "verify": {
+              "gain": -9.89,
+              "hit": false,
+              "price": 13.39,
+              "code": "001300",
+              "at": "2026-10-12",
+              "open": 16.35,
+              "openPct": 10.03,
+              "buyRet": -18.1,
+              "netRet": -18.27,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "九阳股份",
             "code": "002242",
             "sector": "小家电",
             "status": "5板 高位",
-            "reason": "5连板，消费概念"
+            "reason": "5连板，消费概念",
+            "verify": {
+              "gain": 9.98,
+              "hit": true,
+              "price": 16.64,
+              "code": "002242",
+              "at": "2026-10-12",
+              "open": 16.64,
+              "openPct": 9.98,
+              "buyRet": 0,
+              "netRet": -0.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "金健米业",
             "code": "600127",
             "sector": "农业",
             "status": "1板 低位",
-            "reason": "1连板，农业板块"
+            "reason": "1连板，农业板块",
+            "verify": {
+              "gain": -8.43,
+              "hit": false,
+              "price": 13.9,
+              "code": "600127",
+              "at": "2026-10-12",
+              "open": 16.42,
+              "openPct": 8.17,
+              "buyRet": -15.35,
+              "netRet": -15.52,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中文在线",
             "code": "300364",
             "sector": "传媒",
             "status": "1板 低位",
-            "reason": "1连板，AI应用概念"
+            "reason": "1连板，AI应用概念",
+            "verify": {
+              "gain": 3.84,
+              "hit": true,
+              "price": 25.41,
+              "code": "300364",
+              "at": "2026-10-12",
+              "open": 24.91,
+              "openPct": 1.8,
+              "buyRet": 2.01,
+              "netRet": 1.8,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "善水科技",
             "code": "301190",
             "sector": "化工",
             "status": "2板 低位",
-            "reason": "2连板，染料概念"
+            "reason": "2连板，染料概念",
+            "verify": {
+              "gain": 10.14,
+              "hit": true,
+              "price": 48.45,
+              "code": "301190",
+              "at": "2026-10-12",
+              "open": 46,
+              "openPct": 4.57,
+              "buyRet": 5.33,
+              "netRet": 5.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "绿盟科技",
             "code": "300369",
             "sector": "网络安全",
             "status": "1板 低位",
-            "reason": "1连板，AI安全概念"
+            "reason": "1连板，AI安全概念",
+            "verify": {
+              "gain": 6.71,
+              "hit": true,
+              "price": 11.13,
+              "code": "300369",
+              "at": "2026-10-12",
+              "open": 11.51,
+              "openPct": 10.35,
+              "buyRet": -3.3,
+              "netRet": -3.49,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "上海电影",
             "code": "601595",
             "sector": "传媒",
             "status": "1板 低位",
-            "reason": "1连板，IP概念"
+            "reason": "1连板，IP概念",
+            "verify": {
+              "gain": 9.98,
+              "hit": true,
+              "price": 27.21,
+              "code": "601595",
+              "at": "2026-10-12",
+              "open": 25.79,
+              "openPct": 4.24,
+              "buyRet": 5.51,
+              "netRet": 5.3,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "龙版传媒",
             "code": "605577",
             "sector": "传媒",
             "status": "2板 低位",
-            "reason": "2连板，AI出版概念"
+            "reason": "2连板，AI出版概念",
+            "verify": {
+              "gain": 10,
+              "hit": true,
+              "price": 17.82,
+              "code": "605577",
+              "at": "2026-10-12",
+              "open": 17.82,
+              "openPct": 10,
+              "buyRet": 0,
+              "netRet": -0.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
