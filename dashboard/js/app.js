@@ -30,11 +30,56 @@
      curDate 始终代表"当前正在看的这个子视图的日期"，切子视图时先存后取。 */
   var curSub = 'watch';
   var subDates = { watch: todayYmd(), screener: todayYmd() };
-  function saveSubState() {
+
+  /* ══ 浏览状态：三层存储（2026-10-12，主流 SPA 做法）═════════════════════════════
+     ① URL hash        —— 只承载**导航状态**（主 Tab + 选股子视图）：
+                          #tab=evening ／ #tab=picks&sub=screener
+                          换状态时用 history.replaceState 同步（不堆历史、不触发 hashchange）；
+                          用户手动改地址 / 打开收藏 / 前进后退 → hashchange 事件里应用。
+     ② sessionStorage  —— 「本标签页会话」态：**刷新保留、关掉重开清空**。
+                          各子视图日期、日历期数、滚动位置放这里 —— 这一层就是
+                          「刷新停在原处」与「每天打开都是最新」的分界线。
+     ③ localStorage    —— 跨会话偏好：主 Tab、选股子视图、晚报未读标记。
+     ⚠️ 两个已踩过的坑（2026-10-12）：
+        · 日期曾经放 localStorage：昨天在选股页看了 10-09，今天打开还停在 10-09 ——
+          与「每次点开都是最新日期最新信息」的预期正相反（用户反馈）。日期是
+          「我在追哪一天」的临时意图，不是长期偏好，故降级为会话态。
+        · 日期也曾写进 hash：URL 里的 #date=09-21 会跨会话复活 —— 清掉会话态也没用，
+          用户从地址栏/历史记录打开旧链接，照样被带回老日期。deep link 只做导航，
+          不做日期；要分享某一天，让用户分享时明确选（真需要了再加显式入口）。 */
+  function parseHash() {
+    var st = {};
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (!h) return st;
+    h.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i < 0) return;
+      var v = kv.slice(i + 1);
+      try { v = decodeURIComponent(v); } catch (e) {}
+      st[kv.slice(0, i)] = v;
+    });
+    return st;
+  }
+  function writeHash() {
+    var parts = ['tab=' + curTab];
+    if (curTab === 'picks') parts.push('sub=' + curSub);
     try {
-      localStorage.setItem('curSub', curSub);
-      localStorage.setItem('subDates', JSON.stringify(subDates));
+      history.replaceState(null, '', location.pathname + location.search + '#' + parts.join('&'));
     } catch (e) {}
+  }
+  function saveSubState() {
+    try { localStorage.setItem('curSub', curSub); } catch (e) {}          // 偏好 → 跨会话
+    try { sessionStorage.setItem('subDates', JSON.stringify(subDates)); } catch (e) {}  // 日期 → 会话态
+    writeHash();
+  }
+  /* 程序化滚动一律「瞬间」到位。
+     🔴 不能用默认的 smooth：html{scroll-behavior:smooth} 会让滚动变成几百 ms 的动画，
+        动画中途的 scroll 事件把**中间值**存进 sessionStorage，盖掉真正的目标位置 ——
+        表现为「刷新后停在一个随机高度」（2026-10-12 实测：恢复 700 存成 380）。
+        恢复位置是「回到你刚才看的地方」，要的是瞬移，不是滑行。 */
+  function jumpTo(y) {
+    try { window.scrollTo({ top: y, behavior: 'instant' }); }
+    catch (e) { window.scrollTo(0, y); }   // 老浏览器不支持选项对象时兜底
   }
 
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -1044,7 +1089,11 @@
 
   window.showCal = function (i) {
     calIdx = i;
+    try { sessionStorage.setItem('calIdx', String(i)); } catch (e) {}   // 会话态（刷新保留）
+    writeHash();
     document.getElementById('sec-calendar').innerHTML = renderCalendar();
+    jumpTo(0);                    // 换一期日历 = 换内容：瞬移回顶部（2026-10-12）
+    syncScrolled();
   };
 
   /* ── 日历原图全屏查看器 ── */
@@ -1302,6 +1351,10 @@
     subDates[curSub] = curDate;   // 记到当前子视图名下（短线/量价各记各的日期）
     saveSubState();
     render();
+    // 换日期 = 换一期内容：瞬移回顶部从头读（日期条本身就在内容顶部，
+    // 停在半空会看到新日期内容的「中段」，没有任何上下文）（2026-10-12）。
+    jumpTo(0);
+    syncScrolled();
   }
   window.stepDay = function (n) { setDate(shiftYmd(curDate, n)); };
   window.pickDay = function (v) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) setDate(v); };
@@ -1387,6 +1440,9 @@
     if (tab === 'watchlist') { curSub = 'watch'; tab = 'picks'; }
     else if (tab === 'screener') { curSub = 'screener'; tab = 'picks'; }
     if (TABS.indexOf(tab) < 0) tab = 'morning';
+    // ⚠️ 必须在 curTab / curSub 改写之前调用：scrollKey() 按当前状态取名，
+    //    晚一步就把旧 Tab 的滚动位置存到新 Tab 名下了（2026-10-12）。
+    saveScrollNow();
     curTab = tab;
     saveSubState();
     try { localStorage.setItem('curTab', tab); } catch (e) {}
@@ -1403,9 +1459,13 @@
     //    这里 section 刚变可见，量到的才是真实尺寸（2026-09-23 修）。
     positionSubGlider();
     updateEveningDot();
-    // 切 Tab 会重置滚动位置（新 Tab 内容可能很短、scrollY 直接归 0）。
-    // 不在这里同步的话，body.scrolled 会残留 → header 永久保持收起态
+    // 切 Tab = 换一篇内容读：显式回顶部（2026-10-12）。
+    // 以前靠「新 Tab 内容短 → scrollY 自然归 0」兜底，内容一长就停在半空；
+    // 且不显式同步的话，body.scrolled 会残留 → header 永久保持收起态
     // （日期淡出、上下留白变窄），且只在下次滚动时才恢复。
+    // 旧 Tab 的滚动位置已在 switchTab 开头记下；这里还原**目标 Tab** 的位置
+    // （会话内切回来 = 回到原处；这个 Tab 本次会话还没浏览过 → 0 = 顶部）。
+    restoreScroll();
     requestAnimationFrame(syncScrolled);
     // 🔴 选股页全是「走势」按钮 + 效果统计入口 → 进页就预取 track.js，点了秒开。
     //    只在选股页预取（其它页没有按钮），且TRACK_P 挂上后条件自然失效、不会重复拉。
@@ -1422,11 +1482,14 @@
   window.switchSub = function (sub) {
     if (sub !== 'watch' && sub !== 'screener') return;
     if (sub === curSub) return;
+    saveScrollNow();                      // 旧子视图的位置（在 curSub 改写前，同 switchTab）
     subDates[curSub] = curDate;          // 存下旧子视图的日期
     curSub = sub;
     curDate = clampDate(subDates[sub]);  // 取回新子视图的日期
     saveSubState();
     render();
+    jumpTo(0);                      // 子视图也是「换一篇内容读」：瞬移回顶部（2026-10-12）
+    syncScrolled();
   };
 
   function render() {
@@ -1538,33 +1601,73 @@
   window.switchTab = switchTab;
 
   render();
-  // 刷新后保留上次浏览的 Tab（localStorage 持久化）；选股 Tab 另恢复子视图与各自日期
+
+  // ══ 启动时恢复浏览状态（2026-10-12 重构）═════════════════════════════════════════
+  // 优先级：URL hash > sessionStorage（会话态）> 今天。
+  //   · 刷新（同会话）  → Tab / 子视图 / 日期 / 滚动位置全部还原 = 「停在原处」
+  //   · 关掉重开（新会话）→ 会话态清空 → 日期回「今天」= 「每次打开都是最新」
+  //   · 打开分享/收藏的 #tab=…&date=… → 直达指定状态
+  // 主 Tab / 选股子视图是跨会话偏好（localStorage），日期不是。
   try {
-    var savedSub = localStorage.getItem('curSub');
-    if (savedSub === 'watch' || savedSub === 'screener') curSub = savedSub;
-    var sd = JSON.parse(localStorage.getItem('subDates') || 'null');
-    if (sd && typeof sd === 'object') {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.watch))) subDates.watch = sd.watch;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.screener))) subDates.screener = sd.screener;
+    var st = parseHash();
+
+    // ── 子视图：hash > localStorage（偏好） ──
+    if (st.sub === 'watch' || st.sub === 'screener') curSub = st.sub;
+    else {
+      var lsSub = null;
+      try { lsSub = localStorage.getItem('curSub'); } catch (e) {}
+      if (lsSub === 'watch' || lsSub === 'screener') curSub = lsSub;
     }
-    var savedTab = localStorage.getItem('curTab');
+
+    // ── 日期：纯会话态（sessionStorage，按子视图分别记）；新会话 → 今天 ──
+    try {
+      var sd = JSON.parse(sessionStorage.getItem('subDates') || 'null');
+      if (sd && typeof sd === 'object') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.watch))) subDates.watch = sd.watch;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(sd.screener))) subDates.screener = sd.screener;
+      }
+    } catch (e) {}
+    curDate = clampDate(subDates[curSub]);
+
+    // ── 日历期数：会话态（越界由 renderCalendar 钳回 0 = 最新一期） ──
+    try {
+      var ci = parseInt(sessionStorage.getItem('calIdx') || '', 10);
+      if (!isNaN(ci) && ci >= 0) calIdx = ci;
+    } catch (e) {}
+
+    // ── 主 Tab：hash > localStorage（含旧值迁移） ──
+    var savedTab = st.tab;
     if (savedTab === 'watchlist' || savedTab === 'screener') {   // 旧值迁移
       curSub = savedTab === 'screener' ? 'screener' : 'watch';
       savedTab = 'picks';
     }
-    if (savedTab && TABS.indexOf(savedTab) >= 0) {
-      if (savedTab === 'picks') curDate = clampDate(subDates[curSub]);
-      switchTab(savedTab);
-      if (savedTab === 'picks') render();   // 用子视图自己的日期重渲染一次
+    if (!savedTab || TABS.indexOf(savedTab) < 0) {
+      try { savedTab = localStorage.getItem('curTab'); } catch (e) {}
+      if (savedTab === 'watchlist' || savedTab === 'screener') {
+        curSub = savedTab === 'screener' ? 'screener' : 'watch';
+        savedTab = 'picks';
+      }
+      if (!savedTab || TABS.indexOf(savedTab) < 0) savedTab = 'morning';
     }
-    var sy = parseInt(localStorage.getItem('scroll_' + savedTab) || '0', 10);
-    window.scrollTo(0, sy);
-    syncScrolled();
+    switchTab(savedTab);
+    render();          // 用恢复出的 Tab / 子视图 / 日期重渲染一次（switchTab 不重渲染内容）
+    writeHash();       // 把恢复出的状态同步进 URL（无 hash 时补上，立即可分享）
+    restoreScroll();   // 刷新 → 原滚动位置；新会话 → 0
+
+    // ── 一次性迁移：旧的 localStorage 日期/滚动键（2026-10-12 起改存 sessionStorage） ──
+    // 不清掉的话，老键会永远躺在 localStorage 里，且「日期放 localStorage」的旧行为
+    // 可能被后续脚本误读复活。收集再删，避免边遍历边删。
+    try {
+      var stale = Object.keys(localStorage).filter(function (k) {
+        return k === 'subDates' || k.indexOf('scroll_') === 0;
+      });
+      stale.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
   } catch (e) {}
 
   /* 滚动后收起 header 的品牌/日期区，把屏幕让给内容（Tab 栏本身是 sticky，会留在顶部）。
      ⚠️ 必须抽成函数、不能只写在 scroll 监听里（2026-09-23 修）：
-       ① 页面恢复滚动位置走 localStorage + window.scrollTo()，**不触发 scroll 事件**
+       ① 页面恢复滚动位置走 sessionStorage + window.scrollTo()，**不触发 scroll 事件**
           → 重新打开页面时停在半空，header 却仍是全高、日期还亮着；
        ② switchTab() 会把滚动位置重置，若新 Tab 内容短则 scrollY 归 0，
           残留的 scrolled 类不会自己消失 → header 永久收起。
@@ -1573,11 +1676,61 @@
     document.body.classList.toggle('scrolled', (window.scrollY || window.pageYOffset || 0) > 60);
   }
 
-  // 滚动位置按 Tab 持久化
+  /* ── 滚动位置：按「Tab + 子视图 + 日期」分别记忆，存 sessionStorage（2026-10-12） ──
+     主流做法两件套：
+       ① history.scrollRestoration='manual'（index.html 内联设置）—— 关掉浏览器原生恢复，
+          它与手动恢复叠加、且时机不可控（早在 DOM 就绪前就恢复了）；
+       ② 渲染完之后自己恢复 + window.load 再校准一次 —— 图片/字体加载会改变文档高度，
+          只恢复一次会「漂移」（恢复到 600px，图加载完实际内容被顶到 700px）。
+     · 刷新 → restoreScroll() 还原原位；
+     · 切 Tab / 切子视图 / 换日期 → 各自 scrollTo(0,0)，离开前的位置由 saveScrollNow() 记下。 */
+  function scrollKey() {
+    return 'sc|' + curTab + '|' + (curTab === 'picks' ? curSub : '-') + '|' + curDate;
+  }
+  function saveScrollNow() {
+    try { sessionStorage.setItem(scrollKey(), String(window.scrollY || 0)); } catch (e) {}
+  }
+  function restoreScroll() {
+    var y = 0;
+    try { y = parseInt(sessionStorage.getItem(scrollKey()) || '0', 10) || 0; } catch (e) {}
+    jumpTo(y);
+    syncScrolled();
+  }
+  var scrollSaveTick = false;
   window.addEventListener('scroll', function () {
-    try { localStorage.setItem('scroll_' + curTab, String(window.scrollY)); } catch (e) {}
+    // rAF 节流：scroll 事件高频，直接写盘会掉帧；最后一小段由 pagehide 兜底
+    if (!scrollSaveTick) {
+      scrollSaveTick = true;
+      requestAnimationFrame(function () { scrollSaveTick = false; saveScrollNow(); });
+    }
     syncScrolled();
   }, { passive: true });
+  window.addEventListener('pagehide', saveScrollNow);
+  window.addEventListener('load', restoreScroll);   // 图片/字体撑开高度后校准一次
+
+  // 用户手动改地址 / 前进后退 → 按 hash 恢复**导航状态**（Tab / 子视图）。
+  // 日期不在 hash 里（见状态层注释），replaceState 也不触发本事件，无循环风险。
+  window.addEventListener('hashchange', function () {
+    var st = parseHash();
+    var tab = st.tab;
+    if (tab === 'watchlist' || tab === 'screener') {   // 旧值迁移
+      curSub = tab === 'screener' ? 'screener' : 'watch';
+      tab = 'picks';
+    }
+    if (!tab || TABS.indexOf(tab) < 0) tab = curTab;
+    var sub = (st.sub === 'watch' || st.sub === 'screener') ? st.sub : curSub;
+    if (tab === curTab && sub === curSub) return;   // 无变化
+    if (sub !== curSub) {
+      subDates[curSub] = curDate;
+      curSub = sub;
+      curDate = clampDate(subDates[sub]);   // 与 switchSub 同构：取回新子视图记忆的日期
+    }
+    saveSubState();
+    switchTab(tab);
+    render();
+    restoreScroll();      // 目标 Tab 会话内浏览过 → 原位置；否则顶部
+    syncScrolled();
+  });
 
   // 窗口尺寸变化时重新定位滑动下划线
   window.addEventListener("resize", function () { positionGlider(); positionSubGlider(); });
@@ -1633,6 +1786,7 @@
         // 原本停在最新一期就继续跟到最新；否则留在原来那一天（哪怕那天仍然没有数据）
         curDate = clampDate(wasLatest && list.length ? list[list.length - 1].date : prevDate);
         render();
+        writeHash();   // 日期可能已跟到最新 → URL 同步（2026-10-12）
       })
       .catch(function () {})
       .then(function () { if (done) done(); });

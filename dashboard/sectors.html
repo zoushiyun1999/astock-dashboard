@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="热点板块">
-<link rel="stylesheet" href="css/style.css?v=202609302111">
+<link rel="stylesheet" href="css/style.css?v=202610130041">
 <style>
 /* ── 独立页专属样式（sp- 前缀防冲突；卡片/板块卡复用 style.css 的 .card/.sector 系列） ──
    配色：浅色阅读主题 —— 主看板头部是深色渐变+白字，本页标题曾误用深色变量导致看不清。
@@ -130,6 +130,8 @@ body { padding-bottom: 24px; }
 <script>
 (function () {
   'use strict';
+  // 关掉浏览器原生滚动恢复，改由本页手动恢复（与主看板同一套做法，2026-10-12）
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -220,6 +222,45 @@ body { padding-bottom: 24px; }
   }).join('');
   // 默认选中：最新一期有板块数据的日期；一个都没有 → 全部禁用
   var def = secDates.length ? secDates[secDates.length - 1].ds : null;
+
+  /* 日期状态（2026-10-12，与主看板同构）：
+     sessionStorage（刷新保留、重开回最新一期）。**不写 URL hash** ——
+     自动写进 URL 的日期会跨会话复活（旧链接第二天把用户带回老日期），
+     与「每次打开都是最新」正相反；行业/概念视图仍是跨会话偏好（localStorage secKind）。 */
+  try {
+    var sd = sessionStorage.getItem('secDate');
+    if (sd && options.indexOf(sd) >= 0) def = sd;
+  } catch (e) {}
+
+  /* 滚动位置：会话态（刷新保留、重开回顶部）。rAF 节流 + pagehide 兜底，
+     window.load 后校准一次（板块卡高度随后端数据稳定，但评级 chip 是异步补渲染的）。
+     🔴 必须瞬移（behavior:'instant'）：本页 CSS 同样有 scroll-behavior:smooth，
+        平滑动画中途的 scroll 事件会把中间值存盘，盖掉真正的目标位置（2026-10-12 主看板实测）。 */
+  function jumpTo(y) {
+    try { window.scrollTo({ top: y, behavior: 'instant' }); }
+    catch (e) { window.scrollTo(0, y); }
+  }
+  function saveScrollNow() {
+    try { sessionStorage.setItem('sc', String(window.scrollY || 0)); } catch (e) {}
+  }
+  function restoreScroll() {
+    var y = 0;
+    try { y = parseInt(sessionStorage.getItem('sc') || '0', 10) || 0; } catch (e) {}
+    jumpTo(y);
+  }
+  var scrollSaveTick = false;
+  window.addEventListener('scroll', function () {
+    if (!scrollSaveTick) {
+      scrollSaveTick = true;
+      requestAnimationFrame(function () { scrollSaveTick = false; saveScrollNow(); });
+    }
+  }, { passive: true });
+  window.addEventListener('pagehide', saveScrollNow);
+  // ⚠️ boot() 是异步的（等 data.js fetch 回来才跑），load 事件可能已经错过 →
+  //    readyState 已是 complete 时直接校准，否则等 load。只此一处需要这个兜底
+  //    （主看板 app.js 是同步脚本，执行时 load 必然还没触发）。
+  if (document.readyState === 'complete') restoreScroll();
+  else window.addEventListener('load', restoreScroll);
 
   function streakStats(name, p) {
     // p = 所选日期在 secDates 中的下标。连续期数：中间「没有板块数据的期」被整体排除在
@@ -349,9 +390,18 @@ body { padding-bottom: 24px; }
     render(sel && sel.value ? sel.value : (secDates[0] ? secDates[0].ds : ''));
   };
 
-  sel.addEventListener('change', function () { render(sel.value); });
-  if (def) { sel.value = def; render(def); document.getElementById('spTip').hidden = false; }
-  else {
+  sel.addEventListener('change', function () {
+    try { sessionStorage.setItem('secDate', sel.value); } catch (e) {}
+    render(sel.value);
+    jumpTo(0);   // 换一期 = 换内容：瞬移回顶部（与主看板一致，2026-10-12）
+  });
+  if (def) {
+    sel.value = def;
+    render(def);
+    document.getElementById('spTip').hidden = false;
+    try { sessionStorage.setItem('secDate', def); } catch (e) {}
+    restoreScroll();
+  } else {
     sel.innerHTML = '<option>暂无任何晚报数据</option>';
     sel.disabled = true;
     app.innerHTML = '<div class="sp-empty"><b>还没有数据</b>等晚报任务（每天 21:00）产出后这里自动出现板块热点。</div>';
