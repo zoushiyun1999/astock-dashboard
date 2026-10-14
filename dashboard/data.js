@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-10-14 21:06",
+  "updatedAt": "2026-10-14 21:30",
   "calendar": [
     {
       "id": "4eq6gf4vrjz",
@@ -4997,21 +4997,63 @@ window.REPORTS = {
                 "code": "605577",
                 "role": "接力",
                 "status": "3板+10天4板",
-                "reason": "AI影视核心，日内封单11.2亿，资金承接力度强。"
+                "reason": "AI影视核心，日内封单11.2亿，资金承接力度强。",
+                "verify": {
+                  "gain": -3.32,
+                  "hit": false,
+                  "price": 18.95,
+                  "code": "605577",
+                  "at": "2026-10-14",
+                  "open": 17.64,
+                  "openPct": -10,
+                  "buyRet": 7.43,
+                  "netRet": 7.21,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "慈文传媒",
                 "code": "002343",
                 "role": "观察",
                 "status": "3板+一字",
-                "reason": "AI影视前排，一字板奠定地位。"
+                "reason": "AI影视前排，一字板奠定地位。",
+                "verify": {
+                  "gain": 10.05,
+                  "hit": true,
+                  "price": 8.1,
+                  "code": "002343",
+                  "at": "2026-10-14",
+                  "open": 8.07,
+                  "openPct": 9.65,
+                  "buyRet": 0.37,
+                  "netRet": 0.17,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "新经典",
                 "code": "603096",
                 "role": "观察",
                 "status": "3板+一字",
-                "reason": "AI影视前排，一字板奠定地位。"
+                "reason": "AI影视前排，一字板奠定地位。",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 23.07,
+                  "code": "603096",
+                  "at": "2026-10-14",
+                  "open": 22,
+                  "openPct": 4.91,
+                  "buyRet": 4.86,
+                  "netRet": 4.65,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5027,14 +5069,42 @@ window.REPORTS = {
                 "role": "观察",
                 "status": "1/17天10板+高位",
                 "reason": "板块总龙，17天10板，市场最高板，人气极高。",
-                "statusAutoTagged": true
+                "statusAutoTagged": true,
+                "verify": {
+                  "gain": 6.11,
+                  "hit": true,
+                  "price": 64.08,
+                  "code": "605058",
+                  "at": "2026-10-14",
+                  "open": 62.62,
+                  "openPct": 3.69,
+                  "buyRet": 2.33,
+                  "netRet": 2.13,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中京电子",
                 "code": "002579",
                 "role": "可跟",
                 "status": "1板+11.2亿",
-                "reason": "板块前排，成交额12.6亿，承接较好。"
+                "reason": "板块前排，成交额12.6亿，承接较好。",
+                "verify": {
+                  "gain": 0.73,
+                  "hit": true,
+                  "price": 16.55,
+                  "code": "002579",
+                  "at": "2026-10-14",
+                  "open": 17.15,
+                  "openPct": 4.38,
+                  "buyRet": -3.5,
+                  "netRet": -3.69,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5049,14 +5119,42 @@ window.REPORTS = {
                 "code": "002639",
                 "role": "可跟",
                 "status": "1板+13.0亿",
-                "reason": "板块龙头，成交额13亿，带动效应强。"
+                "reason": "板块龙头，成交额13亿，带动效应强。",
+                "verify": {
+                  "gain": 4.18,
+                  "hit": true,
+                  "price": 15.2,
+                  "code": "002639",
+                  "at": "2026-10-14",
+                  "open": 15.99,
+                  "openPct": 9.6,
+                  "buyRet": -4.94,
+                  "netRet": -5.13,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "大连圣亚",
                 "code": "600593",
                 "role": "观察",
                 "status": "1板+5.6亿",
-                "reason": "东北旅游核心股，涨停时间早。"
+                "reason": "东北旅游核心股，涨停时间早。",
+                "verify": {
+                  "gain": 6.56,
+                  "hit": true,
+                  "price": 53.1,
+                  "code": "600593",
+                  "at": "2026-10-14",
+                  "open": 53.8,
+                  "openPct": 7.97,
+                  "buyRet": -1.3,
+                  "netRet": -1.5,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5071,14 +5169,42 @@ window.REPORTS = {
                 "code": "605136",
                 "role": "可跟",
                 "status": "3板+9.3亿",
-                "reason": "大消费核心，3连板带动板块。"
+                "reason": "大消费核心，3连板带动板块。",
+                "verify": {
+                  "gain": -8.93,
+                  "hit": false,
+                  "price": 10.4,
+                  "code": "605136",
+                  "at": "2026-10-14",
+                  "open": 12.56,
+                  "openPct": 9.98,
+                  "buyRet": -17.2,
+                  "netRet": -17.36,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "东百集团",
                 "code": "600693",
                 "role": "观察",
                 "status": "2板+20.6亿",
-                "reason": "大消费前排，资金介入深。"
+                "reason": "大消费前排，资金介入深。",
+                "verify": {
+                  "gain": -0.89,
+                  "hit": false,
+                  "price": 12.19,
+                  "code": "600693",
+                  "at": "2026-10-14",
+                  "open": 12.4,
+                  "openPct": 0.81,
+                  "buyRet": -1.69,
+                  "netRet": -1.89,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5093,14 +5219,42 @@ window.REPORTS = {
                 "code": "603968",
                 "role": "观察",
                 "status": "2板+5.3亿",
-                "reason": "化工核心，2连板。"
+                "reason": "化工核心，2连板。",
+                "verify": {
+                  "gain": 10.03,
+                  "hit": true,
+                  "price": 15.8,
+                  "code": "603968",
+                  "at": "2026-10-14",
+                  "open": 15.07,
+                  "openPct": 4.94,
+                  "buyRet": 4.84,
+                  "netRet": 4.63,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "建新股份",
                 "code": "300107",
                 "role": "观察",
                 "status": "1板+5.9亿",
-                "reason": "化工前排，炸板率较高。"
+                "reason": "化工前排，炸板率较高。",
+                "verify": {
+                  "gain": 4.52,
+                  "hit": true,
+                  "price": 9.02,
+                  "code": "300107",
+                  "at": "2026-10-14",
+                  "open": 8.8,
+                  "openPct": 1.97,
+                  "buyRet": 2.5,
+                  "netRet": 2.3,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -5115,14 +5269,42 @@ window.REPORTS = {
                 "code": "002980",
                 "role": "可跟",
                 "status": "1板+18.1亿",
-                "reason": "AI应用核心，成交额18.1亿。"
+                "reason": "AI应用核心，成交额18.1亿。",
+                "verify": {
+                  "gain": -5.11,
+                  "hit": false,
+                  "price": 110.12,
+                  "code": "002980",
+                  "at": "2026-10-14",
+                  "open": 113.91,
+                  "openPct": -1.84,
+                  "buyRet": -3.33,
+                  "netRet": -3.52,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "风语筑",
                 "code": "603466",
                 "role": "观察",
                 "status": "1板+13.1亿",
-                "reason": "AI视频龙头，午后涨停。"
+                "reason": "AI视频龙头，午后涨停。",
+                "verify": {
+                  "gain": -0.44,
+                  "hit": false,
+                  "price": 13.51,
+                  "code": "603466",
+                  "at": "2026-10-14",
+                  "open": 13.57,
+                  "openPct": 0,
+                  "buyRet": -0.44,
+                  "netRet": -0.64,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -5220,56 +5402,168 @@ window.REPORTS = {
             "code": "605058",
             "sector": "PCB",
             "status": "17天10板+高位",
-            "reason": "17天10板，属于高位连板龙头，市场关注度极高"
+            "reason": "17天10板，属于高位连板龙头，市场关注度极高",
+            "verify": {
+              "gain": 6.11,
+              "hit": true,
+              "price": 64.08,
+              "code": "605058",
+              "at": "2026-10-14",
+              "open": 62.62,
+              "openPct": 3.69,
+              "buyRet": 2.33,
+              "netRet": 2.13,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "新经典",
             "code": "603096",
             "sector": "出版传媒",
             "status": "3连板",
-            "reason": "3连板，属于近期市场活跃的传媒板块个股"
+            "reason": "3连板，属于近期市场活跃的传媒板块个股",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 23.07,
+              "code": "603096",
+              "at": "2026-10-14",
+              "open": 22,
+              "openPct": 4.91,
+              "buyRet": 4.86,
+              "netRet": 4.65,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "丽人丽妆",
             "code": "605136",
             "sector": "电商",
             "status": "3连板",
-            "reason": "3连板，股价显著偏离基本面，存在情绪过热及非理性炒作情形"
+            "reason": "3连板，股价显著偏离基本面，存在情绪过热及非理性炒作情形",
+            "verify": {
+              "gain": -8.93,
+              "hit": false,
+              "price": 10.4,
+              "code": "605136",
+              "at": "2026-10-14",
+              "open": 12.56,
+              "openPct": 9.98,
+              "buyRet": -17.2,
+              "netRet": -17.36,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东百集团",
             "code": "600693",
             "sector": "零售",
             "status": "2连板",
-            "reason": "2连板，收购杭州快灵光电尚未签署正式协议，存在不确定性"
+            "reason": "2连板，收购杭州快灵光电尚未签署正式协议，存在不确定性",
+            "verify": {
+              "gain": -0.89,
+              "hit": false,
+              "price": 12.19,
+              "code": "600693",
+              "at": "2026-10-14",
+              "open": 12.4,
+              "openPct": 0.81,
+              "buyRet": -1.69,
+              "netRet": -1.89,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "海欣股份",
             "code": "600851",
             "sector": "商业零售",
             "status": "2连板",
-            "reason": "2连板，公司股权转让事项能否获批及获批时间存在不确定性"
+            "reason": "2连板，公司股权转让事项能否获批及获批时间存在不确定性",
+            "verify": {
+              "gain": -2.96,
+              "hit": false,
+              "price": 9.18,
+              "code": "600851",
+              "at": "2026-10-14",
+              "open": 9,
+              "openPct": -4.86,
+              "buyRet": 2,
+              "netRet": 1.8,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "广电网络",
             "code": "600831",
             "sector": "传媒",
             "status": "2连板",
-            "reason": "2连板，公司已进入预重整程序，后续能否进入重整程序尚存在不确定性"
+            "reason": "2连板，公司已进入预重整程序，后续能否进入重整程序尚存在不确定性",
+            "verify": {
+              "gain": -5.81,
+              "hit": false,
+              "price": 4.05,
+              "code": "600831",
+              "at": "2026-10-14",
+              "open": 4.02,
+              "openPct": -6.51,
+              "buyRet": 0.75,
+              "netRet": 0.54,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "龙版传媒",
             "code": "605577",
             "sector": "出版传媒",
             "status": "3连板",
-            "reason": "3连板，属于近期市场活跃的传媒板块个股"
+            "reason": "3连板，属于近期市场活跃的传媒板块个股",
+            "verify": {
+              "gain": -3.32,
+              "hit": false,
+              "price": 18.95,
+              "code": "605577",
+              "at": "2026-10-14",
+              "open": 17.64,
+              "openPct": -10,
+              "buyRet": 7.43,
+              "netRet": 7.21,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "醋化股份",
             "code": "603968",
             "sector": "化工",
             "status": "2连板",
-            "reason": "2连板，属于近期市场活跃的化工板块个股"
+            "reason": "2连板，属于近期市场活跃的化工板块个股",
+            "verify": {
+              "gain": 10.03,
+              "hit": true,
+              "price": 15.8,
+              "code": "603968",
+              "at": "2026-10-14",
+              "open": 15.07,
+              "openPct": 4.94,
+              "buyRet": 4.84,
+              "netRet": 4.63,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },

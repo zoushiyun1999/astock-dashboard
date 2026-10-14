@@ -128,7 +128,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 0.96,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 10.01,
+          "hit": true,
+          "price": 24.61,
+          "code": "603992",
+          "at": "2026-10-14",
+          "open": 21.83,
+          "openPct": -2.41,
+          "buyRet": 12.73,
+          "netRet": 12.51,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603948",
@@ -142,7 +156,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 8.6,
         "aboveRate": 98,
-        "sector": "化工"
+        "sector": "化工",
+        "verify": {
+          "gain": -1.68,
+          "hit": false,
+          "price": 22.29,
+          "code": "603948",
+          "at": "2026-10-14",
+          "open": 22,
+          "openPct": -2.96,
+          "buyRet": 1.32,
+          "netRet": 1.12,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600573",
@@ -156,7 +184,21 @@ window.SCREENER = [
         "yang": 6,
         "gain20": 20.37,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 5.07,
+          "hit": true,
+          "price": 13.46,
+          "code": "600573",
+          "at": "2026-10-14",
+          "open": 12.81,
+          "openPct": 0,
+          "buyRet": 5.07,
+          "netRet": 4.86,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600843",
@@ -170,7 +212,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 14.76,
         "aboveRate": 99,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -4.18,
+          "hit": false,
+          "price": 8.25,
+          "code": "600843",
+          "at": "2026-10-14",
+          "open": 8.37,
+          "openPct": -2.79,
+          "buyRet": -1.43,
+          "netRet": -1.63,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "601858",
@@ -184,7 +240,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 5.72,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 9.98,
+          "hit": true,
+          "price": 26.11,
+          "code": "601858",
+          "at": "2026-10-14",
+          "open": 23.45,
+          "openPct": -1.22,
+          "buyRet": 11.34,
+          "netRet": 11.12,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "000635",
@@ -198,7 +268,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 4.94,
         "aboveRate": 97,
-        "sector": "化工"
+        "sector": "化工",
+        "verify": {
+          "gain": 0.48,
+          "hit": true,
+          "price": 8.46,
+          "code": "000635",
+          "at": "2026-10-14",
+          "open": 8.3,
+          "openPct": -1.43,
+          "buyRet": 1.93,
+          "netRet": 1.72,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603276",
@@ -212,7 +296,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 11.33,
         "aboveRate": 98,
-        "sector": "化工"
+        "sector": "化工",
+        "verify": {
+          "gain": 1.22,
+          "hit": true,
+          "price": 19.06,
+          "code": "603276",
+          "at": "2026-10-14",
+          "open": 18.84,
+          "openPct": 0.05,
+          "buyRet": 1.17,
+          "netRet": 0.97,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
