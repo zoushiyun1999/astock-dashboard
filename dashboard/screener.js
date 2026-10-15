@@ -1,5 +1,13 @@
 window.SCREENER = [
   {
+    "date": "2026-10-15",
+    "runAt": "2026-10-15 15:10",
+    "fault": true,
+    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
+    "count": 0,
+    "list": []
+  },
+  {
     "date": "2026-10-14",
     "runAt": "2026-10-14 15:10",
     "count": 6,
@@ -1698,77 +1706,6 @@ window.SCREENER = [
           "at": "2026-09-20",
           "by": "hist",
           "note": "停牌/无数据（该交易日无K线）"
-        }
-      }
-    ],
-    "warnings": []
-  },
-  {
-    "date": "2026-09-17",
-    "runAt": "2026-09-17 15:20",
-    "count": 2,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": ">1",
-      "yang": "≥2连阳",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "603236",
-        "name": "移远通信",
-        "industry": "通信设备",
-        "price": 73.66,
-        "gain": 5.62,
-        "turnover": 7.01,
-        "volRatio": 1.56,
-        "cap": 299,
-        "yang": 3,
-        "aboveRate": 97,
-        "sector": "算力/AI",
-        "verify": {
-          "gain": -1.52,
-          "hit": false,
-          "price": 72.54,
-          "code": "603236",
-          "at": "2026-09-18",
-          "open": 73.65,
-          "openPct": -0.01,
-          "buyRet": -1.51,
-          "netRet": -1.7,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "601579",
-        "name": "会稽山",
-        "industry": "非白酒",
-        "price": 29.85,
-        "gain": 5.37,
-        "turnover": 8.64,
-        "volRatio": 1.8,
-        "cap": 143,
-        "yang": 2,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": 10.02,
-          "hit": true,
-          "price": 32.84,
-          "code": "601579",
-          "at": "2026-09-18",
-          "open": 30.11,
-          "openPct": 0.87,
-          "buyRet": 9.07,
-          "netRet": 8.85,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
         }
       }
     ],
