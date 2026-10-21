@@ -1,5 +1,107 @@
 window.SCREENER = [
   {
+    "date": "2026-10-21",
+    "runAt": "2026-10-21 15:10",
+    "count": 6,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "600410",
+        "name": "华胜天成",
+        "industry": "IT服务Ⅱ",
+        "price": 13.32,
+        "gain": 5.71,
+        "turnover": 7.28,
+        "volRatio": 2.3,
+        "cap": 146,
+        "yang": 2,
+        "gain20": -19.39,
+        "aboveRate": 98,
+        "sector": ""
+      },
+      {
+        "code": "600186",
+        "name": "莲花控股",
+        "industry": "调味发酵品Ⅱ",
+        "price": 10.39,
+        "gain": 4.95,
+        "turnover": 10.09,
+        "volRatio": 1.79,
+        "cap": 186,
+        "yang": 2,
+        "gain20": -24.89,
+        "aboveRate": 95,
+        "sector": ""
+      },
+      {
+        "code": "002803",
+        "name": "吉宏股份",
+        "industry": "互联网电商",
+        "price": 19.7,
+        "gain": 4.84,
+        "turnover": 5.87,
+        "volRatio": 1.92,
+        "cap": 90,
+        "yang": 2,
+        "gain20": -4.91,
+        "aboveRate": 99,
+        "sector": "算力/AI"
+      },
+      {
+        "code": "003021",
+        "name": "兆威机电",
+        "industry": "电机Ⅱ",
+        "price": 75.81,
+        "gain": 4.46,
+        "turnover": 4.71,
+        "volRatio": 2.33,
+        "cap": 203,
+        "yang": 3,
+        "gain20": 6.99,
+        "aboveRate": 96,
+        "sector": ""
+      },
+      {
+        "code": "600888",
+        "name": "新疆众和",
+        "industry": "工业金属",
+        "price": 9.14,
+        "gain": 4.46,
+        "turnover": 2.87,
+        "volRatio": 1.65,
+        "cap": 142,
+        "yang": 2,
+        "gain20": -10.9,
+        "aboveRate": 98,
+        "sector": ""
+      },
+      {
+        "code": "603859",
+        "name": "能科科技",
+        "industry": "IT服务Ⅱ",
+        "price": 41.71,
+        "gain": 2.76,
+        "turnover": 8.35,
+        "volRatio": 2.66,
+        "cap": 111,
+        "yang": 2,
+        "gain20": 6.54,
+        "aboveRate": 99,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-10-20",
     "runAt": "2026-10-20 15:10",
     "fault": true,
@@ -614,13 +716,5 @@ window.SCREENER = [
       }
     ],
     "warnings": []
-  },
-  {
-    "date": "2026-09-30",
-    "runAt": "2026-09-30 21:26",
-    "fault": true,
-    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
-    "count": 0,
-    "list": []
   }
 ];
