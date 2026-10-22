@@ -1,5 +1,13 @@
 window.SCREENER = [
   {
+    "date": "2026-10-22",
+    "runAt": "2026-10-22 15:10",
+    "fault": true,
+    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
+    "count": 0,
+    "list": []
+  },
+  {
     "date": "2026-10-21",
     "runAt": "2026-10-21 15:10",
     "count": 6,
@@ -586,135 +594,5 @@ window.SCREENER = [
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
     "list": []
-  },
-  {
-    "date": "2026-10-08",
-    "runAt": "2026-10-08 15:10",
-    "count": 4,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "601015",
-        "name": "陕西黑猫",
-        "industry": "焦炭Ⅱ",
-        "price": 3.83,
-        "gain": 6.98,
-        "turnover": 6.9,
-        "volRatio": 2.08,
-        "cap": 78,
-        "yang": 4,
-        "gain20": -7.73,
-        "aboveRate": 100,
-        "sector": "",
-        "verify": {
-          "gain": 0.26,
-          "hit": true,
-          "price": 3.84,
-          "code": "601015",
-          "at": "2026-10-09",
-          "open": 3.84,
-          "openPct": 0.26,
-          "buyRet": 0,
-          "netRet": -0.2,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600573",
-        "name": "惠泉啤酒",
-        "industry": "非白酒",
-        "price": 11.11,
-        "gain": 6.62,
-        "turnover": 8.78,
-        "volRatio": 2.32,
-        "cap": 28,
-        "yang": 3,
-        "gain20": 2.46,
-        "aboveRate": 97,
-        "sector": "",
-        "verify": {
-          "gain": 5.85,
-          "hit": true,
-          "price": 11.76,
-          "code": "600573",
-          "at": "2026-10-09",
-          "open": 11.1,
-          "openPct": -0.09,
-          "buyRet": 5.95,
-          "netRet": 5.73,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600727",
-        "name": "鲁北化工",
-        "industry": "化学原料",
-        "price": 7.8,
-        "gain": 4.14,
-        "turnover": 3.43,
-        "volRatio": 2.32,
-        "cap": 41,
-        "yang": 2,
-        "gain20": -6.49,
-        "aboveRate": 100,
-        "sector": "化工",
-        "verify": {
-          "gain": 0.38,
-          "hit": true,
-          "price": 7.83,
-          "code": "600727",
-          "at": "2026-10-09",
-          "open": 7.81,
-          "openPct": 0.13,
-          "buyRet": 0.26,
-          "netRet": 0.06,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "000554",
-        "name": "泰山石油",
-        "industry": "炼化及贸易",
-        "price": 6.4,
-        "gain": 3.39,
-        "turnover": 5.33,
-        "volRatio": 2.22,
-        "cap": 31,
-        "yang": 2,
-        "gain20": -8.02,
-        "aboveRate": 100,
-        "sector": "",
-        "verify": {
-          "gain": -0.31,
-          "hit": false,
-          "price": 6.38,
-          "code": "000554",
-          "at": "2026-10-09",
-          "open": 6.35,
-          "openPct": -0.78,
-          "buyRet": 0.47,
-          "netRet": 0.27,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
-    "warnings": []
   }
 ];
