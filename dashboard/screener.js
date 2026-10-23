@@ -94,7 +94,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -19.39,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -6.98,
+          "hit": false,
+          "price": 12.39,
+          "code": "600410",
+          "at": "2026-10-22",
+          "open": 13.1,
+          "openPct": -1.65,
+          "buyRet": -5.42,
+          "netRet": -5.61,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600186",
@@ -108,7 +122,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -24.89,
         "aboveRate": 95,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -5.49,
+          "hit": false,
+          "price": 9.82,
+          "code": "600186",
+          "at": "2026-10-22",
+          "open": 10.35,
+          "openPct": -0.38,
+          "buyRet": -5.12,
+          "netRet": -5.31,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002803",
@@ -122,7 +150,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -4.91,
         "aboveRate": 99,
-        "sector": "算力/AI"
+        "sector": "算力/AI",
+        "verify": {
+          "gain": -4.92,
+          "hit": false,
+          "price": 18.73,
+          "code": "002803",
+          "at": "2026-10-22",
+          "open": 19.54,
+          "openPct": -0.81,
+          "buyRet": -4.15,
+          "netRet": -4.34,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "003021",
@@ -136,7 +178,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 6.99,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 10,
+          "hit": true,
+          "price": 83.39,
+          "code": "003021",
+          "at": "2026-10-22",
+          "open": 80,
+          "openPct": 5.53,
+          "buyRet": 4.24,
+          "netRet": 4.03,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600888",
@@ -150,7 +206,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -10.9,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -2.63,
+          "hit": false,
+          "price": 8.9,
+          "code": "600888",
+          "at": "2026-10-22",
+          "open": 9.12,
+          "openPct": -0.22,
+          "buyRet": -2.41,
+          "netRet": -2.61,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603859",
@@ -164,7 +234,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 6.54,
         "aboveRate": 99,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -5.06,
+          "hit": false,
+          "price": 39.6,
+          "code": "603859",
+          "at": "2026-10-22",
+          "open": 40.72,
+          "openPct": -2.37,
+          "buyRet": -2.75,
+          "netRet": -2.94,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
@@ -212,7 +296,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": -27.48,
         "aboveRate": 98,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -3.17,
+          "hit": false,
+          "price": 18.63,
+          "code": "600869",
+          "at": "2026-10-19",
+          "open": 18.9,
+          "openPct": -1.77,
+          "buyRet": -1.43,
+          "netRet": -1.63,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "600560",
@@ -226,7 +324,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 7.64,
         "aboveRate": 97,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -0.99,
+          "hit": false,
+          "price": 12.98,
+          "code": "600560",
+          "at": "2026-10-19",
+          "open": 12.82,
+          "openPct": -2.21,
+          "buyRet": 1.25,
+          "netRet": 1.05,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
