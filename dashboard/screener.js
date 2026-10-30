@@ -1,5 +1,13 @@
 window.SCREENER = [
   {
+    "date": "2026-10-30",
+    "runAt": "2026-10-30 15:10",
+    "fault": true,
+    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
+    "count": 0,
+    "list": []
+  },
+  {
     "date": "2026-10-29",
     "runAt": "2026-10-29 15:10",
     "fault": true,
@@ -320,79 +328,5 @@ window.SCREENER = [
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
     "list": []
-  },
-  {
-    "date": "2026-10-16",
-    "runAt": "2026-10-16 15:10",
-    "count": 2,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "600869",
-        "name": "远东股份",
-        "industry": "电网设备",
-        "price": 19.24,
-        "gain": 6.42,
-        "turnover": 11.6,
-        "volRatio": 1.85,
-        "cap": 427,
-        "yang": 3,
-        "gain20": -27.48,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": -3.17,
-          "hit": false,
-          "price": 18.63,
-          "code": "600869",
-          "at": "2026-10-19",
-          "open": 18.9,
-          "openPct": -1.77,
-          "buyRet": -1.43,
-          "netRet": -1.63,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600560",
-        "name": "金自天正",
-        "industry": "专用设备",
-        "price": 13.11,
-        "gain": 5.73,
-        "turnover": 7.69,
-        "volRatio": 1.6,
-        "cap": 29,
-        "yang": 2,
-        "gain20": 7.64,
-        "aboveRate": 97,
-        "sector": "",
-        "verify": {
-          "gain": -0.99,
-          "hit": false,
-          "price": 12.98,
-          "code": "600560",
-          "at": "2026-10-19",
-          "open": 12.82,
-          "openPct": -2.21,
-          "buyRet": 1.25,
-          "netRet": 1.05,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
-    "warnings": []
   }
 ];
