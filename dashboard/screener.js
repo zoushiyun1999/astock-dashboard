@@ -86,7 +86,21 @@ window.SCREENER = [
         "yang": 5,
         "gain20": -4.64,
         "aboveRate": 97,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -4.6,
+          "hit": false,
+          "price": 8.51,
+          "code": "002706",
+          "at": "2026-10-26",
+          "open": 8.98,
+          "openPct": 0.67,
+          "buyRet": -5.23,
+          "netRet": -5.42,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "603101",
@@ -100,7 +114,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 9.1,
         "aboveRate": 100,
-        "sector": "消费"
+        "sector": "消费",
+        "verify": {
+          "gain": -3.44,
+          "hit": false,
+          "price": 8.15,
+          "code": "603101",
+          "at": "2026-10-26",
+          "open": 8.17,
+          "openPct": -3.2,
+          "buyRet": -0.24,
+          "netRet": -0.44,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "001388",
@@ -114,7 +142,21 @@ window.SCREENER = [
         "yang": 4,
         "gain20": 9.54,
         "aboveRate": 97,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -3.48,
+          "hit": false,
+          "price": 22.18,
+          "code": "001388",
+          "at": "2026-10-26",
+          "open": 21.86,
+          "openPct": -4.87,
+          "buyRet": 1.46,
+          "netRet": 1.26,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
