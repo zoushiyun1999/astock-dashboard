@@ -1,6 +1,17 @@
 window.REPORTS = {
-  "updatedAt": "2026-11-02 08:31",
+  "updatedAt": "2026-11-02 22:20",
   "calendar": [
+    {
+      "id": "4er5qca440x",
+      "title": "投资日历：11月投资日历已更新 都在指向同一低位题材",
+      "author": "A股投资日历",
+      "publishedAt": "2026-10-31 23:26:53",
+      "url": "https://www.jiuyangongshe.com/a/4er5qca440x",
+      "images": [
+        "calendar/4er5qca440x_img1.png"
+      ],
+      "events": []
+    },
     {
       "id": "jz2jdw8y3k",
       "title": "投资日历：下周正式进入验证高潮 或迎来大反转",
@@ -50,18 +61,6 @@ window.REPORTS = {
         "calendar/4eq6gf4vrjz_img3.png",
         "calendar/4eq6gf4vrjz_img4.png",
         "calendar/4eq6gf4vrjz_img5.png"
-      ],
-      "events": []
-    },
-    {
-      "id": "jy6w4x656k",
-      "title": "投资日历：10月投资日历已更新 或出现一次历史性事件",
-      "author": "A股投资日历",
-      "publishedAt": "2026-10-07 21:23:02",
-      "url": "https://www.jiuyangongshe.com/a/jy6w4x656k",
-      "images": [
-        "calendar/jy6w4x656k_img1.png",
-        "calendar/jy6w4x656k_img2.png"
       ],
       "events": []
     }
@@ -2813,6 +2812,100 @@ window.REPORTS = {
             "sector": "新材料",
             "status": "2板 中军 趋势",
             "reason": "AI算力核心中军，趋势确立"
+          }
+        ]
+      },
+      "evening": {
+        "sources": [
+          "湖南人",
+          "行鱼复盘"
+        ],
+        "generatedAt": "2026-11-02 22:20",
+        "博主观点": [
+          {
+            "author": "行鱼复盘",
+            "view": "今日市场情绪处于分歧阶段，主线板块在高位震荡，部分核心个股出现分歧。资金主要集中在科技与消费领域，游资参与度尚可。对于明日，建议关注主线板块的分歧转一致机会，谨慎参与高位接力，注意风险控制。"
+          }
+        ],
+        "大盘概况": {
+          "summary": "大盘震荡分化，主线板块表现活跃",
+          "metrics": [
+            {
+              "k": "上证指数",
+              "v": "3885.33",
+              "d": "-0.07%",
+              "up": false
+            }
+          ]
+        },
+        "连板梯队": [
+          "4板：锡华科技 603248（…）、华瓷股份 001216（…）"
+        ],
+        "明日关注": [
+          {
+            "sector": "半导体",
+            "stage": "分歧",
+            "why": "板块内部轮动活跃，资金青睐低位补涨",
+            "chain": "芯片/光刻胶/国产替代",
+            "picks": [
+              {
+                "name": "上海沪工",
+                "code": "",
+                "role": "可跟",
+                "status": "4板+高位+龙头",
+                "reason": "葛卫东大买，游资合力，资金关注度极高"
+              },
+              {
+                "name": "联赢激光",
+                "code": "",
+                "role": "可跟",
+                "status": "3板+换手+趋势",
+                "reason": "上海超短帮买入，形态稳健"
+              },
+              {
+                "name": "文投控股",
+                "code": "",
+                "role": "观察",
+                "status": "2板+涨停+跟风",
+                "reason": "湖滨四季介入，人气尚可"
+              },
+              {
+                "name": "实丰文化",
+                "code": "",
+                "role": "观察",
+                "status": "2板+换手+补涨",
+                "reason": "成都系买入，有连板潜力"
+              },
+              {
+                "name": "海洋王",
+                "code": "",
+                "role": "观察",
+                "status": "2板+震荡+分歧",
+                "reason": "红岭路与交易猿均有买入，分歧中博弈"
+              },
+              {
+                "name": "合百集团",
+                "code": "",
+                "role": "可跟",
+                "status": "2板+烂板+回封",
+                "reason": "量化资金净买，抗跌性强"
+              },
+              {
+                "name": "果麦文化",
+                "code": "",
+                "role": "可跟",
+                "status": "1板+低吸+反包",
+                "reason": "量化资金大买，有望反弹"
+              }
+            ]
+          }
+        ],
+        "板块热点": [
+          {
+            "name": "半导体",
+            "strength": "分歧",
+            "stocks": "上海沪工,联赢激光,文投控股,实丰文化,海洋王,合百集团,果麦文化",
+            "catalyst": "板块内部轮动活跃，资金青睐低位补涨"
           }
         ]
       }
