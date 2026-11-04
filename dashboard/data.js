@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-11-04 21:12",
+  "updatedAt": "2026-11-04 21:30",
   "calendar": [
     {
       "id": "4er5qca440x",
@@ -1916,14 +1916,42 @@ window.REPORTS = {
                 "code": "001216",
                 "role": "观察",
                 "status": "4板+高位+炸板",
-                "reason": "市场最高连板，作为情绪标的高度关注，但炸板风险大，需看能否弱转强。"
+                "reason": "市场最高连板，作为情绪标的高度关注，但炸板风险大，需看能否弱转强。",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 18.68,
+                  "code": "001216",
+                  "at": "2026-11-02",
+                  "open": 17.05,
+                  "openPct": 0.41,
+                  "buyRet": 9.56,
+                  "netRet": 9.34,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "锡华科技",
                 "code": "603248",
                 "role": "观察",
                 "status": "4板+高位+炸板",
-                "reason": "同为4板高位股，与华瓷股份形成共振，关注其承接情况。"
+                "reason": "同为4板高位股，与华瓷股份形成共振，关注其承接情况。",
+                "verify": {
+                  "gain": 1.85,
+                  "hit": true,
+                  "price": 16.48,
+                  "code": "603248",
+                  "at": "2026-11-02",
+                  "open": 16.13,
+                  "openPct": -0.31,
+                  "buyRet": 2.17,
+                  "netRet": 1.97,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -2004,105 +2032,315 @@ window.REPORTS = {
             "code": "600825",
             "sector": "传媒",
             "status": "10板 高位 换手板",
-            "reason": "历史强势龙头，连板高度最高，市场关注焦点"
+            "reason": "历史强势龙头，连板高度最高，市场关注焦点",
+            "verify": {
+              "gain": -6.66,
+              "hit": false,
+              "price": 12.47,
+              "code": "600825",
+              "at": "2026-11-02",
+              "open": 12.02,
+              "openPct": -10.03,
+              "buyRet": 3.74,
+              "netRet": 3.54,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "时代万恒",
             "code": "600241",
             "sector": "商业百货",
             "status": "6板 高位 换手板",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": 5.61,
+              "hit": true,
+              "price": 8.29,
+              "code": "600241",
+              "at": "2026-11-02",
+              "open": 7.86,
+              "openPct": 0.13,
+              "buyRet": 5.47,
+              "netRet": 5.26,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "慈文传媒",
             "code": "002343",
             "sector": "传媒",
             "status": "7板 高位 分歧",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": -2.6,
+              "hit": false,
+              "price": 7.86,
+              "code": "002343",
+              "at": "2026-11-02",
+              "open": 7.57,
+              "openPct": -6.2,
+              "buyRet": 3.83,
+              "netRet": 3.62,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "上海九百",
             "code": "600838",
             "sector": "商业百货",
             "status": "5板 高位 换手板",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": -4.24,
+              "hit": false,
+              "price": 11.75,
+              "code": "600838",
+              "at": "2026-11-02",
+              "open": 11.34,
+              "openPct": -7.58,
+              "buyRet": 3.62,
+              "netRet": 3.41,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "百洋股份",
             "code": "002696",
             "sector": "水产养殖",
             "status": "5板 高位",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": 1.08,
+              "hit": true,
+              "price": 11.24,
+              "code": "002696",
+              "at": "2026-11-02",
+              "open": 10.61,
+              "openPct": -4.59,
+              "buyRet": 5.94,
+              "netRet": 5.73,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "赛福天",
             "code": "603028",
             "sector": "工程机械",
             "status": "4板 高位 换手板",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": -9.98,
+              "hit": false,
+              "price": 7.58,
+              "code": "603028",
+              "at": "2026-11-02",
+              "open": 7.58,
+              "openPct": -9.98,
+              "buyRet": 0,
+              "netRet": -0.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "得润电子",
             "code": "002055",
             "sector": "消费电子",
             "status": "2板 低位 放量",
-            "reason": "低位放量板，具备补涨潜质"
+            "reason": "低位放量板，具备补涨潜质",
+            "verify": {
+              "gain": 0.97,
+              "hit": true,
+              "price": 5.22,
+              "code": "002055",
+              "at": "2026-11-02",
+              "open": 5.25,
+              "openPct": 1.55,
+              "buyRet": -0.57,
+              "netRet": -0.77,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中际旭创",
             "code": "300308",
             "sector": "通信设备",
             "status": "3板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": -0.54,
+              "hit": false,
+              "price": 550,
+              "code": "300308",
+              "at": "2026-11-02",
+              "open": 564.06,
+              "openPct": 2,
+              "buyRet": -2.49,
+              "netRet": -2.69,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "常山北明",
             "code": "000158",
             "sector": "软件",
             "status": "3板 高位 领涨",
-            "reason": "高位连板股，市场核心辨识度标的"
+            "reason": "高位连板股，市场核心辨识度标的",
+            "verify": {
+              "gain": 4.38,
+              "hit": true,
+              "price": 10.72,
+              "code": "000158",
+              "at": "2026-11-02",
+              "open": 10.3,
+              "openPct": 0.29,
+              "buyRet": 4.08,
+              "netRet": 3.87,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "软通动力",
             "code": "301236",
             "sector": "计算机",
             "status": "3板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": 5.23,
+              "hit": true,
+              "price": 32.58,
+              "code": "301236",
+              "at": "2026-11-02",
+              "open": 31.55,
+              "openPct": 1.91,
+              "buyRet": 3.26,
+              "netRet": 3.06,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "太辰光",
             "code": "300570",
             "sector": "通信设备",
             "status": "2板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": -3.05,
+              "hit": false,
+              "price": 114.25,
+              "code": "300570",
+              "at": "2026-11-02",
+              "open": 120.21,
+              "openPct": 2,
+              "buyRet": -4.96,
+              "netRet": -5.15,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "法本信息",
             "code": "300925",
             "sector": "软件开发",
             "status": "2板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": 6.96,
+              "hit": true,
+              "price": 13.37,
+              "code": "300925",
+              "at": "2026-11-02",
+              "open": 12.58,
+              "openPct": 0.64,
+              "buyRet": 6.28,
+              "netRet": 6.07,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "三祥新材",
             "code": "603663",
             "sector": "有色金属",
             "status": "2板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": 0.87,
+              "hit": true,
+              "price": 28.92,
+              "code": "603663",
+              "at": "2026-11-02",
+              "open": 29.21,
+              "openPct": 1.88,
+              "buyRet": -0.99,
+              "netRet": -1.19,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东方锆业",
             "code": "002167",
             "sector": "有色金属",
             "status": "2板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": 1.55,
+              "hit": true,
+              "price": 13.08,
+              "code": "002167",
+              "at": "2026-11-02",
+              "open": 13.07,
+              "openPct": 1.48,
+              "buyRet": 0.08,
+              "netRet": -0.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "翔丰华",
             "code": "300890",
             "sector": "新材料",
             "status": "2板 中军 趋势",
-            "reason": "AI算力核心中军，趋势确立"
+            "reason": "AI算力核心中军，趋势确立",
+            "verify": {
+              "gain": 1.35,
+              "hit": true,
+              "price": 25.45,
+              "code": "300890",
+              "at": "2026-11-02",
+              "open": 25.2,
+              "openPct": 0.36,
+              "buyRet": 0.99,
+              "netRet": 0.79,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
@@ -2251,84 +2489,252 @@ window.REPORTS = {
             "code": "600825",
             "sector": "文化传媒",
             "status": "10板 高位 换手板",
-            "reason": "历史连板记录显示10板，高位换手"
+            "reason": "历史连板记录显示10板，高位换手",
+            "verify": {
+              "gain": -1.28,
+              "hit": false,
+              "price": 12.31,
+              "code": "600825",
+              "at": "2026-11-03",
+              "open": 12.3,
+              "openPct": -1.36,
+              "buyRet": 0.08,
+              "netRet": -0.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "百洋股份",
             "code": "002696",
             "sector": "海洋经济",
             "status": "5板 高位",
-            "reason": "历史连板记录显示5板，高位"
+            "reason": "历史连板记录显示5板，高位",
+            "verify": {
+              "gain": 9.96,
+              "hit": true,
+              "price": 12.36,
+              "code": "002696",
+              "at": "2026-11-03",
+              "open": 11.26,
+              "openPct": 0.18,
+              "buyRet": 9.77,
+              "netRet": 9.55,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "上海九百",
             "code": "600838",
             "sector": "商业零售",
             "status": "5板 高位 换手板",
-            "reason": "历史连板记录显示5板，高位换手"
+            "reason": "历史连板记录显示5板，高位换手",
+            "verify": {
+              "gain": 6.81,
+              "hit": true,
+              "price": 12.55,
+              "code": "600838",
+              "at": "2026-11-03",
+              "open": 11.88,
+              "openPct": 1.11,
+              "buyRet": 5.64,
+              "netRet": 5.43,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "时代万恒",
             "code": "600241",
             "sector": "贸易零售",
             "status": "6板 高位 换手板",
-            "reason": "历史连板记录显示6板，高位换手"
+            "reason": "历史连板记录显示6板，高位换手",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 9.12,
+              "code": "600241",
+              "at": "2026-11-03",
+              "open": 8.16,
+              "openPct": -1.57,
+              "buyRet": 11.76,
+              "netRet": 11.54,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "赛福天",
             "code": "603028",
             "sector": "机械设备",
             "status": "4板 高位 换手板",
-            "reason": "历史连板记录显示4板，高位换手"
+            "reason": "历史连板记录显示4板，高位换手",
+            "verify": {
+              "gain": -6.99,
+              "hit": false,
+              "price": 7.05,
+              "code": "603028",
+              "at": "2026-11-03",
+              "open": 7.36,
+              "openPct": -2.9,
+              "buyRet": -4.21,
+              "netRet": -4.4,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "得润电子",
             "code": "002055",
             "sector": "消费电子",
             "status": "2板 低位 放量",
-            "reason": "历史连板记录显示2板，低位放量"
+            "reason": "历史连板记录显示2板，低位放量",
+            "verify": {
+              "gain": 0.19,
+              "hit": true,
+              "price": 5.23,
+              "code": "002055",
+              "at": "2026-11-03",
+              "open": 5.22,
+              "openPct": 0,
+              "buyRet": 0.19,
+              "netRet": -0.01,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "常山北明",
             "code": "000158",
             "sector": "计算机",
             "status": "3板 高位 领涨",
-            "reason": "历史连板记录显示3板，高位领涨"
+            "reason": "历史连板记录显示3板，高位领涨",
+            "verify": {
+              "gain": 0.19,
+              "hit": true,
+              "price": 10.74,
+              "code": "000158",
+              "at": "2026-11-03",
+              "open": 10.64,
+              "openPct": -0.75,
+              "buyRet": 0.94,
+              "netRet": 0.74,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "中际旭创",
             "code": "300308",
             "sector": "通信设备",
             "status": "3板 中军 趋势",
-            "reason": "历史连板记录显示3板，中军趋势"
+            "reason": "历史连板记录显示3板，中军趋势",
+            "verify": {
+              "gain": -12.69,
+              "hit": false,
+              "price": 480.2,
+              "code": "300308",
+              "at": "2026-11-03",
+              "open": 539,
+              "openPct": -2,
+              "buyRet": -10.91,
+              "netRet": -11.09,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "太辰光",
             "code": "300570",
             "sector": "光通信",
             "status": "2板 中军 趋势",
-            "reason": "历史连板记录显示2板，中军趋势"
+            "reason": "历史连板记录显示2板，中军趋势",
+            "verify": {
+              "gain": -10.25,
+              "hit": false,
+              "price": 102.54,
+              "code": "300570",
+              "at": "2026-11-03",
+              "open": 111.16,
+              "openPct": -2.7,
+              "buyRet": -7.75,
+              "netRet": -7.94,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "法本信息",
             "code": "300925",
             "sector": "计算机",
             "status": "2板 中军 趋势",
-            "reason": "历史连板记录显示2板，中军趋势"
+            "reason": "历史连板记录显示2板，中军趋势",
+            "verify": {
+              "gain": -1.5,
+              "hit": false,
+              "price": 13.17,
+              "code": "300925",
+              "at": "2026-11-03",
+              "open": 13.2,
+              "openPct": -1.27,
+              "buyRet": -0.23,
+              "netRet": -0.43,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "三祥新材",
             "code": "603663",
             "sector": "小金属",
             "status": "2板 中军 趋势",
-            "reason": "历史连板记录显示2板，中军趋势"
+            "reason": "历史连板记录显示2板，中军趋势",
+            "verify": {
+              "gain": -4.11,
+              "hit": false,
+              "price": 27.73,
+              "code": "603663",
+              "at": "2026-11-03",
+              "open": 28.7,
+              "openPct": -0.76,
+              "buyRet": -3.38,
+              "netRet": -3.57,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东方锆业",
             "code": "002167",
             "sector": "稀有金属",
             "status": "2板 中军 趋势",
-            "reason": "历史连板记录显示2板，中军趋势"
+            "reason": "历史连板记录显示2板，中军趋势",
+            "verify": {
+              "gain": -2.91,
+              "hit": false,
+              "price": 12.7,
+              "code": "002167",
+              "at": "2026-11-03",
+              "open": 12.91,
+              "openPct": -1.3,
+              "buyRet": -1.63,
+              "netRet": -1.82,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
