@@ -1,5 +1,65 @@
 window.SCREENER = [
   {
+    "date": "2026-11-09",
+    "runAt": "2026-11-09 15:10",
+    "count": 3,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "600903",
+        "name": "贵州燃气",
+        "industry": "燃气Ⅱ",
+        "price": 6.19,
+        "gain": 5.45,
+        "turnover": 4.34,
+        "volRatio": 2.94,
+        "cap": 72,
+        "yang": 5,
+        "gain20": -13.55,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "603318",
+        "name": "水发燃气",
+        "industry": "燃气Ⅱ",
+        "price": 8.26,
+        "gain": 4.69,
+        "turnover": 8.74,
+        "volRatio": 1.77,
+        "cap": 46,
+        "yang": 3,
+        "gain20": -11.35,
+        "aboveRate": 96,
+        "sector": ""
+      },
+      {
+        "code": "600641",
+        "name": "先导基电",
+        "industry": "半导体",
+        "price": 32.72,
+        "gain": 4.2,
+        "turnover": 16.73,
+        "volRatio": 2,
+        "cap": 310,
+        "yang": 3,
+        "gain20": -29.69,
+        "aboveRate": 95,
+        "sector": "算力/AI"
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-06",
     "runAt": "2026-11-06 15:10",
     "count": 2,
@@ -269,22 +329,5 @@ window.SCREENER = [
     "warnings": [
       "分时获取失败 12 只"
     ]
-  },
-  {
-    "date": "2026-10-26",
-    "runAt": "2026-10-26 15:10",
-    "count": 0,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [],
-    "warnings": []
   }
 ];
