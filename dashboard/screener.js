@@ -1,5 +1,79 @@
 window.SCREENER = [
   {
+    "date": "2026-11-10",
+    "runAt": "2026-11-10 15:10",
+    "count": 4,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "002825",
+        "name": "纳尔股份",
+        "industry": "塑料",
+        "price": 8.75,
+        "gain": 6.84,
+        "turnover": 7.29,
+        "volRatio": 3.92,
+        "cap": 30,
+        "yang": 6,
+        "gain20": -10.59,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "603687",
+        "name": "大胜达",
+        "industry": "包装印刷",
+        "price": 13.36,
+        "gain": 6.28,
+        "turnover": 8,
+        "volRatio": 1.51,
+        "cap": 73,
+        "yang": 4,
+        "gain20": -4.63,
+        "aboveRate": 98,
+        "sector": ""
+      },
+      {
+        "code": "600121",
+        "name": "郑州煤电",
+        "industry": "煤炭开采",
+        "price": 4.98,
+        "gain": 5.29,
+        "turnover": 18.48,
+        "volRatio": 2.36,
+        "cap": 61,
+        "yang": 6,
+        "gain20": -13.84,
+        "aboveRate": 98,
+        "sector": ""
+      },
+      {
+        "code": "603657",
+        "name": "春光科技",
+        "industry": "家电零部件Ⅱ",
+        "price": 34.54,
+        "gain": 2.86,
+        "turnover": 10.77,
+        "volRatio": 1.7,
+        "cap": 47,
+        "yang": 4,
+        "gain20": 1.79,
+        "aboveRate": 99,
+        "sector": "消费"
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-09",
     "runAt": "2026-11-09 15:10",
     "count": 3,
@@ -310,24 +384,5 @@ window.SCREENER = [
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
     "list": []
-  },
-  {
-    "date": "2026-10-27",
-    "runAt": "2026-10-27 15:10",
-    "count": 0,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [],
-    "warnings": [
-      "分时获取失败 12 只"
-    ]
   }
 ];
