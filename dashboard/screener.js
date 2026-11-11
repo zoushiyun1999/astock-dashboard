@@ -1,5 +1,93 @@
 window.SCREENER = [
   {
+    "date": "2026-11-11",
+    "runAt": "2026-11-11 15:10",
+    "count": 5,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "601177",
+        "name": "杭齿前进",
+        "industry": "通用设备",
+        "price": 14.27,
+        "gain": 6.65,
+        "turnover": 5.61,
+        "volRatio": 2.79,
+        "cap": 58,
+        "yang": 5,
+        "gain20": -0.3,
+        "aboveRate": 99,
+        "sector": ""
+      },
+      {
+        "code": "000887",
+        "name": "中鼎股份",
+        "industry": "汽车零部件",
+        "price": 18.68,
+        "gain": 5.9,
+        "turnover": 3.91,
+        "volRatio": 1.67,
+        "cap": 246,
+        "yang": 5,
+        "gain20": 3.46,
+        "aboveRate": 96,
+        "sector": "新能源/车"
+      },
+      {
+        "code": "001324",
+        "name": "长青科技",
+        "industry": "轨交设备Ⅱ",
+        "price": 20.31,
+        "gain": 4.91,
+        "turnover": 4.36,
+        "volRatio": 1.88,
+        "cap": 28,
+        "yang": 5,
+        "gain20": -2.66,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "002825",
+        "name": "纳尔股份",
+        "industry": "塑料",
+        "price": 9.16,
+        "gain": 4.69,
+        "turnover": 5.47,
+        "volRatio": 1.83,
+        "cap": 31,
+        "yang": 7,
+        "gain20": -4.16,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "002969",
+        "name": "嘉美包装",
+        "industry": "包装印刷",
+        "price": 10.52,
+        "gain": 4.57,
+        "turnover": 3.74,
+        "volRatio": 1.6,
+        "cap": 116,
+        "yang": 5,
+        "gain20": -2.14,
+        "aboveRate": 98,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-10",
     "runAt": "2026-11-10 15:10",
     "count": 4,
@@ -372,14 +460,6 @@ window.SCREENER = [
   {
     "date": "2026-10-29",
     "runAt": "2026-10-29 15:10",
-    "fault": true,
-    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
-    "count": 0,
-    "list": []
-  },
-  {
-    "date": "2026-10-28",
-    "runAt": "2026-10-28 15:10",
     "fault": true,
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
