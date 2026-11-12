@@ -1,5 +1,93 @@
 window.SCREENER = [
   {
+    "date": "2026-11-12",
+    "runAt": "2026-11-12 15:10",
+    "count": 5,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "600506",
+        "name": "统一股份",
+        "industry": "炼化及贸易",
+        "price": 19.35,
+        "gain": 5.45,
+        "turnover": 19.04,
+        "volRatio": 1.57,
+        "cap": 48,
+        "yang": 3,
+        "gain20": 18.01,
+        "aboveRate": 98,
+        "sector": ""
+      },
+      {
+        "code": "600815",
+        "name": "厦工股份",
+        "industry": "工程机械",
+        "price": 3.21,
+        "gain": 5.25,
+        "turnover": 9.04,
+        "volRatio": 2.43,
+        "cap": 57,
+        "yang": 2,
+        "gain20": -15.04,
+        "aboveRate": 99,
+        "sector": ""
+      },
+      {
+        "code": "603637",
+        "name": "镇海股份",
+        "industry": "专业工程",
+        "price": 12.33,
+        "gain": 4.85,
+        "turnover": 5.38,
+        "volRatio": 1.59,
+        "cap": 29,
+        "yang": 6,
+        "gain20": -5.39,
+        "aboveRate": 96,
+        "sector": ""
+      },
+      {
+        "code": "603967",
+        "name": "中创物流",
+        "industry": "物流",
+        "price": 13.4,
+        "gain": 4.61,
+        "turnover": 2.5,
+        "volRatio": 3.02,
+        "cap": 46,
+        "yang": 5,
+        "gain20": 4.23,
+        "aboveRate": 100,
+        "sector": ""
+      },
+      {
+        "code": "603318",
+        "name": "水发燃气",
+        "industry": "燃气Ⅱ",
+        "price": 8.83,
+        "gain": 4.5,
+        "turnover": 14.73,
+        "volRatio": 1.98,
+        "cap": 49,
+        "yang": 6,
+        "gain20": -3.54,
+        "aboveRate": 97,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-11",
     "runAt": "2026-11-11 15:10",
     "count": 5,
@@ -452,14 +540,6 @@ window.SCREENER = [
   {
     "date": "2026-10-30",
     "runAt": "2026-10-30 15:10",
-    "fault": true,
-    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
-    "count": 0,
-    "list": []
-  },
-  {
-    "date": "2026-10-29",
-    "runAt": "2026-10-29 15:10",
     "fault": true,
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
