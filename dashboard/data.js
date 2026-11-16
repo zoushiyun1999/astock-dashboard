@@ -1,6 +1,18 @@
 window.REPORTS = {
-  "updatedAt": "2026-11-16 08:30",
+  "updatedAt": "2026-11-16 21:58",
   "calendar": [
+    {
+      "id": "2zbyr0m50xq",
+      "title": "投资日历：周末霸榜热搜 下周或再次见证历史",
+      "author": "A股投资日历",
+      "publishedAt": "2026-11-15 20:29:57",
+      "url": "https://www.jiuyangongshe.com/a/2zbyr0m50xq",
+      "images": [
+        "calendar/2zbyr0m50xq_img1.png",
+        "calendar/2zbyr0m50xq_img2.png"
+      ],
+      "events": []
+    },
     {
       "id": "4er5qca440x",
       "title": "投资日历：11月投资日历已更新 都在指向同一低位题材",
@@ -46,21 +58,6 @@ window.REPORTS = {
         "calendar/11ep6nv3lyw_img1.png",
         "calendar/11ep6nv3lyw_img2.png",
         "calendar/11ep6nv3lyw_img3.png"
-      ],
-      "events": []
-    },
-    {
-      "id": "4eq6gf4vrjz",
-      "title": "投资日历：下周正式开闸 周末三大事件引爆下周窗口",
-      "author": "A股投资日历",
-      "publishedAt": "2026-10-11 18:35:12",
-      "url": "https://www.jiuyangongshe.com/a/4eq6gf4vrjz",
-      "images": [
-        "calendar/4eq6gf4vrjz_img1.png",
-        "calendar/4eq6gf4vrjz_img2.png",
-        "calendar/4eq6gf4vrjz_img3.png",
-        "calendar/4eq6gf4vrjz_img4.png",
-        "calendar/4eq6gf4vrjz_img5.png"
       ],
       "events": []
     }
@@ -2290,6 +2287,125 @@ window.REPORTS = {
             "sector": "小家电",
             "status": "未连板 中位",
             "reason": "盘前人气股"
+          }
+        ]
+      },
+      "evening": {
+        "sources": [
+          "湖南人",
+          "行鱼复盘"
+        ],
+        "generatedAt": "2026-11-16 21:58",
+        "博主观点": [
+          {
+            "author": "湖南人",
+            "view": "指数维持震荡整理，午后回落。短线情绪在分歧中尝试修复，高位股分歧加剧，退潮期博弈特征明显。主线方向上，人工智能应用端（Sora）延续强势，带动算力需求。核心个股如宏景科技走出连板，是资金做多的旗帜。明日策略上，需警惕高位股炸板风险，关注分歧转一致的低吸机会，重点围绕Sora产业链及算力补涨逻辑进行操作。"
+          },
+          {
+            "author": "行鱼复盘",
+            "view": "今日大盘弱势震荡，尾盘跳水，成交量略减。短线情绪经历分歧后略有回暖，但高位连板股风险依旧较大，处于退潮期的倒计时博弈阶段。主线方面，算力板块因英伟达利好及Sora应用端的高预期，表现最为强劲，资金聚焦于核心标的的抱团。核心个股方面，宏景科技等龙头股维持强势，是观察资金流向的风向标。明日策略建议谨慎为主，控制仓位，关注分歧后的核心回流机会，回避高位接力。"
+          }
+        ],
+        "大盘概况": {
+          "summary": "指数震荡回落，短线情绪分歧修复",
+          "metrics": [
+            {
+              "k": "上证指数",
+              "v": "3885.33",
+              "d": "-0.07%",
+              "up": false
+            }
+          ]
+        },
+        "连板梯队": [
+          "4板：锡华科技 603248、华瓷股份 001216"
+        ],
+        "明日关注": [
+          {
+            "sector": "算力",
+            "stage": "主升",
+            "why": "英伟达利好叠加Sora应用端预期，板块延续强势，资金抱团明显",
+            "chain": "英伟达产业链/算力租赁/光模块",
+            "picks": [
+              {
+                "name": "宏景科技",
+                "code": "",
+                "role": "接力",
+                "status": "5板+高位+抱团",
+                "reason": "算力龙头，市场最高标，资金抱团核心"
+              }
+            ]
+          },
+          {
+            "sector": "Sora应用",
+            "stage": "主升",
+            "why": "AI应用端持续发酵，Sora概念带动板块扩散，逻辑清晰",
+            "chain": "AI视频/传媒/软件",
+            "picks": [
+              {
+                "name": "万兴科技",
+                "code": "",
+                "role": "观察",
+                "status": "3板+低位+趋势",
+                "reason": "AI应用核心，低位补涨潜力大"
+              }
+            ]
+          },
+          {
+            "sector": "英伟达概念",
+            "stage": "启动",
+            "why": "受外围消息刺激，产业链个股表现活跃，有补涨需求",
+            "chain": "CPO/PCB/服务器",
+            "picks": [
+              {
+                "name": "工业富联",
+                "code": "",
+                "role": "可跟",
+                "status": "2板+辨识度+趋势",
+                "reason": "算力核心标的，趋势走强"
+              }
+            ]
+          },
+          {
+            "sector": "固态电池",
+            "stage": "分歧",
+            "why": "板块经历大涨后今日出现分歧，资金高低切换",
+            "chain": "电解液/材料/设备",
+            "picks": [
+              {
+                "name": "瑞泰新材",
+                "code": "",
+                "role": "观察",
+                "status": "1板+首板+预期",
+                "reason": "固态电池核心标的，关注分歧低吸"
+              }
+            ]
+          }
+        ],
+        "板块热点": [
+          {
+            "name": "算力",
+            "strength": "主升",
+            "stocks": "宏景科技",
+            "catalyst": "英伟达利好+Sora应用端预期"
+          },
+          {
+            "name": "Sora应用",
+            "strength": "主升",
+            "stocks": "万兴科技",
+            "catalyst": "AI视频概念持续发酵"
+          },
+          {
+            "name": "英伟达概念",
+            "strength": "启动",
+            "stocks": "工业富联",
+            "catalyst": "外围消息刺激产业链活跃"
+          },
+          {
+            "name": "固态电池",
+            "strength": "分歧",
+            "stocks": "瑞泰新材",
+            "catalyst": "板块大涨后出现分歧"
           }
         ]
       }
