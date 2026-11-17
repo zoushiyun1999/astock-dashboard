@@ -1,5 +1,51 @@
 window.SCREENER = [
   {
+    "date": "2026-11-17",
+    "runAt": "2026-11-17 15:10",
+    "count": 2,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "000062",
+        "name": "深圳华强",
+        "industry": "其他电子Ⅱ",
+        "price": 22.28,
+        "gain": 6.7,
+        "turnover": 5.72,
+        "volRatio": 2.89,
+        "cap": 233,
+        "yang": 2,
+        "gain20": 4.92,
+        "aboveRate": 96,
+        "sector": ""
+      },
+      {
+        "code": "002557",
+        "name": "洽洽食品",
+        "industry": "休闲食品",
+        "price": 20.28,
+        "gain": 3.68,
+        "turnover": 3.32,
+        "volRatio": 2.63,
+        "cap": 103,
+        "yang": 2,
+        "gain20": 1.88,
+        "aboveRate": 96,
+        "sector": "消费"
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-16",
     "runAt": "2026-11-16 15:10",
     "fault": true,
@@ -807,14 +853,6 @@ window.SCREENER = [
   {
     "date": "2026-11-04",
     "runAt": "2026-11-04 15:10",
-    "fault": true,
-    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
-    "count": 0,
-    "list": []
-  },
-  {
-    "date": "2026-11-03",
-    "runAt": "2026-11-03 15:10",
     "fault": true,
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
