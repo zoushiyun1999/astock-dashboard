@@ -1,5 +1,65 @@
 window.SCREENER = [
   {
+    "date": "2026-11-18",
+    "runAt": "2026-11-18 15:10",
+    "count": 3,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "002229",
+        "name": "鸿博股份",
+        "industry": "IT服务Ⅱ",
+        "price": 10.78,
+        "gain": 5.48,
+        "turnover": 17.88,
+        "volRatio": 1.51,
+        "cap": 53,
+        "yang": 6,
+        "gain20": 3.13,
+        "aboveRate": 95,
+        "sector": ""
+      },
+      {
+        "code": "000034",
+        "name": "神州数码",
+        "industry": "IT服务Ⅱ",
+        "price": 23,
+        "gain": 4.21,
+        "turnover": 5.74,
+        "volRatio": 1.76,
+        "cap": 234,
+        "yang": 3,
+        "gain20": 7.4,
+        "aboveRate": 96,
+        "sector": ""
+      },
+      {
+        "code": "002557",
+        "name": "洽洽食品",
+        "industry": "休闲食品",
+        "price": 20.96,
+        "gain": 3.35,
+        "turnover": 3.76,
+        "volRatio": 2.13,
+        "cap": 106,
+        "yang": 3,
+        "gain20": 5.02,
+        "aboveRate": 95,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-17",
     "runAt": "2026-11-17 15:10",
     "count": 2,
@@ -849,13 +909,5 @@ window.SCREENER = [
       }
     ],
     "warnings": []
-  },
-  {
-    "date": "2026-11-04",
-    "runAt": "2026-11-04 15:10",
-    "fault": true,
-    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
-    "count": 0,
-    "list": []
   }
 ];
