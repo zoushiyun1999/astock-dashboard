@@ -66,7 +66,21 @@ window.SCREENER = [
         "yang": 6,
         "gain20": 3.13,
         "aboveRate": 95,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -10.02,
+          "hit": false,
+          "price": 9.7,
+          "code": "002229",
+          "at": "2026-11-19",
+          "open": 10.68,
+          "openPct": -0.93,
+          "buyRet": -9.18,
+          "netRet": -9.36,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "000034",
@@ -80,7 +94,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 7.4,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -9.3,
+          "hit": false,
+          "price": 20.86,
+          "code": "000034",
+          "at": "2026-11-19",
+          "open": 22.8,
+          "openPct": -0.87,
+          "buyRet": -8.51,
+          "netRet": -8.69,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002557",
@@ -94,7 +122,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 5.02,
         "aboveRate": 95,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": 0.14,
+          "hit": true,
+          "price": 20.99,
+          "code": "002557",
+          "at": "2026-11-19",
+          "open": 20.96,
+          "openPct": 0,
+          "buyRet": 0.14,
+          "netRet": -0.06,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
@@ -126,7 +168,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 4.92,
         "aboveRate": 96,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -1.39,
+          "hit": false,
+          "price": 21.97,
+          "code": "000062",
+          "at": "2026-11-18",
+          "open": 21.61,
+          "openPct": -3.01,
+          "buyRet": 1.67,
+          "netRet": 1.46,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       },
       {
         "code": "002557",
@@ -140,7 +196,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": 1.88,
         "aboveRate": 96,
-        "sector": "消费"
+        "sector": "消费",
+        "verify": {
+          "gain": 3.35,
+          "hit": true,
+          "price": 20.96,
+          "code": "002557",
+          "at": "2026-11-18",
+          "open": 20.15,
+          "openPct": -0.64,
+          "buyRet": 4.02,
+          "netRet": 3.81,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
