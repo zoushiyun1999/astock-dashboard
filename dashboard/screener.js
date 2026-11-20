@@ -1,5 +1,37 @@
 window.SCREENER = [
   {
+    "date": "2026-11-20",
+    "runAt": "2026-11-20 15:10",
+    "count": 1,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "000158",
+        "name": "常山北明",
+        "industry": "IT服务Ⅱ",
+        "price": 13.52,
+        "gain": 3.76,
+        "turnover": 11.6,
+        "volRatio": 2.62,
+        "cap": 216,
+        "yang": 3,
+        "gain20": 7.69,
+        "aboveRate": 97,
+        "sector": "AI应用"
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-19",
     "runAt": "2026-11-19 15:10",
     "fault": true,
@@ -678,80 +710,6 @@ window.SCREENER = [
           "openPct": 5.07,
           "buyRet": -2.65,
           "netRet": -2.84,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
-    "warnings": []
-  },
-  {
-    "date": "2026-11-06",
-    "runAt": "2026-11-06 15:10",
-    "count": 2,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "600038",
-        "name": "中直股份",
-        "industry": "航空装备Ⅱ",
-        "price": 28.77,
-        "gain": 5.93,
-        "turnover": 3.7,
-        "volRatio": 3.65,
-        "cap": 236,
-        "yang": 5,
-        "gain20": 1.76,
-        "aboveRate": 99,
-        "sector": "",
-        "verify": {
-          "gain": -0.59,
-          "hit": false,
-          "price": 28.6,
-          "code": "600038",
-          "at": "2026-11-09",
-          "open": 29.16,
-          "openPct": 1.36,
-          "buyRet": -1.92,
-          "netRet": -2.12,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "002611",
-        "name": "东方精工",
-        "industry": "专用设备",
-        "price": 13.91,
-        "gain": 3.96,
-        "turnover": 5.82,
-        "volRatio": 2.14,
-        "cap": 169,
-        "yang": 4,
-        "gain20": -1.69,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": 5.9,
-          "hit": true,
-          "price": 14.73,
-          "code": "002611",
-          "at": "2026-11-09",
-          "open": 14.3,
-          "openPct": 2.8,
-          "buyRet": 3.01,
-          "netRet": 2.8,
           "locked": false,
           "basis": "open-to-close",
           "by": "hist"
