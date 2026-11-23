@@ -1,5 +1,13 @@
 window.SCREENER = [
   {
+    "date": "2026-11-23",
+    "runAt": "2026-11-23 15:10",
+    "fault": true,
+    "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
+    "count": 0,
+    "list": []
+  },
+  {
     "date": "2026-11-20",
     "runAt": "2026-11-20 15:10",
     "count": 1,
@@ -678,108 +686,6 @@ window.SCREENER = [
           "openPct": 1.3,
           "buyRet": 1.03,
           "netRet": 0.83,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
-    "warnings": []
-  },
-  {
-    "date": "2026-11-09",
-    "runAt": "2026-11-09 15:10",
-    "count": 3,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "600903",
-        "name": "贵州燃气",
-        "industry": "燃气Ⅱ",
-        "price": 6.19,
-        "gain": 5.45,
-        "turnover": 4.34,
-        "volRatio": 2.94,
-        "cap": 72,
-        "yang": 5,
-        "gain20": -13.55,
-        "aboveRate": 100,
-        "sector": "",
-        "verify": {
-          "gain": -1.94,
-          "hit": false,
-          "price": 6.07,
-          "code": "600903",
-          "at": "2026-11-10",
-          "open": 6.09,
-          "openPct": -1.62,
-          "buyRet": -0.33,
-          "netRet": -0.53,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603318",
-        "name": "水发燃气",
-        "industry": "燃气Ⅱ",
-        "price": 8.26,
-        "gain": 4.69,
-        "turnover": 8.74,
-        "volRatio": 1.77,
-        "cap": 46,
-        "yang": 3,
-        "gain20": -11.35,
-        "aboveRate": 96,
-        "sector": "",
-        "verify": {
-          "gain": -0.85,
-          "hit": false,
-          "price": 8.19,
-          "code": "603318",
-          "at": "2026-11-10",
-          "open": 8.18,
-          "openPct": -0.97,
-          "buyRet": 0.12,
-          "netRet": -0.08,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600641",
-        "name": "先导基电",
-        "industry": "半导体",
-        "price": 32.72,
-        "gain": 4.2,
-        "turnover": 16.73,
-        "volRatio": 2,
-        "cap": 310,
-        "yang": 3,
-        "gain20": -29.69,
-        "aboveRate": 95,
-        "sector": "算力/AI",
-        "verify": {
-          "gain": 2.29,
-          "hit": true,
-          "price": 33.47,
-          "code": "600641",
-          "at": "2026-11-10",
-          "open": 34.38,
-          "openPct": 5.07,
-          "buyRet": -2.65,
-          "netRet": -2.84,
           "locked": false,
           "basis": "open-to-close",
           "by": "hist"
