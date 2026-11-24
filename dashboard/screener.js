@@ -1,5 +1,37 @@
 window.SCREENER = [
   {
+    "date": "2026-11-24",
+    "runAt": "2026-11-24 15:10",
+    "count": 1,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "601606",
+        "name": "长城军工",
+        "industry": "地面兵装Ⅱ",
+        "price": 30.81,
+        "gain": 6.28,
+        "turnover": 5.62,
+        "volRatio": 1.58,
+        "cap": 223,
+        "yang": 2,
+        "gain20": -4.23,
+        "aboveRate": 95,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-23",
     "runAt": "2026-11-23 15:10",
     "fault": true,
@@ -556,136 +588,6 @@ window.SCREENER = [
           "openPct": 1.52,
           "buyRet": -5.71,
           "netRet": -5.9,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
-    "warnings": []
-  },
-  {
-    "date": "2026-11-10",
-    "runAt": "2026-11-10 15:10",
-    "count": 4,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "002825",
-        "name": "纳尔股份",
-        "industry": "塑料",
-        "price": 8.75,
-        "gain": 6.84,
-        "turnover": 7.29,
-        "volRatio": 3.92,
-        "cap": 30,
-        "yang": 6,
-        "gain20": -10.59,
-        "aboveRate": 100,
-        "sector": "",
-        "verify": {
-          "gain": 4.69,
-          "hit": true,
-          "price": 9.16,
-          "code": "002825",
-          "at": "2026-11-11",
-          "open": 8.75,
-          "openPct": 0,
-          "buyRet": 4.69,
-          "netRet": 4.48,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603687",
-        "name": "大胜达",
-        "industry": "包装印刷",
-        "price": 13.36,
-        "gain": 6.28,
-        "turnover": 8,
-        "volRatio": 1.51,
-        "cap": 73,
-        "yang": 4,
-        "gain20": -4.63,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": 0.6,
-          "hit": true,
-          "price": 13.44,
-          "code": "603687",
-          "at": "2026-11-11",
-          "open": 13.16,
-          "openPct": -1.5,
-          "buyRet": 2.13,
-          "netRet": 1.92,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600121",
-        "name": "郑州煤电",
-        "industry": "煤炭开采",
-        "price": 4.98,
-        "gain": 5.29,
-        "turnover": 18.48,
-        "volRatio": 2.36,
-        "cap": 61,
-        "yang": 6,
-        "gain20": -13.84,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": -4.42,
-          "hit": false,
-          "price": 4.76,
-          "code": "600121",
-          "at": "2026-11-11",
-          "open": 4.85,
-          "openPct": -2.61,
-          "buyRet": -1.86,
-          "netRet": -2.05,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603657",
-        "name": "春光科技",
-        "industry": "家电零部件Ⅱ",
-        "price": 34.54,
-        "gain": 2.86,
-        "turnover": 10.77,
-        "volRatio": 1.7,
-        "cap": 47,
-        "yang": 4,
-        "gain20": 1.79,
-        "aboveRate": 99,
-        "sector": "消费",
-        "verify": {
-          "gain": 2.35,
-          "hit": true,
-          "price": 35.35,
-          "code": "603657",
-          "at": "2026-11-11",
-          "open": 34.99,
-          "openPct": 1.3,
-          "buyRet": 1.03,
-          "netRet": 0.83,
           "locked": false,
           "basis": "open-to-close",
           "by": "hist"
