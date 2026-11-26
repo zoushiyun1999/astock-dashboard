@@ -1,5 +1,24 @@
 window.SCREENER = [
   {
+    "date": "2026-11-26",
+    "runAt": "2026-11-26 15:10",
+    "count": 0,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [],
+    "warnings": [
+      "分时获取失败 4 只"
+    ]
+  },
+  {
     "date": "2026-11-25",
     "runAt": "2026-11-25 15:10",
     "fault": true,
@@ -286,164 +305,6 @@ window.SCREENER = [
       "exclude": "创业板/科创板/北交所/ST/退市"
     },
     "list": [],
-    "warnings": []
-  },
-  {
-    "date": "2026-11-12",
-    "runAt": "2026-11-12 15:10",
-    "count": 5,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [
-      {
-        "code": "600506",
-        "name": "统一股份",
-        "industry": "炼化及贸易",
-        "price": 19.35,
-        "gain": 5.45,
-        "turnover": 19.04,
-        "volRatio": 1.57,
-        "cap": 48,
-        "yang": 3,
-        "gain20": 18.01,
-        "aboveRate": 98,
-        "sector": "",
-        "verify": {
-          "gain": -4.44,
-          "hit": false,
-          "price": 18.49,
-          "code": "600506",
-          "at": "2026-11-13",
-          "open": 19.13,
-          "openPct": -1.14,
-          "buyRet": -3.35,
-          "netRet": -3.54,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "600815",
-        "name": "厦工股份",
-        "industry": "工程机械",
-        "price": 3.21,
-        "gain": 5.25,
-        "turnover": 9.04,
-        "volRatio": 2.43,
-        "cap": 57,
-        "yang": 2,
-        "gain20": -15.04,
-        "aboveRate": 99,
-        "sector": "",
-        "verify": {
-          "gain": -8.1,
-          "hit": false,
-          "price": 2.95,
-          "code": "600815",
-          "at": "2026-11-13",
-          "open": 3.12,
-          "openPct": -2.8,
-          "buyRet": -5.45,
-          "netRet": -5.64,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603637",
-        "name": "镇海股份",
-        "industry": "专业工程",
-        "price": 12.33,
-        "gain": 4.85,
-        "turnover": 5.38,
-        "volRatio": 1.59,
-        "cap": 29,
-        "yang": 6,
-        "gain20": -5.39,
-        "aboveRate": 96,
-        "sector": "",
-        "verify": {
-          "gain": 2.51,
-          "hit": true,
-          "price": 12.64,
-          "code": "603637",
-          "at": "2026-11-13",
-          "open": 12.3,
-          "openPct": -0.24,
-          "buyRet": 2.76,
-          "netRet": 2.56,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603967",
-        "name": "中创物流",
-        "industry": "物流",
-        "price": 13.4,
-        "gain": 4.61,
-        "turnover": 2.5,
-        "volRatio": 3.02,
-        "cap": 46,
-        "yang": 5,
-        "gain20": 4.23,
-        "aboveRate": 100,
-        "sector": "",
-        "verify": {
-          "gain": -2.84,
-          "hit": false,
-          "price": 13.02,
-          "code": "603967",
-          "at": "2026-11-13",
-          "open": 13.33,
-          "openPct": -0.52,
-          "buyRet": -2.33,
-          "netRet": -2.52,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      },
-      {
-        "code": "603318",
-        "name": "水发燃气",
-        "industry": "燃气Ⅱ",
-        "price": 8.83,
-        "gain": 4.5,
-        "turnover": 14.73,
-        "volRatio": 1.98,
-        "cap": 49,
-        "yang": 6,
-        "gain20": -3.54,
-        "aboveRate": 97,
-        "sector": "",
-        "verify": {
-          "gain": -5.78,
-          "hit": false,
-          "price": 8.32,
-          "code": "603318",
-          "at": "2026-11-13",
-          "open": 8.6,
-          "openPct": -2.6,
-          "buyRet": -3.26,
-          "netRet": -3.45,
-          "locked": false,
-          "basis": "open-to-close",
-          "by": "hist"
-        }
-      }
-    ],
     "warnings": []
   }
 ];
