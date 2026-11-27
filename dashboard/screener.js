@@ -1,5 +1,51 @@
 window.SCREENER = [
   {
+    "date": "2026-11-27",
+    "runAt": "2026-11-27 15:10",
+    "count": 2,
+    "criteria": {
+      "gain": "2.5%-7%",
+      "turnover": "2.5%-20%",
+      "cap": "20亿-500亿",
+      "volRatio": "≥1.5",
+      "yang": "≥2连阳",
+      "gain20": "≤25%（近 20 日）",
+      "aboveAvg": "≥95% 时间在分时均线上",
+      "exclude": "创业板/科创板/北交所/ST/退市"
+    },
+    "list": [
+      {
+        "code": "603887",
+        "name": "城地香江",
+        "industry": "IT服务Ⅱ",
+        "price": 9.5,
+        "gain": 6.62,
+        "turnover": 19.26,
+        "volRatio": 1.71,
+        "cap": 57,
+        "yang": 5,
+        "gain20": 23.07,
+        "aboveRate": 99,
+        "sector": ""
+      },
+      {
+        "code": "603360",
+        "name": "百傲化学",
+        "industry": "农化制品",
+        "price": 11.91,
+        "gain": 5.87,
+        "turnover": 8.57,
+        "volRatio": 1.89,
+        "cap": 84,
+        "yang": 4,
+        "gain20": 11.06,
+        "aboveRate": 98,
+        "sector": ""
+      }
+    ],
+    "warnings": []
+  },
+  {
     "date": "2026-11-26",
     "runAt": "2026-11-26 15:10",
     "count": 0,
@@ -289,22 +335,5 @@ window.SCREENER = [
     "reason": "数据源（东财 push2delay 行情接口）在交易时段抓取失败，全市场 0 只，无法筛选。通常是上游网络/接口临时故障，不是\"没有符合条件个股\"。故障恢复后下一交易日会自动补录。",
     "count": 0,
     "list": []
-  },
-  {
-    "date": "2026-11-13",
-    "runAt": "2026-11-13 15:10",
-    "count": 0,
-    "criteria": {
-      "gain": "2.5%-7%",
-      "turnover": "2.5%-20%",
-      "cap": "20亿-500亿",
-      "volRatio": "≥1.5",
-      "yang": "≥2连阳",
-      "gain20": "≤25%（近 20 日）",
-      "aboveAvg": "≥95% 时间在分时均线上",
-      "exclude": "创业板/科创板/北交所/ST/退市"
-    },
-    "list": [],
-    "warnings": []
   }
 ];
