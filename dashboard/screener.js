@@ -99,7 +99,21 @@ window.SCREENER = [
         "yang": 2,
         "gain20": -4.23,
         "aboveRate": 95,
-        "sector": ""
+        "sector": "",
+        "verify": {
+          "gain": -9.09,
+          "hit": false,
+          "price": 28.01,
+          "code": "601606",
+          "at": "2026-11-25",
+          "open": 30,
+          "openPct": -2.63,
+          "buyRet": -6.63,
+          "netRet": -6.82,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []
@@ -139,7 +153,21 @@ window.SCREENER = [
         "yang": 3,
         "gain20": 7.69,
         "aboveRate": 97,
-        "sector": "AI应用"
+        "sector": "AI应用",
+        "verify": {
+          "gain": -1.26,
+          "hit": false,
+          "price": 13.35,
+          "code": "000158",
+          "at": "2026-11-23",
+          "open": 13.01,
+          "openPct": -3.77,
+          "buyRet": 2.61,
+          "netRet": 2.41,
+          "locked": false,
+          "basis": "open-to-close",
+          "by": "hist"
+        }
       }
     ],
     "warnings": []

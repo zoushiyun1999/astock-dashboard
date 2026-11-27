@@ -1,5 +1,5 @@
 window.REPORTS = {
-  "updatedAt": "2026-11-27 21:25",
+  "updatedAt": "2026-11-27 21:30",
   "calendar": [
     {
       "id": "20eb47a2xhd",
@@ -835,14 +835,42 @@ window.REPORTS = {
                 "code": "000628",
                 "role": "接力",
                 "status": "4板+10天5板+高位警惕",
-                "reason": "主线核心，若能承接分歧，有望开启新一轮主升。"
+                "reason": "主线核心，若能承接分歧，有望开启新一轮主升。",
+                "verify": {
+                  "gain": 2.4,
+                  "hit": true,
+                  "price": 43.52,
+                  "code": "000628",
+                  "at": "2026-11-23",
+                  "open": 41.42,
+                  "openPct": -2.54,
+                  "buyRet": 5.07,
+                  "netRet": 4.86,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "工业富联",
                 "code": "601138",
                 "role": "可跟",
                 "status": "趋势中军",
-                "reason": "作为中军代表，承接力度决定板块后续高度。"
+                "reason": "作为中军代表，承接力度决定板块后续高度。",
+                "verify": {
+                  "gain": 3.01,
+                  "hit": true,
+                  "price": 38.29,
+                  "code": "601138",
+                  "at": "2026-11-23",
+                  "open": 36.5,
+                  "openPct": -1.8,
+                  "buyRet": 4.9,
+                  "netRet": 4.69,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -857,14 +885,42 @@ window.REPORTS = {
                 "code": "002085",
                 "role": "观察",
                 "status": "5板+高位警惕",
-                "reason": "作为板块总龙头，其走势是观察资金回流意愿的关键指标。"
+                "reason": "作为板块总龙头，其走势是观察资金回流意愿的关键指标。",
+                "verify": {
+                  "gain": 3.53,
+                  "hit": true,
+                  "price": 7.92,
+                  "code": "002085",
+                  "at": "2026-11-23",
+                  "open": 7.56,
+                  "openPct": -1.18,
+                  "buyRet": 4.76,
+                  "netRet": 4.55,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中信海直",
                 "code": "000099",
                 "role": "可跟",
                 "status": "中军",
-                "reason": "作为板块核心中军，关注其缩量回踩后的企稳信号。"
+                "reason": "作为板块核心中军，关注其缩量回踩后的企稳信号。",
+                "verify": {
+                  "gain": 2.36,
+                  "hit": true,
+                  "price": 10.86,
+                  "code": "000099",
+                  "at": "2026-11-23",
+                  "open": 10.45,
+                  "openPct": -1.51,
+                  "buyRet": 3.92,
+                  "netRet": 3.72,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -879,7 +935,21 @@ window.REPORTS = {
                 "code": "002460",
                 "role": "观察",
                 "status": "趋势中军",
-                "reason": "板块核心中军，关注其能否带动板块走出持续性。"
+                "reason": "板块核心中军，关注其能否带动板块走出持续性。",
+                "verify": {
+                  "gain": 1.69,
+                  "hit": true,
+                  "price": 33.68,
+                  "code": "002460",
+                  "at": "2026-11-23",
+                  "open": 32.52,
+                  "openPct": -1.81,
+                  "buyRet": 3.57,
+                  "netRet": 3.36,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -894,7 +964,21 @@ window.REPORTS = {
                 "code": "603993",
                 "role": "可跟",
                 "status": "趋势中军",
-                "reason": "作为核心中军，关注其带动板块上涨的力度。"
+                "reason": "作为核心中军，关注其带动板块上涨的力度。",
+                "verify": {
+                  "gain": 3.67,
+                  "hit": true,
+                  "price": 12.14,
+                  "code": "603993",
+                  "at": "2026-11-23",
+                  "open": 11.79,
+                  "openPct": 0.68,
+                  "buyRet": 2.97,
+                  "netRet": 2.76,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -977,56 +1061,168 @@ window.REPORTS = {
             "code": "600327",
             "sector": "百货零售",
             "status": "5板 高位 换手板",
-            "reason": "历史连板高度龙头，市场关注度极高"
+            "reason": "历史连板高度龙头，市场关注度极高",
+            "verify": {
+              "gain": 9.94,
+              "hit": true,
+              "price": 5.31,
+              "code": "600327",
+              "at": "2026-11-23",
+              "open": 4.72,
+              "openPct": -2.28,
+              "buyRet": 12.5,
+              "netRet": 12.28,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "文投控股",
             "code": "600715",
             "sector": "传媒娱乐",
             "status": "9板 高位 换手板",
-            "reason": "近期市场最高连板个股，市场情绪风向标"
+            "reason": "近期市场最高连板个股，市场情绪风向标",
+            "verify": {
+              "gain": 4.01,
+              "hit": true,
+              "price": 2.85,
+              "code": "600715",
+              "at": "2026-11-23",
+              "open": 2.47,
+              "openPct": -9.85,
+              "buyRet": 15.38,
+              "netRet": 15.15,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "光洋股份",
             "code": "002708",
             "sector": "汽车零部件",
             "status": "13天7板 高位 换手板",
-            "reason": "连板高度个股，人气龙头"
+            "reason": "连板高度个股，人气龙头",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 20.99,
+              "code": "002708",
+              "at": "2026-11-23",
+              "open": 18.77,
+              "openPct": -1.62,
+              "buyRet": 11.83,
+              "netRet": 11.6,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "上海电影",
             "code": "601595",
             "sector": "影视院线",
             "status": "4板 高位 换手板",
-            "reason": "近期连板热门股"
+            "reason": "近期连板热门股",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 32.52,
+              "code": "601595",
+              "at": "2026-11-23",
+              "open": 29.56,
+              "openPct": 0,
+              "buyRet": 10.01,
+              "netRet": 9.79,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东方环宇",
             "code": "603706",
             "sector": "天然气",
             "status": "3连板 高位 换手板",
-            "reason": "连板活跃股"
+            "reason": "连板活跃股",
+            "verify": {
+              "gain": 9.98,
+              "hit": true,
+              "price": 23.69,
+              "code": "603706",
+              "at": "2026-11-23",
+              "open": 20.89,
+              "openPct": -3.02,
+              "buyRet": 13.4,
+              "netRet": 13.18,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "智微智能",
             "code": "001339",
             "sector": "通信设备",
             "status": "6天3板 高位 换手板",
-            "reason": "连板活跃股"
+            "reason": "连板活跃股",
+            "verify": {
+              "gain": 6.08,
+              "hit": true,
+              "price": 53.55,
+              "code": "001339",
+              "at": "2026-11-23",
+              "open": 49.3,
+              "openPct": -2.34,
+              "buyRet": 8.62,
+              "netRet": 8.4,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "飞亚达",
             "code": "000026",
             "sector": "钟表",
             "status": "3天2板 中位 换手板",
-            "reason": "连板活跃股"
+            "reason": "连板活跃股",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 20.55,
+              "code": "000026",
+              "at": "2026-11-23",
+              "open": 17.88,
+              "openPct": -4.28,
+              "buyRet": 14.93,
+              "netRet": 14.7,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "奥士康",
             "code": "002913",
             "sector": "印制电路板",
             "status": "3天2板 中位 换手板",
-            "reason": "连板活跃股"
+            "reason": "连板活跃股",
+            "verify": {
+              "gain": 10,
+              "hit": true,
+              "price": 60.59,
+              "code": "002913",
+              "at": "2026-11-23",
+              "open": 53.42,
+              "openPct": -3.01,
+              "buyRet": 13.42,
+              "netRet": 13.2,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
@@ -1072,14 +1268,42 @@ window.REPORTS = {
                 "code": "603248",
                 "role": "接力",
                 "status": "4板+高位+分歧转一致",
-                "reason": "市场风向标，确立主线地位"
+                "reason": "市场风向标，确立主线地位",
+                "verify": {
+                  "gain": -1.38,
+                  "hit": false,
+                  "price": 14.3,
+                  "code": "603248",
+                  "at": "2026-11-24",
+                  "open": 14.9,
+                  "openPct": 2.76,
+                  "buyRet": -4.03,
+                  "netRet": -4.22,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "华瓷股份",
                 "code": "001216",
                 "role": "观察",
                 "status": "2板+中军+回踩企稳",
-                "reason": "抗跌性强，核心锚点"
+                "reason": "抗跌性强，核心锚点",
+                "verify": {
+                  "gain": -0.61,
+                  "hit": false,
+                  "price": 14.67,
+                  "code": "001216",
+                  "at": "2026-11-24",
+                  "open": 14.87,
+                  "openPct": 0.75,
+                  "buyRet": -1.34,
+                  "netRet": -1.54,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1094,7 +1318,21 @@ window.REPORTS = {
                 "code": "300563",
                 "role": "可跟",
                 "status": "首板+低位+突破",
-                "reason": "板块活跃，适合低位套利"
+                "reason": "板块活跃，适合低位套利",
+                "verify": {
+                  "gain": 0.87,
+                  "hit": true,
+                  "price": 17.3,
+                  "code": "300563",
+                  "at": "2026-11-24",
+                  "open": 18.11,
+                  "openPct": 5.6,
+                  "buyRet": -4.47,
+                  "netRet": -4.66,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1109,7 +1347,21 @@ window.REPORTS = {
                 "code": "300438",
                 "role": "观察",
                 "status": "3板+中军+高位",
-                "reason": "作为中军品种，观察是否继续走强"
+                "reason": "作为中军品种，观察是否继续走强",
+                "verify": {
+                  "gain": 1.33,
+                  "hit": true,
+                  "price": 34.24,
+                  "code": "300438",
+                  "at": "2026-11-24",
+                  "open": 35.08,
+                  "openPct": 3.82,
+                  "buyRet": -2.39,
+                  "netRet": -2.59,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -1186,84 +1438,253 @@ window.REPORTS = {
             "code": "600715",
             "sector": "文化传媒",
             "status": "9板 高位 换手板",
-            "reason": "盘前人气股，历史高位连板龙头，市场关注度极高。"
+            "reason": "盘前人气股，历史高位连板龙头，市场关注度极高。",
+            "verify": {
+              "gain": 10.18,
+              "hit": true,
+              "price": 3.14,
+              "code": "600715",
+              "at": "2026-11-24",
+              "open": 2.8,
+              "openPct": -1.75,
+              "buyRet": 12.14,
+              "netRet": 11.92,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "光洋股份",
             "code": "002708",
             "sector": "汽车零部件",
             "status": "13天7板 高位 换手板",
-            "reason": "机器人核心标的，历史高位连板，市场辨识度极高。"
+            "reason": "机器人核心标的，历史高位连板，市场辨识度极高。",
+            "verify": {
+              "gain": 10,
+              "hit": true,
+              "price": 23.09,
+              "code": "002708",
+              "at": "2026-11-24",
+              "open": 23.09,
+              "openPct": 10,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "上海电影",
             "code": "601595",
             "sector": "影视院线",
             "status": "4板 高位 换手板",
-            "reason": "AI+IP全链模式验证，IP储备丰富，连续涨停表现强势。"
+            "reason": "AI+IP全链模式验证，IP储备丰富，连续涨停表现强势。",
+            "verify": {
+              "gain": 5.04,
+              "hit": true,
+              "price": 34.16,
+              "code": "601595",
+              "at": "2026-11-24",
+              "open": 33.98,
+              "openPct": 4.49,
+              "buyRet": 0.53,
+              "netRet": 0.33,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "东方环宇",
             "code": "603706",
             "sector": "燃气",
             "status": "3连板 高位 换手板",
-            "reason": "天然气主业叠加重组预期，连续涨停晋级高位。"
+            "reason": "天然气主业叠加重组预期，连续涨停晋级高位。",
+            "verify": {
+              "gain": -3.93,
+              "hit": false,
+              "price": 22.76,
+              "code": "603706",
+              "at": "2026-11-24",
+              "open": 22.81,
+              "openPct": -3.71,
+              "buyRet": -0.22,
+              "netRet": -0.42,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "智微智能",
             "code": "001339",
             "sector": "电子元件",
             "status": "6天3板 高位 换手板",
-            "reason": "端侧AI算力矩阵完善，物理AI产业趋势受益标的。"
+            "reason": "端侧AI算力矩阵完善，物理AI产业趋势受益标的。",
+            "verify": {
+              "gain": 2.35,
+              "hit": true,
+              "price": 54.81,
+              "code": "001339",
+              "at": "2026-11-24",
+              "open": 56.14,
+              "openPct": 4.84,
+              "buyRet": -2.37,
+              "netRet": -2.56,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "大东方",
             "code": "600327",
             "sector": "零售",
             "status": "5板 高位 换手板",
-            "reason": "百货零售龙头，高位连板，市场资金抱团标的。"
+            "reason": "百货零售龙头，高位连板，市场资金抱团标的。",
+            "verify": {
+              "gain": -0.19,
+              "hit": false,
+              "price": 5.3,
+              "code": "600327",
+              "at": "2026-11-24",
+              "open": 5.04,
+              "openPct": -5.08,
+              "buyRet": 5.16,
+              "netRet": 4.95,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "新华传媒",
             "code": "600825",
             "sector": "文化传媒",
             "status": "10板 高位 换手板",
-            "reason": "传媒板块龙头，连续涨停，市场高度板。"
+            "reason": "传媒板块龙头，连续涨停，市场高度板。",
+            "verify": {
+              "gain": 1.69,
+              "hit": true,
+              "price": 12,
+              "code": "600825",
+              "at": "2026-11-24",
+              "open": 11.7,
+              "openPct": -0.85,
+              "buyRet": 2.56,
+              "netRet": 2.36,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "奥士康",
             "code": "002913",
             "sector": "电子元件",
             "status": "3天2板 中位 换手板",
-            "reason": "AI硬件方向，连板晋级中位，具备补涨潜力。"
+            "reason": "AI硬件方向，连板晋级中位，具备补涨潜力。",
+            "verify": {
+              "gain": -1.32,
+              "hit": false,
+              "price": 59.79,
+              "code": "002913",
+              "at": "2026-11-24",
+              "open": 66.65,
+              "openPct": 10,
+              "buyRet": -10.29,
+              "netRet": -10.47,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "飞亚达",
             "code": "000026",
             "sector": "珠宝首饰",
             "status": "3天2板 中位 换手板",
-            "reason": "消费电子方向，连板晋级中位，走势稳健。"
+            "reason": "消费电子方向，连板晋级中位，走势稳健。",
+            "verify": {
+              "gain": 8.76,
+              "hit": true,
+              "price": 22.35,
+              "code": "000026",
+              "at": "2026-11-24",
+              "open": 21.58,
+              "openPct": 5.01,
+              "buyRet": 3.57,
+              "netRet": 3.36,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "金辰股份",
             "code": "603396",
             "sector": "光伏设备",
             "status": "3连板 高位 换手板",
-            "reason": "光伏设备方向，连续涨停，高位换手板。"
+            "reason": "光伏设备方向，连续涨停，高位换手板。",
+            "verify": {
+              "gain": -1.01,
+              "hit": false,
+              "price": 23.46,
+              "code": "603396",
+              "at": "2026-11-24",
+              "open": 23.9,
+              "openPct": 0.84,
+              "buyRet": -1.84,
+              "netRet": -2.04,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "广百股份",
             "code": "002187",
             "sector": "零售",
             "status": "2连板 高位 换手板",
-            "reason": "消费方向，连板晋级高位，市场活跃度较高。"
+            "reason": "消费方向，连板晋级高位，市场活跃度较高。",
+            "verify": {
+              "gain": 2.07,
+              "hit": true,
+              "price": 5.91,
+              "code": "002187",
+              "at": "2026-11-24",
+              "open": 5.72,
+              "openPct": -1.21,
+              "buyRet": 3.32,
+              "netRet": 3.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "日发精机",
             "code": "002520",
             "sector": "数控机床",
             "status": "未连板 中位",
-            "reason": "工业母机方向，近期表现活跃，处于中位震荡。"
+            "reason": "工业母机方向，近期表现活跃，处于中位震荡。",
+            "verify": {
+              "gain": 3.43,
+              "hit": true,
+              "price": 6.64,
+              "code": "002520",
+              "at": "2026-11-24",
+              "open": 6.54,
+              "openPct": 1.87,
+              "buyRet": 1.53,
+              "netRet": 1.33,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
@@ -1305,14 +1726,42 @@ window.REPORTS = {
                 "code": "603248",
                 "role": "观察",
                 "status": "4板+高位+分歧",
-                "reason": "板块活口，高位分歧转一致"
+                "reason": "板块活口，高位分歧转一致",
+                "verify": {
+                  "gain": -5.87,
+                  "hit": false,
+                  "price": 13.46,
+                  "code": "603248",
+                  "at": "2026-11-25",
+                  "open": 14.16,
+                  "openPct": -0.98,
+                  "buyRet": -4.94,
+                  "netRet": -5.13,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "华瓷股份",
                 "code": "001216",
                 "role": "观察",
                 "status": "4板+高位+分歧",
-                "reason": "板块活口，高位分歧转一致"
+                "reason": "板块活口，高位分歧转一致",
+                "verify": {
+                  "gain": -4.02,
+                  "hit": false,
+                  "price": 14.08,
+                  "code": "001216",
+                  "at": "2026-11-25",
+                  "open": 14.27,
+                  "openPct": -2.73,
+                  "buyRet": -1.33,
+                  "netRet": -1.53,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1416,63 +1865,189 @@ window.REPORTS = {
             "code": "600715",
             "sector": "文化传媒",
             "status": "9板 高位 换手板",
-            "reason": "历史强势股，高位连板，市场辨识度高"
+            "reason": "历史强势股，高位连板，市场辨识度高",
+            "verify": {
+              "gain": -9.87,
+              "hit": false,
+              "price": 2.83,
+              "code": "600715",
+              "at": "2026-11-25",
+              "open": 3.12,
+              "openPct": -0.64,
+              "buyRet": -9.29,
+              "netRet": -9.48,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "金辰股份",
             "code": "603396",
             "sector": "光伏设备",
             "status": "3连板 高位 换手板",
-            "reason": "高位连板，光伏板块活跃，换手板形态"
+            "reason": "高位连板，光伏板块活跃，换手板形态",
+            "verify": {
+              "gain": -1.28,
+              "hit": false,
+              "price": 23.16,
+              "code": "603396",
+              "at": "2026-11-25",
+              "open": 23.15,
+              "openPct": -1.32,
+              "buyRet": 0.04,
+              "netRet": -0.16,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "广百股份",
             "code": "002187",
             "sector": "商业百货",
             "status": "2连板 高位 换手板",
-            "reason": "高位连板，百货板块补涨，换手板形态"
+            "reason": "高位连板，百货板块补涨，换手板形态",
+            "verify": {
+              "gain": 3.21,
+              "hit": true,
+              "price": 6.1,
+              "code": "002187",
+              "at": "2026-11-25",
+              "open": 5.98,
+              "openPct": 1.18,
+              "buyRet": 2.01,
+              "netRet": 1.8,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "光洋股份",
             "code": "002708",
             "sector": "机器人",
             "status": "13天7板 高位 换手板",
-            "reason": "高位连板，机器人板块核心标的，连板高度最高"
+            "reason": "高位连板，机器人板块核心标的，连板高度最高",
+            "verify": {
+              "gain": -1.26,
+              "hit": false,
+              "price": 22.8,
+              "code": "002708",
+              "at": "2026-11-25",
+              "open": 24.23,
+              "openPct": 4.94,
+              "buyRet": -5.9,
+              "netRet": -6.09,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "新华传媒",
             "code": "600825",
             "sector": "文化传媒",
             "status": "10板 高位 换手板",
-            "reason": "高位连板，传媒板块龙头，连板高度极高"
+            "reason": "高位连板，传媒板块龙头，连板高度极高",
+            "verify": {
+              "gain": -2.08,
+              "hit": false,
+              "price": 11.75,
+              "code": "600825",
+              "at": "2026-11-25",
+              "open": 11.87,
+              "openPct": -1.08,
+              "buyRet": -1.01,
+              "netRet": -1.21,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "智微智能",
             "code": "001339",
             "sector": "通信设备",
             "status": "6天3板 高位 换手板",
-            "reason": "高位连板，AI硬件方向，换手板形态"
+            "reason": "高位连板，AI硬件方向，换手板形态",
+            "verify": {
+              "gain": -6.86,
+              "hit": false,
+              "price": 51.05,
+              "code": "001339",
+              "at": "2026-11-25",
+              "open": 53.54,
+              "openPct": -2.32,
+              "buyRet": -4.65,
+              "netRet": -4.84,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "大东方",
             "code": "600327",
             "sector": "商业百货",
             "status": "5板 高位 换手板",
-            "reason": "高位连板，百货板块核心，连板高度较高"
+            "reason": "高位连板，百货板块核心，连板高度较高",
+            "verify": {
+              "gain": -10,
+              "hit": false,
+              "price": 4.77,
+              "code": "600327",
+              "at": "2026-11-25",
+              "open": 5.1,
+              "openPct": -3.77,
+              "buyRet": -6.47,
+              "netRet": -6.66,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "飞亚达",
             "code": "000026",
             "sector": "钟表眼镜",
             "status": "3天2板 中位 换手板",
-            "reason": "中位连板，换手板形态，趋势中继"
+            "reason": "中位连板，换手板形态，趋势中继",
+            "verify": {
+              "gain": -9.98,
+              "hit": false,
+              "price": 20.12,
+              "code": "000026",
+              "at": "2026-11-25",
+              "open": 22,
+              "openPct": -1.57,
+              "buyRet": -8.55,
+              "netRet": -8.73,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "奥士康",
             "code": "002913",
             "sector": "PCB",
             "status": "3天2板 中位 换手板",
-            "reason": "中位连板，换手板形态，趋势中继"
+            "reason": "中位连板，换手板形态，趋势中继",
+            "verify": {
+              "gain": -4.18,
+              "hit": false,
+              "price": 57.29,
+              "code": "002913",
+              "at": "2026-11-25",
+              "open": 59.79,
+              "openPct": 0,
+              "buyRet": -4.18,
+              "netRet": -4.37,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
@@ -1518,28 +2093,84 @@ window.REPORTS = {
                 "code": "603248",
                 "role": "接力",
                 "status": "4板+高位+抗跌",
-                "reason": "高位抗跌，龙头地位稳固"
+                "reason": "高位抗跌，龙头地位稳固",
+                "verify": {
+                  "gain": -2.38,
+                  "hit": false,
+                  "price": 13.14,
+                  "code": "603248",
+                  "at": "2026-11-26",
+                  "open": 13.59,
+                  "openPct": 0.97,
+                  "buyRet": -3.31,
+                  "netRet": -3.5,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "华瓷股份",
                 "code": "001216",
                 "role": "接力",
                 "status": "4板+高位+抗跌",
-                "reason": "高位抗跌，资金抱团标的"
+                "reason": "高位抗跌，资金抱团标的",
+                "verify": {
+                  "gain": 1.85,
+                  "hit": true,
+                  "price": 14.34,
+                  "code": "001216",
+                  "at": "2026-11-26",
+                  "open": 14.15,
+                  "openPct": 0.5,
+                  "buyRet": 1.34,
+                  "netRet": 1.14,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中际旭创",
                 "code": "300308",
                 "role": "观察",
                 "status": "高位+震荡",
-                "reason": "板块核心，趋势未坏"
+                "reason": "板块核心，趋势未坏",
+                "verify": {
+                  "gain": 5.18,
+                  "hit": true,
+                  "price": 430.18,
+                  "code": "300308",
+                  "at": "2026-11-26",
+                  "open": 417.94,
+                  "openPct": 2.19,
+                  "buyRet": 2.93,
+                  "netRet": 2.72,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "工业富联",
                 "code": "601138",
                 "role": "观察",
                 "status": "高位+震荡",
-                "reason": "算力核心，趋势未坏"
+                "reason": "算力核心，趋势未坏",
+                "verify": {
+                  "gain": 3.51,
+                  "hit": true,
+                  "price": 41,
+                  "code": "601138",
+                  "at": "2026-11-26",
+                  "open": 40.41,
+                  "openPct": 2.02,
+                  "buyRet": 1.46,
+                  "netRet": 1.26,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1554,14 +2185,42 @@ window.REPORTS = {
                 "code": "600900",
                 "role": "观察",
                 "status": "高位+震荡",
-                "reason": "高股息龙头，防御属性强"
+                "reason": "高股息龙头，防御属性强",
+                "verify": {
+                  "gain": -0.5,
+                  "hit": false,
+                  "price": 31.8,
+                  "code": "600900",
+                  "at": "2026-11-26",
+                  "open": 31.94,
+                  "openPct": -0.06,
+                  "buyRet": -0.44,
+                  "netRet": -0.64,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中国神华",
                 "code": "601088",
                 "role": "观察",
                 "status": "高位+震荡",
-                "reason": "高股息龙头，防御属性强"
+                "reason": "高股息龙头，防御属性强",
+                "verify": {
+                  "gain": 2.28,
+                  "hit": true,
+                  "price": 53,
+                  "code": "601088",
+                  "at": "2026-11-26",
+                  "open": 51.81,
+                  "openPct": -0.02,
+                  "buyRet": 2.3,
+                  "netRet": 2.09,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1576,14 +2235,42 @@ window.REPORTS = {
                 "code": "300459",
                 "role": "可跟",
                 "status": "低位+启动",
-                "reason": "AI应用方向，低位补涨"
+                "reason": "AI应用方向，低位补涨",
+                "verify": {
+                  "gain": -1.22,
+                  "hit": false,
+                  "price": 3.24,
+                  "code": "300459",
+                  "at": "2026-11-26",
+                  "open": 3.31,
+                  "openPct": 0.91,
+                  "buyRet": -2.11,
+                  "netRet": -2.31,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "掌阅科技",
                 "code": "603533",
                 "role": "可跟",
                 "status": "低位+启动",
-                "reason": "AI应用方向，低位补涨"
+                "reason": "AI应用方向，低位补涨",
+                "verify": {
+                  "gain": -0.71,
+                  "hit": false,
+                  "price": 23.76,
+                  "code": "603533",
+                  "at": "2026-11-26",
+                  "open": 24.3,
+                  "openPct": 1.55,
+                  "buyRet": -2.22,
+                  "netRet": -2.42,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -1661,56 +2348,169 @@ window.REPORTS = {
             "code": "600715",
             "sector": "传媒娱乐",
             "status": "9板 高位 换手板",
-            "reason": "历史强势股，连续强势连板，高位换手板"
+            "reason": "历史强势股，连续强势连板，高位换手板",
+            "verify": {
+              "gain": -6.36,
+              "hit": false,
+              "price": 2.65,
+              "code": "600715",
+              "at": "2026-11-26",
+              "open": 2.81,
+              "openPct": -0.71,
+              "buyRet": -5.69,
+              "netRet": -5.88,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "九阳股份",
             "code": "002242",
             "sector": "家电",
             "status": "未连板 中位",
-            "reason": "盘前人气股前列，历史强势股，但已连涨310%后出现风险提示"
+            "reason": "盘前人气股前列，历史强势股，但已连涨310%后出现风险提示",
+            "verify": {
+              "gain": 8.66,
+              "hit": true,
+              "price": 41.9,
+              "code": "002242",
+              "at": "2026-11-26",
+              "open": 38.56,
+              "openPct": 0,
+              "buyRet": 8.66,
+              "netRet": 8.44,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "金辰股份",
             "code": "603396",
             "sector": "光伏设备",
             "status": "3连板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 25.48,
+              "code": "603396",
+              "at": "2026-11-26",
+              "open": 25.48,
+              "openPct": 10.02,
+              "buyRet": 0,
+              "netRet": null,
+              "locked": true,
+              "basis": "open-to-close",
+              "by": "hist",
+              "note": "一字板·无法买入（剔除）"
+            }
           },
           {
             "name": "广百股份",
             "code": "002187",
             "sector": "商贸零售",
             "status": "2连板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": -8.2,
+              "hit": false,
+              "price": 5.6,
+              "code": "002187",
+              "at": "2026-11-26",
+              "open": 5.95,
+              "openPct": -2.46,
+              "buyRet": -5.88,
+              "netRet": -6.07,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "光洋股份",
             "code": "002708",
             "sector": "汽车零部件",
             "status": "13天7板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": 2.02,
+              "hit": true,
+              "price": 23.26,
+              "code": "002708",
+              "at": "2026-11-26",
+              "open": 22.76,
+              "openPct": -0.18,
+              "buyRet": 2.2,
+              "netRet": 1.99,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "智微智能",
             "code": "001339",
             "sector": "计算机设备",
             "status": "6天3板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": -2.92,
+              "hit": false,
+              "price": 49.56,
+              "code": "001339",
+              "at": "2026-11-26",
+              "open": 51.9,
+              "openPct": 1.67,
+              "buyRet": -4.51,
+              "netRet": -4.7,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "新华传媒",
             "code": "600825",
             "sector": "出版传媒",
             "status": "10板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": -4.34,
+              "hit": false,
+              "price": 11.24,
+              "code": "600825",
+              "at": "2026-11-26",
+              "open": 11.7,
+              "openPct": -0.43,
+              "buyRet": -3.93,
+              "netRet": -4.12,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "大东方",
             "code": "600327",
             "sector": "零售",
             "status": "5板 高位 换手板",
-            "reason": "历史强势股，高位换手板"
+            "reason": "历史强势股，高位换手板",
+            "verify": {
+              "gain": -2.31,
+              "hit": false,
+              "price": 4.66,
+              "code": "600327",
+              "at": "2026-11-26",
+              "open": 4.76,
+              "openPct": -0.21,
+              "buyRet": -2.1,
+              "netRet": -2.3,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
@@ -1768,14 +2568,42 @@ window.REPORTS = {
                 "code": "300418",
                 "role": "观察",
                 "status": "4板+10天5板+高位",
-                "reason": "核心票抗住分歧，高位连板标杆"
+                "reason": "核心票抗住分歧，高位连板标杆",
+                "verify": {
+                  "gain": 10.43,
+                  "hit": true,
+                  "price": 35.56,
+                  "code": "300418",
+                  "at": "2026-11-27",
+                  "open": 32.39,
+                  "openPct": 0.59,
+                  "buyRet": 9.79,
+                  "netRet": 9.57,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "汤姆猫",
                 "code": "300459",
                 "role": "可跟",
                 "status": "3板+高位",
-                "reason": "AI应用核心低位补涨"
+                "reason": "AI应用核心低位补涨",
+                "verify": {
+                  "gain": 6.48,
+                  "hit": true,
+                  "price": 3.45,
+                  "code": "300459",
+                  "at": "2026-11-27",
+                  "open": 3.25,
+                  "openPct": 0.31,
+                  "buyRet": 6.15,
+                  "netRet": 5.94,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1790,14 +2618,42 @@ window.REPORTS = {
                 "code": "300308",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "算力龙头调整中"
+                "reason": "算力龙头调整中",
+                "verify": {
+                  "gain": 19.98,
+                  "hit": true,
+                  "price": 516.15,
+                  "code": "300308",
+                  "at": "2026-11-27",
+                  "open": 434.95,
+                  "openPct": 1.11,
+                  "buyRet": 18.67,
+                  "netRet": 18.43,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "新易盛",
                 "code": "300502",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "算力龙头调整中"
+                "reason": "算力龙头调整中",
+                "verify": {
+                  "gain": 20,
+                  "hit": true,
+                  "price": 226.84,
+                  "code": "300502",
+                  "at": "2026-11-27",
+                  "open": 189.77,
+                  "openPct": 0.39,
+                  "buyRet": 19.53,
+                  "netRet": 19.3,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1812,14 +2668,42 @@ window.REPORTS = {
                 "code": "002805",
                 "role": "观察",
                 "status": "涨停+启动",
-                "reason": "固态电池前排标的"
+                "reason": "固态电池前排标的",
+                "verify": {
+                  "gain": 7.61,
+                  "hit": true,
+                  "price": 11.74,
+                  "code": "002805",
+                  "at": "2026-11-27",
+                  "open": 11.05,
+                  "openPct": 1.28,
+                  "buyRet": 6.24,
+                  "netRet": 6.03,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "东方钽业",
                 "code": "000962",
                 "role": "观察",
                 "status": "涨停+启动",
-                "reason": "固态电池前排标的"
+                "reason": "固态电池前排标的",
+                "verify": {
+                  "gain": 10.01,
+                  "hit": true,
+                  "price": 31.43,
+                  "code": "000962",
+                  "at": "2026-11-27",
+                  "open": 28.58,
+                  "openPct": 0.04,
+                  "buyRet": 9.97,
+                  "netRet": 9.75,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1834,14 +2718,42 @@ window.REPORTS = {
                 "code": "002475",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "消费电子核心龙头"
+                "reason": "消费电子核心龙头",
+                "verify": {
+                  "gain": 9.05,
+                  "hit": true,
+                  "price": 50.6,
+                  "code": "002475",
+                  "at": "2026-11-27",
+                  "open": 46.5,
+                  "openPct": 0.22,
+                  "buyRet": 8.82,
+                  "netRet": 8.6,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "歌尔股份",
                 "code": "002241",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "消费电子核心龙头"
+                "reason": "消费电子核心龙头",
+                "verify": {
+                  "gain": 7.27,
+                  "hit": true,
+                  "price": 23.18,
+                  "code": "002241",
+                  "at": "2026-11-27",
+                  "open": 21.8,
+                  "openPct": 0.88,
+                  "buyRet": 6.33,
+                  "netRet": 6.12,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1856,14 +2768,42 @@ window.REPORTS = {
                 "code": "002085",
                 "role": "观察",
                 "status": "涨停+启动",
-                "reason": "低空经济核心龙头"
+                "reason": "低空经济核心龙头",
+                "verify": {
+                  "gain": 5.58,
+                  "hit": true,
+                  "price": 8.14,
+                  "code": "002085",
+                  "at": "2026-11-27",
+                  "open": 7.71,
+                  "openPct": 0,
+                  "buyRet": 5.58,
+                  "netRet": 5.37,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "中信海直",
                 "code": "000099",
                 "role": "观察",
                 "status": "涨停+启动",
-                "reason": "低空经济核心龙头"
+                "reason": "低空经济核心龙头",
+                "verify": {
+                  "gain": 4.95,
+                  "hit": true,
+                  "price": 11.02,
+                  "code": "000099",
+                  "at": "2026-11-27",
+                  "open": 10.51,
+                  "openPct": 0.1,
+                  "buyRet": 4.85,
+                  "netRet": 4.64,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           },
@@ -1878,14 +2818,42 @@ window.REPORTS = {
                 "code": "300624",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "多模态龙头"
+                "reason": "多模态龙头",
+                "verify": {
+                  "gain": 10.98,
+                  "hit": true,
+                  "price": 44.08,
+                  "code": "300624",
+                  "at": "2026-11-27",
+                  "open": 39.99,
+                  "openPct": 0.68,
+                  "buyRet": 10.23,
+                  "netRet": 10.01,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               },
               {
                 "name": "蓝色光标",
                 "code": "300058",
                 "role": "观察",
                 "status": "高位震荡",
-                "reason": "多模态龙头"
+                "reason": "多模态龙头",
+                "verify": {
+                  "gain": 9.53,
+                  "hit": true,
+                  "price": 12.18,
+                  "code": "300058",
+                  "at": "2026-11-27",
+                  "open": 11.2,
+                  "openPct": 0.72,
+                  "buyRet": 8.75,
+                  "netRet": 8.53,
+                  "locked": false,
+                  "basis": "open-to-close",
+                  "by": "hist"
+                }
               }
             ]
           }
@@ -1979,84 +2947,252 @@ window.REPORTS = {
             "code": "600467",
             "sector": "食品加工",
             "status": "11天7板 高位",
-            "reason": "股价已脱离基本面，存在非理性炒作风险"
+            "reason": "股价已脱离基本面，存在非理性炒作风险",
+            "verify": {
+              "gain": -4.04,
+              "hit": false,
+              "price": 3.8,
+              "code": "600467",
+              "at": "2026-11-27",
+              "open": 4.05,
+              "openPct": 2.27,
+              "buyRet": -6.17,
+              "netRet": -6.36,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "全筑股份",
             "code": "603030",
             "sector": "装修装饰",
             "status": "8天6板 高位",
-            "reason": "子公司云阙智算尚处于早期试点培育阶段"
+            "reason": "子公司云阙智算尚处于早期试点培育阶段",
+            "verify": {
+              "gain": 10.1,
+              "hit": true,
+              "price": 3.16,
+              "code": "603030",
+              "at": "2026-11-27",
+              "open": 3.1,
+              "openPct": 8.01,
+              "buyRet": 1.94,
+              "netRet": 1.73,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "金牛化工",
             "code": "600722",
             "sector": "化工",
             "status": "3连板 高位",
-            "reason": "主营业务未发生重大变化"
+            "reason": "主营业务未发生重大变化",
+            "verify": {
+              "gain": 4.77,
+              "hit": true,
+              "price": 15.16,
+              "code": "600722",
+              "at": "2026-11-27",
+              "open": 14.8,
+              "openPct": 2.28,
+              "buyRet": 2.43,
+              "netRet": 2.23,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "宏达高科",
             "code": "002144",
             "sector": "纺织",
             "status": "2连板 中位",
-            "reason": "高端功能性面料和碳纤维复合材料项目处于建设阶段，尚未产生营收"
+            "reason": "高端功能性面料和碳纤维复合材料项目处于建设阶段，尚未产生营收",
+            "verify": {
+              "gain": 10.01,
+              "hit": true,
+              "price": 10.99,
+              "code": "002144",
+              "at": "2026-11-27",
+              "open": 9.89,
+              "openPct": -1,
+              "buyRet": 11.12,
+              "netRet": 10.9,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "襄阳轴承",
             "code": "000678",
             "sector": "汽车零部件",
             "status": "未连板 高位",
-            "reason": "经营业绩持续亏损，股价存在情绪过热，非理性炒作风险"
+            "reason": "经营业绩持续亏损，股价存在情绪过热，非理性炒作风险",
+            "verify": {
+              "gain": -6.06,
+              "hit": false,
+              "price": 20.63,
+              "code": "000678",
+              "at": "2026-11-27",
+              "open": 23,
+              "openPct": 4.74,
+              "buyRet": -10.3,
+              "netRet": -10.48,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "拓维信息",
             "code": "002261",
             "sector": "算力",
             "status": "未连板 中位",
-            "reason": "与华为在“鲲鹏/昇腾AI+大模型/云+开源鸿蒙+海思”领域形成软硬一体全方位战略合作"
+            "reason": "与华为在“鲲鹏/昇腾AI+大模型/云+开源鸿蒙+海思”领域形成软硬一体全方位战略合作",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 23.06,
+              "code": "002261",
+              "at": "2026-11-27",
+              "open": 21.99,
+              "openPct": 4.91,
+              "buyRet": 4.87,
+              "netRet": 4.66,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "旋极信息",
             "code": "300324",
             "sector": "军工电子",
             "status": "未连板 中位",
-            "reason": "参股多家芯片公司，布局射频模拟、电源管理、AI推理芯片等业务"
+            "reason": "参股多家芯片公司，布局射频模拟、电源管理、AI推理芯片等业务",
+            "verify": {
+              "gain": 20.04,
+              "hit": true,
+              "price": 6.05,
+              "code": "300324",
+              "at": "2026-11-27",
+              "open": 5.12,
+              "openPct": 1.59,
+              "buyRet": 18.16,
+              "netRet": 17.93,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "恺英网络",
             "code": "002517",
             "sector": "游戏",
             "status": "未连板 中位",
-            "reason": "《BOOM BOOM TD》登陆东南亚多国市场引发下载热潮"
+            "reason": "《BOOM BOOM TD》登陆东南亚多国市场引发下载热潮",
+            "verify": {
+              "gain": 7.59,
+              "hit": true,
+              "price": 14.04,
+              "code": "002517",
+              "at": "2026-11-27",
+              "open": 13.1,
+              "openPct": 0.38,
+              "buyRet": 7.18,
+              "netRet": 6.96,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "飞亚达",
             "code": "000026",
             "sector": "珠宝首饰",
             "status": "未连板 中位",
-            "reason": "人形机器人用精密减速器正快速提升产能"
+            "reason": "人形机器人用精密减速器正快速提升产能",
+            "verify": {
+              "gain": 10.02,
+              "hit": true,
+              "price": 21.86,
+              "code": "000026",
+              "at": "2026-11-27",
+              "open": 20.19,
+              "openPct": 1.61,
+              "buyRet": 8.27,
+              "netRet": 8.05,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "铭利达",
             "code": "301268",
             "sector": "精密制造",
             "status": "未连板 中位",
-            "reason": "液冷产品处于客户送样、验证及小批量供货阶段"
+            "reason": "液冷产品处于客户送样、验证及小批量供货阶段",
+            "verify": {
+              "gain": 9.59,
+              "hit": true,
+              "price": 8.8,
+              "code": "301268",
+              "at": "2026-11-27",
+              "open": 8.05,
+              "openPct": 0.25,
+              "buyRet": 9.32,
+              "netRet": 9.1,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "科达制造",
             "code": "600499",
             "sector": "机械装备",
             "status": "未连板 中位",
-            "reason": "控股股东及实控人持续增持，合计持股比例提升至11.91%"
+            "reason": "控股股东及实控人持续增持，合计持股比例提升至11.91%",
+            "verify": {
+              "gain": 1.96,
+              "hit": true,
+              "price": 12.98,
+              "code": "600499",
+              "at": "2026-11-27",
+              "open": 12.67,
+              "openPct": -0.47,
+              "buyRet": 2.45,
+              "netRet": 2.24,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           },
           {
             "name": "新奥股份",
             "code": "600803",
             "sector": "天然气",
             "status": "未连板 中位",
-            "reason": "承诺2026-2028年每年现金分红不低于归母经营利润的50%"
+            "reason": "承诺2026-2028年每年现金分红不低于归母经营利润的50%",
+            "verify": {
+              "gain": -0.5,
+              "hit": false,
+              "price": 21.74,
+              "code": "600803",
+              "at": "2026-11-27",
+              "open": 22.2,
+              "openPct": 1.6,
+              "buyRet": -2.07,
+              "netRet": -2.27,
+              "locked": false,
+              "basis": "open-to-close",
+              "by": "hist"
+            }
           }
         ]
       },
